@@ -11,7 +11,7 @@ export default function OnboardingScreen() {
   async function finish() {
     const user = getCurrentUser() ?? 'default';
     const displayName = user.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    await createProfile(displayName, { new_words_per_day: newWordsPerDay, reviews_per_day: 20 });
+    await createProfile(displayName, { new_words_per_day: newWordsPerDay, reviews_per_day: 20, new_word_rate: 20 });
     navigate('/app/home');
   }
 

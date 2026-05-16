@@ -65,7 +65,7 @@ export default function LearnScreen() {
   const [recallKnew, setRecallKnew] = useState(false);
   const [goalPopup, setGoalPopup] = useState<'reviews' | 'new_words' | null>(null);
   const startMs = useRef(Date.now());
-  const settingsRef = useRef<ProfileSettings>({ new_words_per_day: 10, reviews_per_day: 20 });
+  const settingsRef = useRef<ProfileSettings>({ new_words_per_day: 10, reviews_per_day: 20, new_word_rate: 20 });
   const goalsNotified = useRef(new Set<'reviews' | 'new_words'>());
   const sessionStartStats = useRef({ reviewsToday: 0, newWordsToday: 0 });
 
