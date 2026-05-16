@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getProfile, getSkillMastery, getDailyStats } from '../database/db';
 import { scaffoldLevel, scaffoldHint } from '../algorithms/afm';
 import { buildPracticePool } from '../scheduling/sessionAssembly';
+import { uploadToDrive } from '../sync/driveSync';
 import { useSessionStore } from '../store/sessionStore';
 import FlashCard from '../components/exercises/FlashCard';
 import MultipleChoice from '../components/exercises/MultipleChoice';
@@ -114,6 +115,7 @@ export default function LearnScreen() {
     if (profile) {
       await store.finishSession(profile);
     }
+    uploadToDrive(); // fire-and-forget; fails silently if offline or not signed in
     setPhase('summary');
   }
 

@@ -103,6 +103,11 @@ export async function listUsers(): Promise<string[]> {
   });
 }
 
+// Saves a downloaded DB binary into IndexedDB before openDatabase is called.
+export async function importDatabase(userName: string, data: Uint8Array): Promise<void> {
+  await idbSave(`db_${userName}`, data);
+}
+
 export async function openDatabase(userName: string): Promise<void> {
   if (_db && _currentUser === userName) return;
   if (_db) {

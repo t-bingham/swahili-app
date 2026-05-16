@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
 import './index.css';
 
@@ -25,6 +26,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
-    <App />
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''}>
+      <App />
+    </GoogleOAuthProvider>
   </ErrorBoundary>,
 );
