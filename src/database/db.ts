@@ -212,6 +212,10 @@ export async function getProfile(): Promise<Profile | null> {
     (settings as Partial<ProfileSettings>).reviews_per_day = DEFAULT_REVIEWS_PER_DAY;
     dirty = true;
   }
+  if (!('new_word_rate' in settings)) {
+    (settings as Partial<ProfileSettings>).new_word_rate = 20;
+    dirty = true;
+  }
   if (dirty) run('UPDATE profile SET settings = ?', [JSON.stringify(settings)]);
   return {
     display_name: row.display_name as string,

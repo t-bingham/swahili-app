@@ -73,7 +73,7 @@ function NumberInput({
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
-  const [settings, setSettings] = useState<ProfileSettings>({ new_words_per_day: 10, reviews_per_day: 20 });
+  const [settings, setSettings] = useState<ProfileSettings>({ new_words_per_day: 10, reviews_per_day: 20, new_word_rate: 20 });
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -137,6 +137,27 @@ export default function SettingsScreen() {
         max={500}
         onChange={n => setSettings(s => ({ ...s, reviews_per_day: n }))}
       />
+
+      <div className="bg-slate-800 rounded-xl p-4">
+        <label className="block text-slate-300 text-sm font-medium mb-1">New word rate</label>
+        <p className="text-slate-500 text-xs mb-4">
+          In Learn mode, the chance each card drawn is a new (unseen) word.
+        </p>
+        <div className="flex items-center gap-4">
+          <span className="text-slate-500 text-xs w-16">Reviews only</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={settings.new_word_rate}
+            onChange={e => setSettings(s => ({ ...s, new_word_rate: Number(e.target.value) }))}
+            className="flex-1 accent-cyan-500"
+          />
+          <span className="text-slate-500 text-xs w-16 text-right">Mostly new</span>
+        </div>
+        <p className="text-center text-cyan-400 font-bold text-lg mt-3">{settings.new_word_rate}%</p>
+      </div>
 
       <button
         onClick={save}

@@ -13,14 +13,15 @@ interface SessionState {
   sessionId: string;
   isActive: boolean;
   startedAt: number;
-  pool: CardWithState[];         // all introduced cards
+  pool: CardWithState[];         // all cards available for this session
   current: CardWithState | null; // card being shown
   lastCardId: string | null;     // excluded from next draw to avoid immediate repeat
   reviews: SessionReview[];
   againCount: number;
   newWordsIntroduced: number;
+  newWordRate: number;           // 0–100: % chance of drawing a new word
 
-  startSession: (pool: CardWithState[]) => void;
+  startSession: (pool: CardWithState[], newWordRate?: number) => void;
   submitRating: (
     card: CardWithState,
     rating: 1 | 2 | 3 | 4 | 5,
@@ -76,9 +77,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   reviews: [],
   againCount: 0,
   newWordsIntroduced: 0,
+  newWordRate: 0,
 
-  startSession: (pool) => {
-    const first = drawWeightedCard(pool, Date.now());
+  startSession: (pool, newWordRate = 0) => {
+    const first = drawWeightedCard(pool, Date.now(), undefined, newWordRate);
     set({
       sessionId: uuidv4(),
       isActive: true,
@@ -89,11 +91,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       reviews: [],
       againCount: 0,
       newWordsIntroduced: 0,
+      newWordRate,
     });
   },
 
   submitRating: async (card, rating, exerciseType, responseMs, wrongAnswer) => {
-    const { sessionId, pool } = get();
+    const { sessionId, pool, newWordRate } = get();
     const now = new Date().toISOString();
     const isNewCard = card.state.depth_level === 1 || card.state.review_count === 0;
     const daysSinceLast = card.state.last_review
@@ -183,7 +186,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
     // Draw the next card (excluding the one just rated)
     const nowMs = Date.now();
-    const next = drawWeightedCard(updatedPool, nowMs, card.id);
+    const next = drawWeightedCard(updatedPool, nowMs, card.id, newWordRate);
 
     set(prev => ({
       pool: updatedPool,

@@ -53,6 +53,7 @@ export default function LearnScreen() {
   const store = useSessionStore();
 
   const [phase, setPhase] = useState<Phase>('idle');
+  const [mode, setMode] = useState<'review' | 'learn'>('review');
   const [assembling, setAssembling] = useState(false);
   const [exercise, setExercise] = useState<UiPhaseExercise>('flashcard');
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
@@ -97,7 +98,7 @@ export default function LearnScreen() {
     if (profile) settingsRef.current = profile.settings;
     sessionStartStats.current = startStats;
 
-    const pool = await buildPracticePool();
+    const pool = await buildPracticePool(mode);
     setAssembling(false);
 
     if (!pool.length) {
@@ -105,7 +106,8 @@ export default function LearnScreen() {
       return;
     }
 
-    store.startSession(pool);
+    const newWordRate = mode === 'learn' ? (profile?.settings.new_word_rate ?? 20) : 0;
+    store.startSession(pool, newWordRate);
   }
 
   // ── Session end ──────────────────────────────────────────────────────────────
@@ -183,16 +185,52 @@ export default function LearnScreen() {
     return (
       <div className="p-5 space-y-6 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-slate-100 pt-2">Practice</h1>
-        <p className="text-slate-400 text-sm">
-          Cards are drawn based on how soon they're due and how recently you learned them.
-          Practice as long as you like and end whenever you're ready.
-        </p>
+
+        {/* Mode selector */}
+        <div className="space-y-3">
+          <button
+            onClick={() => setMode('review')}
+            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
+              mode === 'review'
+                ? 'border-cyan-500 bg-cyan-500/10'
+                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔁</span>
+              <div>
+                <p className="text-slate-100 font-semibold">Review</p>
+                <p className="text-slate-400 text-sm">Practice words you already know — no new words.</p>
+              </div>
+              {mode === 'review' && <span className="ml-auto text-cyan-400">✓</span>}
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode('learn')}
+            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
+              mode === 'learn'
+                ? 'border-cyan-500 bg-cyan-500/10'
+                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🌱</span>
+              <div>
+                <p className="text-slate-100 font-semibold">Learn</p>
+                <p className="text-slate-400 text-sm">Mix reviews with new words as you go.</p>
+              </div>
+              {mode === 'learn' && <span className="ml-auto text-cyan-400">✓</span>}
+            </div>
+          </button>
+        </div>
+
         <button
           onClick={startSession}
           disabled={assembling}
           className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-slate-950 font-bold text-lg rounded-2xl transition-colors"
         >
-          {assembling ? 'Loading…' : 'Start practicing →'}
+          {assembling ? 'Loading…' : 'Start →'}
         </button>
       </div>
     );

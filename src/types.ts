@@ -45,6 +45,7 @@ export interface CardWithState extends Card {
 export interface ProfileSettings {
   new_words_per_day: number;
   reviews_per_day: number;
+  new_word_rate: number; // 0–100: % chance of drawing a new word in Learn mode
 }
 
 export interface Profile {
