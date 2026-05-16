@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { openDatabase, listUsers, getProfile, importDatabase } from '../database/db';
 import {
-  saveGoogleSession, getGoogleProfile, clearGoogleSession,
+  saveGoogleSession, getGoogleProfile, getGoogleToken, clearGoogleSession,
   googleUsername, isGoogleSignedIn,
 } from '../auth/googleAuth';
 import { downloadIfNewer, clearSyncState } from '../sync/driveSync';
@@ -101,7 +101,6 @@ export default function UserPickerScreen() {
     setOpening('google');
     try {
       // If token is still valid, check Drive for a newer copy
-      const { getGoogleToken } = await import('../auth/googleAuth');
       const token = getGoogleToken();
       if (token) {
         const driveData = await downloadIfNewer(token);
