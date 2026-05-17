@@ -26,11 +26,11 @@ export default function Layout() {
   if (!ready) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950">
-      <main className="flex-1 overflow-y-auto">
+    <div className="flex flex-col bg-slate-950" style={{ height: '100dvh' }}>
+      <main className="flex-1 overflow-y-auto min-h-0">
         <Outlet />
       </main>
-      <nav className="flex border-t border-slate-800 bg-slate-900">
+      <nav className="shrink-0 flex border-t border-slate-800 bg-slate-900 pb-safe">
         {tabs.map(t => (
           <NavLink
             key={t.to}
