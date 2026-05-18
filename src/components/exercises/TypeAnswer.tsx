@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
 
 interface Props {
   card: CardWithState;
-  onAnswer: (correct: boolean, typed: string) => void;
+  onAnswer: (correct: boolean, typed: string, keystrokeCount: number) => void;
+  direction?: 'sw_to_en' | 'en_to_sw';
+  showPronunciation?: boolean;
+  showMorphemeHints?: boolean;
 }
 
 function normalize(s: string) {
@@ -15,44 +19,59 @@ function stripParens(s: string) {
   return s.replace(/\s*\([^)]*\)/g, '').trim();
 }
 
-function isAnswerCorrect(typed: string, english: string): boolean {
+function isAnswerCorrect(typed: string, card: CardWithState, direction: 'sw_to_en' | 'en_to_sw'): boolean {
   const input = normalize(typed);
-  const alternatives = english.split(/\s*\/\s*|\s*,\s*/);
-  return alternatives.some(alt => normalize(alt) === input || normalize(stripParens(alt)) === input);
+  if (direction === 'en_to_sw') {
+    return normalize(card.swahili) === input;
+  }
+  // sw_to_en: accept any slash/comma-separated alternative, senses, or parenthetical strips
+  const targets = card.senses?.map(s => s.english) ?? [];
+  targets.push(card.english);
+  return targets.some(t => {
+    const alternatives = t.split(/\s*\/\s*|\s*,\s*/);
+    return alternatives.some(alt => normalize(alt) === input || normalize(stripParens(alt)) === input);
+  });
 }
 
-export default function TypeAnswer({ card, onAnswer }: Props) {
+export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', showPronunciation = true, showMorphemeHints = false }: Props) {
   const [value, setValue] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [correct, setCorrect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const keystrokeCount = useRef(0);
 
   useEffect(() => {
     setValue('');
     setSubmitted(false);
+    keystrokeCount.current = 0;
     inputRef.current?.focus();
-  }, [card.id]);
+  }, [card.id, direction]);
 
   function submit() {
     if (!value.trim() || submitted) return;
-    const isCorrect = isAnswerCorrect(value, card.english);
+    const isCorrect = isAnswerCorrect(value, card, direction);
     setCorrect(isCorrect);
     setSubmitted(true);
-    setTimeout(() => onAnswer(isCorrect, value), 1000);
+    setTimeout(() => onAnswer(isCorrect, value, keystrokeCount.current), 1000);
   }
+
+  const prompt    = direction === 'sw_to_en' ? card.swahili : card.english;
+  const answer    = direction === 'sw_to_en' ? card.english : card.swahili;
+  const promptLabel = direction === 'sw_to_en' ? 'Type the English translation' : 'Type the Swahili translation';
+  const hasAlts   = direction === 'sw_to_en' && (card.english.includes('/') || (card.senses?.length ?? 0) > 1);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-800 rounded-2xl p-8 text-center">
-        <div className="text-slate-400 text-sm mb-2">Type the English translation</div>
-        <div className="text-4xl font-bold text-slate-100">{card.swahili}</div>
-        {card.pronunciation && (
+        <div className="text-slate-400 text-sm mb-2">{promptLabel}</div>
+        <div className="text-4xl font-bold text-slate-100">{prompt}</div>
+        {direction === 'sw_to_en' && card.pronunciation && showPronunciation && (
           <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
         )}
       </div>
 
       <div className="space-y-3">
-        {card.english.includes('/') && !submitted && (
+        {hasAlts && !submitted && (
           <p className="text-slate-500 text-xs text-center">Any one translation accepted</p>
         )}
         <input
@@ -60,7 +79,15 @@ export default function TypeAnswer({ card, onAnswer }: Props) {
           type="text"
           value={value}
           onChange={e => setValue(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && submit()}
+          onKeyDown={e => {
+            // Count every keypress (including backspace corrections) as motor overhead
+            if (!submitted) {
+              // Only skip backspace-clearing the whole word — that's giving up, not correcting
+              const isFullClear = e.key === 'Backspace' && (e.target as HTMLInputElement).value.length <= 1;
+              if (!isFullClear) keystrokeCount.current++;
+            }
+            if (e.key === 'Enter') submit();
+          }}
           disabled={submitted}
           placeholder="Type your answer…"
           className={`w-full px-5 py-4 rounded-xl bg-slate-800 border-2 text-slate-100 text-lg placeholder-slate-500 transition-colors ${
@@ -75,7 +102,19 @@ export default function TypeAnswer({ card, onAnswer }: Props) {
         {submitted && !correct && (
           <div className="bg-slate-800 rounded-xl p-3 text-center">
             <span className="text-slate-400 text-sm">Correct answer: </span>
-            <span className="text-green-400 font-semibold">{card.english}</span>
+            <span className="text-green-400 font-semibold">{answer}</span>
+          </div>
+        )}
+
+        {submitted && showMorphemeHints && (
+          <div className="bg-slate-800/60 rounded-xl p-3">
+            <MorphemeBreakdown card={card} />
+          </div>
+        )}
+
+        {submitted && card.register && card.register !== 'neutral' && (
+          <div className="flex justify-center">
+            <RegisterBadge register={card.register} />
           </div>
         )}
 

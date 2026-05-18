@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile, getSkillMastery, getDailyStats } from '../database/db';
+import { getProfile, getSkillMastery, getDailyStats, getStarredCards } from '../database/db';
 import { scaffoldLevel, scaffoldHint } from '../algorithms/afm';
-import { buildPracticePool } from '../scheduling/sessionAssembly';
+import { buildPracticePool, loadSessionModifiers } from '../scheduling/sessionAssembly';
 import { uploadToDrive } from '../sync/driveSync';
 import { useSessionStore } from '../store/sessionStore';
 import FlashCard from '../components/exercises/FlashCard';
@@ -21,6 +21,7 @@ type UiPhaseExercise = ExerciseType | 'recall_prompt';
 function pickExercise(
   card: CardWithState,
   mastery: Map<string, number>,
+  settings: ProfileSettings,
 ): { exercise: UiPhaseExercise; level: 1 | 2 | 3 | 4 | 5 } {
   if (card.type === 'grammar' && card.swahili.includes('___')) {
     return { exercise: 'fill_blank', level: 3 };
@@ -29,11 +30,26 @@ function pickExercise(
     return { exercise: 'recall_prompt', level: 5 };
   }
   const level = scaffoldLevel(card, mastery);
-  const exercise: UiPhaseExercise =
+  let exercise: UiPhaseExercise =
     level >= 5 ? 'flashcard' :
     level >= 3 ? 'multiple_choice' :
     'type_answer';
+  // Apply disable preferences — fall back up the scaffold ladder
+  if (exercise === 'type_answer' && settings.disable_type_answer) {
+    exercise = 'multiple_choice';
+  }
+  if (exercise === 'flashcard' && settings.disable_flashcard) {
+    exercise = 'multiple_choice';
+  }
   return { exercise, level };
+}
+
+// Resolve a single exercise direction from the user's preference setting.
+function resolveDirection(setting?: ProfileSettings['exercise_direction']): 'sw_to_en' | 'en_to_sw' {
+  if (setting === 'recognition') return 'sw_to_en';
+  if (setting === 'production')  return 'en_to_sw';
+  // balanced: 50/50
+  return Math.random() < 0.5 ? 'sw_to_en' : 'en_to_sw';
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -53,7 +69,8 @@ export default function LearnScreen() {
   const store = useSessionStore();
 
   const [phase, setPhase] = useState<Phase>('idle');
-  const [mode, setMode] = useState<'review' | 'learn'>('review');
+  const [mode, setMode] = useState<'review' | 'learn' | 'starred'>('review');
+  const [activeMode, setActiveMode] = useState<'review' | 'learn' | 'starred'>('review');
   const [assembling, setAssembling] = useState(false);
   const [exercise, setExercise] = useState<UiPhaseExercise>('flashcard');
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
@@ -74,10 +91,11 @@ export default function LearnScreen() {
   // When the current card changes, set up the exercise
   useEffect(() => {
     if (!store.isActive || !card) return;
-    const { exercise: ex, level: lv } = pickExercise(card, skillMastery);
+    const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current);
     setExercise(ex);
     setLevel(lv);
-    setDirection(ex === 'flashcard' ? (Math.random() < 0.5 ? 'sw_to_en' : 'en_to_sw') : 'sw_to_en');
+    // direction applies to all exercise types (not just flashcard)
+    setDirection(resolveDirection(settingsRef.current.exercise_direction));
     setRevealed(false);
     setAutoCorrect(null);
     setWrongAnswer(null);
@@ -98,16 +116,20 @@ export default function LearnScreen() {
     if (profile) settingsRef.current = profile.settings;
     sessionStartStats.current = startStats;
 
-    const pool = await buildPracticePool(mode);
+    setActiveMode(mode);
+    const [rawPool, modifiers] = await Promise.all([
+      mode === 'starred' ? getStarredCards() : buildPracticePool(mode, profile?.settings),
+      loadSessionModifiers(profile?.settings.learning_goal),
+    ]);
     setAssembling(false);
 
-    if (!pool.length) {
+    if (!rawPool.length) {
       setPhase('empty');
       return;
     }
 
     const newWordRate = mode === 'learn' ? (profile?.settings.new_word_rate ?? 20) : 0;
-    store.startSession(pool, newWordRate);
+    store.startSession(rawPool, newWordRate, modifiers);
   }
 
   // ── Session end ──────────────────────────────────────────────────────────────
@@ -135,9 +157,19 @@ export default function LearnScreen() {
     setPhase('recall_reveal');
   }
 
+  async function onRecallAlreadyKnow() {
+    if (!card) return;
+    await store.markCardKnown(card, Date.now() - startMs.current);
+    startMs.current = Date.now();
+    // Phase/exercise will update via the useEffect on card?.id
+  }
+
   // ── Exercise answer handler ──────────────────────────────────────────────────
 
-  function onExerciseAnswer(correct: boolean, typed?: string) {
+  const keystrokeCountRef = useRef<number | undefined>(undefined);
+
+  function onExerciseAnswer(correct: boolean, typed?: string, keystrokeCount?: number) {
+    keystrokeCountRef.current = keystrokeCount;
     setAutoCorrect(correct);
     setWrongAnswer(correct ? null : (typed ?? null));
     setPhase('rating');
@@ -175,7 +207,8 @@ export default function LearnScreen() {
     if (!card) return;
     const responseMs = Date.now() - startMs.current;
     const ex: ExerciseType = exercise === 'recall_prompt' ? 'flashcard' : exercise as ExerciseType;
-    await store.submitRating(card, rating, ex, responseMs, wrongAnswer ?? undefined);
+    await store.submitRating(card, rating, ex, responseMs, wrongAnswer ?? undefined, keystrokeCountRef.current);
+    keystrokeCountRef.current = undefined;
     try { await checkGoals(); } catch { /* never block on goal-check error */ }
   }
 
@@ -223,6 +256,24 @@ export default function LearnScreen() {
               {mode === 'learn' && <span className="ml-auto text-cyan-400">✓</span>}
             </div>
           </button>
+
+          <button
+            onClick={() => setMode('starred')}
+            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
+              mode === 'starred'
+                ? 'border-yellow-500 bg-yellow-500/10'
+                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⭐</span>
+              <div>
+                <p className="text-slate-100 font-semibold">Starred Words</p>
+                <p className="text-slate-400 text-sm">Practice only the words you've starred.</p>
+              </div>
+              {mode === 'starred' && <span className="ml-auto text-yellow-400">✓</span>}
+            </div>
+          </button>
         </div>
 
         <button
@@ -248,12 +299,19 @@ export default function LearnScreen() {
   }
 
   if (phase === 'empty') {
+    const isStarredEmpty = activeMode === 'starred';
     return (
       <div className="flex h-full items-center justify-center p-6">
         <div className="text-center space-y-4">
-          <div className="text-6xl">📚</div>
-          <h2 className="text-2xl font-bold text-slate-100">Nothing to practice yet</h2>
-          <p className="text-slate-400">Complete a lesson in the Units tab to get started.</p>
+          <div className="text-6xl">{isStarredEmpty ? '⭐' : '📚'}</div>
+          <h2 className="text-2xl font-bold text-slate-100">
+            {isStarredEmpty ? 'Nothing starred yet' : 'Nothing to practice yet'}
+          </h2>
+          <p className="text-slate-400">
+            {isStarredEmpty
+              ? 'Star words during practice or in the Card Gallery to build your starred list.'
+              : 'Complete a lesson in the Units tab to get started.'}
+          </p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => setPhase('idle')}
@@ -261,12 +319,14 @@ export default function LearnScreen() {
             >
               Back
             </button>
-            <button
-              onClick={() => navigate('/app/units')}
-              className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl"
-            >
-              Go to Units
-            </button>
+            {!isStarredEmpty && (
+              <button
+                onClick={() => navigate('/app/units')}
+                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl"
+              >
+                Go to Units
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -326,12 +386,23 @@ export default function LearnScreen() {
       {/* Header */}
       <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
         <span>{reviewedCount} reviewed this session</span>
-        <button
-          onClick={endSession}
-          className="text-slate-600 hover:text-slate-300 transition-colors"
-        >
-          End session
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => store.toggleStar(card.id)}
+            className={`text-xl leading-none transition-colors ${
+              card.state.starred ? 'text-yellow-400' : 'text-slate-600 hover:text-slate-400'
+            }`}
+            aria-label={card.state.starred ? 'Unstar this word' : 'Star this word'}
+          >
+            {card.state.starred ? '★' : '☆'}
+          </button>
+          <button
+            onClick={endSession}
+            className="text-slate-600 hover:text-slate-300 transition-colors"
+          >
+            End session
+          </button>
+        </div>
       </div>
 
       {/* Exercise area */}
@@ -348,7 +419,7 @@ export default function LearnScreen() {
 
         {/* ── Recall prompt (first exposure) ── */}
         {phase === 'recall_prompt' && (
-          <RecallPrompt card={card} onKnew={onRecallKnew} onDidntKnow={onRecallDidntKnow} />
+          <RecallPrompt card={card} onKnew={onRecallKnew} onDidntKnow={onRecallDidntKnow} onAlreadyKnow={onRecallAlreadyKnow} />
         )}
 
         {/* ── Recall reveal ── */}
@@ -379,13 +450,29 @@ export default function LearnScreen() {
                 revealed={revealed}
                 hint={level >= 5 ? scaffoldHint(card) : undefined}
                 direction={direction}
+                showPronunciation={settingsRef.current.pronunciation_style !== 'none'}
+                showExamples={settingsRef.current.show_example_sentences !== false}
+                showMorphemeHints={!!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist')}
               />
             )}
             {exercise === 'multiple_choice' && (
-              <MultipleChoice card={card} allCards={store.pool} onAnswer={onExerciseAnswer} easy={level >= 4} />
+              <MultipleChoice
+                card={card}
+                allCards={store.pool}
+                onAnswer={onExerciseAnswer}
+                easy={level >= 4}
+                direction={direction}
+                showMorphemeHints={!!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist')}
+              />
             )}
             {exercise === 'type_answer' && (
-              <TypeAnswer card={card} onAnswer={onExerciseAnswer} />
+              <TypeAnswer
+                card={card}
+                onAnswer={onExerciseAnswer}
+                direction={direction}
+                showPronunciation={settingsRef.current.pronunciation_style !== 'none'}
+                showMorphemeHints={!!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist')}
+              />
             )}
             {exercise === 'fill_blank' && (
               <FillInBlank card={card} onAnswer={onExerciseAnswer} />

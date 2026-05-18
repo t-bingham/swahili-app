@@ -4,6 +4,46 @@ export type ErrorType = 'phonological' | 'semantic' | 'structural';
 export type SessionType = 1 | 2 | 3 | 4;
 export type DepthLevel = 1 | 2 | 2.5 | 3 | 4 | 4.5 | 5.1 | 5.2 | 5.3;
 
+// ─── Learner customisation types ─────────────────────────────────────────────
+
+export type LearningGoal =
+  | 'travel_survival'
+  | 'live_in_country'        // moving to Tanzania, Kenya, or another Swahili region
+  | 'family_community'
+  | 'business_professional'
+  | 'academic_literary'
+  | 'cultural_curiosity';
+
+export type GrammarDepth = 'communication' | 'fluency' | 'linguist';
+export type ExerciseDirection = 'recognition' | 'production' | 'balanced';
+export type PronunciationStyle = 'syllable' | 'ipa' | 'none';
+
+// ─── Card metadata types ──────────────────────────────────────────────────────
+
+export type CardRegister = 'formal' | 'neutral' | 'informal' | 'slang' | 'literary' | 'mixed';
+export type CardDialect  = 'standard' | 'coastal' | 'nairobi' | 'congolese';
+export type Etymology    = 'bantu' | 'arabic' | 'english' | 'portuguese' | 'hindi' | 'french';
+export type PartOfSpeech =
+  | 'noun' | 'verb' | 'adjective' | 'adverb'
+  | 'conjunction' | 'interjection' | 'phrase' | 'particle';
+
+// A single sense entry within the senses array — replaces slash-separated english for polysemous words
+export interface CardSense {
+  english:  string;
+  pos?:     PartOfSpeech;
+  register?: CardRegister;
+  note?:    string;
+}
+
+// One slot in the compositional morpheme breakdown of a conjugated form
+export interface MorphemeSlot {
+  morpheme: string;  // e.g. 'na'
+  slot:     string;  // e.g. 'tense_marker'
+  gloss:    string;  // e.g. 'PRES'
+}
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
+
 export interface Card {
   id: string;
   swahili: string;
@@ -18,10 +58,21 @@ export interface Card {
   frequency_rank: number;
   quick_learn: boolean;
   unit_id: string;
-  source: 'handwritten' | 'generated';
+  source: 'handwritten' | 'generated' | 'reviewed';
   prerequisite_card_id?: string;
   example_sentences: Array<{ swahili: string; english: string }>;
+  // New metadata fields (A-01)
+  register?:            CardRegister;
+  morpheme_breakdown?:  MorphemeSlot[];
+  part_of_speech?:      PartOfSpeech;
+  etymology?:           Etymology;
+  dialect?:             CardDialect;
+  cultural_note?:       string;
+  senses?:              CardSense[];
+  placement_only?:      boolean;
 }
+
+// ─── Card State ───────────────────────────────────────────────────────────────
 
 export interface CardState {
   card_id: string;
@@ -36,16 +87,39 @@ export interface CardState {
   consecutive_correct: number;
   fast_learn_level: 0 | 2 | 4;
   fast_learn_fail_count: number;
+  // New fields (A-02, A-06)
+  response_time_avg_ms?: number | null;
+  starred?: boolean;
 }
 
 export interface CardWithState extends Card {
   state: CardState;
 }
 
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
 export interface ProfileSettings {
+  // Existing
   new_words_per_day: number;
-  reviews_per_day: number;
-  new_word_rate: number; // 0–100: % chance of drawing a new word in Learn mode
+  reviews_per_day:   number;
+  new_word_rate:     number; // 0–100: % chance of drawing a new word in Learn mode
+  // Learning path (A-04, A-05)
+  learning_goal?:       LearningGoal;
+  grammar_depth?:       GrammarDepth;
+  exercise_direction?:  ExerciseDirection;
+  preferred_register?:  CardRegister;
+  // Exercise preferences
+  disable_type_answer?:    boolean;
+  disable_flashcard?:      boolean;
+  show_morpheme_hints?:    boolean;
+  show_example_sentences?: boolean;
+  pronunciation_style?:    PronunciationStyle;
+  // Display / accessibility
+  large_text?:             boolean;
+  high_contrast?:          boolean;
+  gamification_enabled?:   boolean;
+  // Dialect (future-ready, defaults to 'standard')
+  dialect_preference?:     CardDialect;
 }
 
 export interface Profile {
@@ -54,6 +128,8 @@ export interface Profile {
   settings: ProfileSettings;
   last_activity: string | null;
 }
+
+// ─── Units ────────────────────────────────────────────────────────────────────
 
 export interface Unit {
   id: string;
@@ -73,6 +149,8 @@ export interface UnitProgress {
   completed_at: string | null;
   mastery_score: number;
 }
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
 
 export interface Session {
   id: string;
@@ -120,4 +198,14 @@ export interface FSRSResult {
   new_difficulty: number;
   next_interval_days: number;
   retrievability_at_review: number;
+}
+
+// ─── Morpheme mastery (A-03) ──────────────────────────────────────────────────
+
+export interface MorphemeMastery {
+  morpheme:     string;
+  slot:         string;
+  opportunities: number;
+  correct:      number;
+  updated_at:   string;
 }

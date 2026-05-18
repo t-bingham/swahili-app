@@ -52,9 +52,15 @@ export default function UnitMapScreen() {
 
   if (loading) return <div className="flex h-full items-center justify-center text-slate-400">Loading…</div>;
 
+  const visibleUnits = [...units]
+    .filter(u => u.id !== 'unit-00-placement')
+    .sort((a, b) => a.level !== b.level ? a.level - b.level : a.order_index - b.order_index);
+
+  const displayNumber = new Map(visibleUnits.map((u, i) => [u.id, i + 1]));
+
   const grouped = [1, 2, 3].map(level => ({
     level: level as 1 | 2 | 3,
-    units: units.filter(u => u.level === level),
+    units: visibleUnits.filter(u => u.level === level),
   })).filter(g => g.units.length > 0);
 
   return (
@@ -92,7 +98,7 @@ export default function UnitMapScreen() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs text-slate-500">Unit {unit.order_index}</span>
+                        <span className="text-xs text-slate-500">Unit {displayNumber.get(unit.id)}</span>
                         {statusBadge}
                       </div>
                       <h3 className="font-semibold text-slate-100">{unit.name}</h3>

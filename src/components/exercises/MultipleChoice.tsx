@@ -1,54 +1,73 @@
 import { useState, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
 
 interface Props {
   card: CardWithState;
   allCards: CardWithState[];
   onAnswer: (correct: boolean, chosen: string) => void;
   easy?: boolean; // level 4: 2 options, obviously-different distractor
+  direction?: 'sw_to_en' | 'en_to_sw';
+  showMorphemeHints?: boolean;
 }
 
-export default function MultipleChoice({ card, allCards, onAnswer, easy = false }: Props) {
+export default function MultipleChoice({ card, allCards, onAnswer, easy = false, direction = 'sw_to_en', showMorphemeHints = false }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+
+  const correctAnswer = direction === 'sw_to_en' ? card.english : card.swahili;
 
   useEffect(() => {
     const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
     const cardTagSet = new Set(card.tags);
+    const extract = (c: CardWithState) => direction === 'sw_to_en' ? c.english : c.swahili;
 
     const distractors = easy
-      // Easy: one distractor from a clearly different semantic group
       ? shuffle(allCards.filter(c => c.id !== card.id && !c.tags.some(t => cardTagSet.has(t))))
           .slice(0, 1)
-          .map(c => c.english)
-      // Hard: three distractors from the same card type
+          .map(extract)
       : shuffle(allCards.filter(c => c.id !== card.id && c.type === card.type))
           .slice(0, 3)
-          .map(c => c.english);
+          .map(extract);
 
-    setOptions(shuffle([card.english, ...distractors]));
+    setOptions(shuffle([correctAnswer, ...distractors]));
     setSelected(null);
-  }, [card.id, easy]);
+  }, [card.id, easy, direction]);
 
   function choose(opt: string) {
     if (selected) return;
     setSelected(opt);
-    setTimeout(() => onAnswer(opt === card.english, opt), 800);
+    setTimeout(() => onAnswer(opt === correctAnswer, opt), 800);
   }
+
+  const prompt      = direction === 'sw_to_en' ? card.swahili : card.english;
+  const promptLabel = direction === 'sw_to_en' ? 'What does this mean?' : 'How do you say this in Swahili?';
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-800 rounded-2xl p-8 text-center">
-        <div className="text-slate-400 text-sm mb-2">What does this mean?</div>
-        <div className="text-4xl font-bold text-slate-100">{card.swahili}</div>
-        {card.pronunciation && (
+        <div className="text-slate-400 text-sm mb-2">{promptLabel}</div>
+        <div className="text-4xl font-bold text-slate-100">{prompt}</div>
+        {direction === 'sw_to_en' && card.pronunciation && (
           <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
         )}
       </div>
 
+      {selected && showMorphemeHints && (
+        <div className="bg-slate-800/60 rounded-xl p-3">
+          <MorphemeBreakdown card={card} />
+        </div>
+      )}
+
+      {selected && card.register && card.register !== 'neutral' && (
+        <div className="flex justify-center">
+          <RegisterBadge register={card.register} />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-3">
         {options.map(opt => {
-          const isCorrect = opt === card.english;
+          const isCorrect = opt === correctAnswer;
           const isSelected = selected === opt;
           let cls = 'w-full py-4 px-5 rounded-xl text-left font-medium transition-all border-2 ';
           if (!selected) {

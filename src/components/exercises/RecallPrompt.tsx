@@ -3,11 +3,12 @@ import type { CardWithState } from '../../types';
 
 interface Props {
   card: CardWithState;
-  onKnew: () => void;    // user claimed they knew it — reveal then full rating
-  onDidntKnow: () => void; // user didn't know — reveal then simplified rating
+  onKnew: () => void;         // user claimed they knew it — reveal then full rating
+  onDidntKnow: () => void;    // user didn't know — reveal then simplified rating
+  onAlreadyKnow?: () => void; // skip entirely — sets depth=3 and advances
 }
 
-export default function RecallPrompt({ card, onKnew, onDidntKnow }: Props) {
+export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow }: Props) {
   const [attempted, setAttempted] = useState(false);
 
   // Show a hint for conjugation cards to reduce frustration
@@ -47,6 +48,14 @@ export default function RecallPrompt({ card, onKnew, onDidntKnow }: Props) {
               Show me
             </button>
           </div>
+          {onAlreadyKnow && (
+            <button
+              onClick={() => { setAttempted(true); onAlreadyKnow(); }}
+              className="w-full py-2.5 text-slate-600 hover:text-slate-400 text-xs transition-colors"
+            >
+              I already know this — skip it
+            </button>
+          )}
         </div>
       ) : (
         <div className="py-3 text-center text-slate-500 text-sm">Revealing…</div>

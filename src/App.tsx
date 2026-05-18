@@ -8,6 +8,9 @@ import UnitDetailScreen from './screens/UnitDetailScreen';
 import UnitLessonScreen from './screens/UnitLessonScreen';
 import StatsScreen from './screens/StatsScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import PlacementTestScreen from './screens/PlacementTestScreen';
+import CardGalleryScreen from './screens/CardGalleryScreen';
+import ReviewScreen from './screens/ReviewScreen';
 import Layout from './components/Layout';
 
 export default function App() {
@@ -16,6 +19,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<UserPickerScreen />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
+        <Route path="/placement-test" element={<PlacementTestScreen />} />
         <Route path="/app" element={<Layout />}>
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<HomeScreen />} />
@@ -23,8 +27,10 @@ export default function App() {
           <Route path="units" element={<UnitMapScreen />} />
           <Route path="units/:id" element={<UnitDetailScreen />} />
           <Route path="units/:id/lesson/:lessonIndex" element={<UnitLessonScreen />} />
+          <Route path="gallery" element={<CardGalleryScreen />} />
           <Route path="stats" element={<StatsScreen />} />
           <Route path="settings" element={<SettingsScreen />} />
+          <Route path="review" element={<ReviewScreen />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,17 +1,37 @@
-import { getIntroducedCards, getNewCards } from '../database/db';
-import type { CardWithState } from '../types';
+import { getIntroducedCards, getNewCards, getSkillMastery } from '../database/db';
+import type { CardWithState, LearningGoal, ProfileSettings } from '../types';
+import { goalMultiplierForCard } from '../utils/goalWeights';
+
+// ─── Session modifiers ────────────────────────────────────────────────────────
+
+// Computed once per session from the DB, then threaded through draw calls.
+export interface SessionModifiers {
+  errorRates: Map<string, number>; // skill_tag → error rate (0–1), derived from skill mastery
+  goal?: LearningGoal;
+}
+
+// Call once when building a session. Reads skill mastery from DB and converts
+// to error rates (1 − mastery). Cheap: one DB scan, cached for the session.
+export async function loadSessionModifiers(goal?: LearningGoal): Promise<SessionModifiers> {
+  const skillMastery = await getSkillMastery();
+  const errorRates = new Map<string, number>();
+  for (const [tag, mastery] of skillMastery) {
+    errorRates.set(tag, 1 - mastery);
+  }
+  return { errorRates, goal };
+}
 
 // ─── Weight functions ─────────────────────────────────────────────────────────
 
 // Shallower depth = higher base weight. Depth 1 (new, unseen) gets a strong
 // but not dominant weight so new words appear regularly without flooding reviews.
 function depthWeight(depth: number): number {
-  if (depth < 2)     return 4.0; // new / unseen
-  if (depth <= 2)    return 5.0; // learning
-  if (depth <= 3)    return 2.5; // young
-  if (depth <= 4)    return 1.0; // established
-  if (depth <= 5.1)  return 0.5;
-  if (depth <= 5.2)  return 0.25;
+  if (depth < 2)    return 4.0; // new / unseen
+  if (depth <= 2)   return 5.0; // learning
+  if (depth <= 3)   return 2.5; // young
+  if (depth <= 4)   return 1.0; // established
+  if (depth <= 5.1) return 0.5;
+  if (depth <= 5.2) return 0.25;
   return 0.1;
 }
 
@@ -27,14 +47,47 @@ function timeFraction(card: CardWithState, nowMs: number): number {
   return Math.max(0.05, Math.min(1.5, (nowMs - lastMs) / scheduled));
 }
 
+// Base weight — used externally by tests and the unit lesson screen.
 export function cardWeight(card: CardWithState, nowMs: number): number {
   return depthWeight(card.state.depth_level) * timeFraction(card, nowMs);
 }
 
+// Full weight including ITS modifiers (C-01 error boost, C-06 goal priority, D-04 star boost).
+// Falls back to base cardWeight when no modifiers are provided.
+function fullCardWeight(
+  card: CardWithState,
+  nowMs: number,
+  modifiers?: SessionModifiers,
+): number {
+  const base = cardWeight(card, nowMs);
+  if (!modifiers) return base;
+
+  // C-01: error boost — cards with high per-skill error rates surface more
+  const avgErrorRate =
+    card.tags.length > 0
+      ? card.tags.reduce((sum, tag) => sum + (modifiers.errorRates.get(tag) ?? 0), 0) / card.tags.length
+      : 0;
+  const errorBoost = 1 + avgErrorRate * 0.5; // 1.0–1.5×
+
+  // C-06: goal multiplier — cards aligned with the learner's goal get a priority bump
+  const goalMult = modifiers.goal
+    ? goalMultiplierForCard(card.tags, modifiers.goal)
+    : 1.0;
+
+  // D-04: star boost — explicitly starred cards get extra weight
+  const starBoost = card.state.starred ? 1.4 : 1.0;
+
+  return base * errorBoost * goalMult * starBoost;
+}
+
 // ─── Weighted draw ────────────────────────────────────────────────────────────
 
-function weightedDraw(candidates: CardWithState[], nowMs: number): CardWithState {
-  const weights = candidates.map(c => cardWeight(c, nowMs));
+function weightedDraw(
+  candidates: CardWithState[],
+  nowMs: number,
+  modifiers?: SessionModifiers,
+): CardWithState {
+  const weights = candidates.map(c => fullCardWeight(c, nowMs, modifiers));
   const total = weights.reduce((s, w) => s + w, 0);
   if (total === 0) return candidates[Math.floor(Math.random() * candidates.length)];
   let r = Math.random() * total;
@@ -50,6 +103,7 @@ export function drawWeightedCard(
   nowMs: number,
   excludeId?: string,
   newWordRate = 0, // 0–100: % chance of drawing a new (depth-1) card
+  modifiers?: SessionModifiers,
 ): CardWithState | null {
   if (!pool.length) return null;
 
@@ -63,23 +117,49 @@ export function drawWeightedCard(
     if (newCards.length > 0 && Math.random() * 100 < newWordRate) {
       return newCards[Math.floor(Math.random() * newCards.length)];
     }
-    if (reviewCards.length > 0) return weightedDraw(reviewCards, nowMs);
+    if (reviewCards.length > 0) return weightedDraw(reviewCards, nowMs, modifiers);
     return newCards[Math.floor(Math.random() * newCards.length)];
   }
 
-  return weightedDraw(eligible, nowMs);
+  return weightedDraw(eligible, nowMs, modifiers);
 }
 
 // ─── Pool loader ──────────────────────────────────────────────────────────────
 
+// C-04: grammar depth filter
+// 'communication' — conjugation cards excluded entirely
+// 'fluency'       — conjugation cards capped at 40% of pool (default behaviour)
+// 'linguist'      — no filter
+function applyGrammarDepthFilter(
+  cards: CardWithState[],
+  depth: ProfileSettings['grammar_depth'],
+): CardWithState[] {
+  if (depth === 'communication') {
+    return cards.filter(c => c.type !== 'conjugation');
+  }
+  if (depth === 'fluency') {
+    const nonConj = cards.filter(c => c.type !== 'conjugation');
+    const conj    = cards.filter(c => c.type === 'conjugation');
+    // Keep conjugations up to 40% of the total pool size
+    const maxConj = Math.floor((nonConj.length / 0.6) * 0.4);
+    return [...nonConj, ...conj.slice(0, maxConj)];
+  }
+  return cards; // 'linguist' or undefined — no filter
+}
+
 export async function buildPracticePool(
   mode: 'review' | 'learn' = 'review',
+  settings?: Pick<ProfileSettings, 'grammar_depth'>,
 ): Promise<CardWithState[]> {
   const introduced = await getIntroducedCards();
-  if (mode === 'review') return introduced;
+  const filtered = applyGrammarDepthFilter(introduced, settings?.grammar_depth);
 
-  // In learn mode, seed the pool with a handful of unlearned cards so they
-  // surface naturally through the same weighted draw (depth 1 → weight 4.0).
-  const newCards = await getNewCards(10);
-  return [...introduced, ...newCards];
+  if (mode === 'review') return filtered;
+
+  // In learn mode, seed the pool with unlearned cards so they surface naturally
+  // through the same weighted draw (depth 1 → weight 4.0).
+  let newCards = await getNewCards(10);
+  newCards = applyGrammarDepthFilter(newCards, settings?.grammar_depth);
+
+  return [...filtered, ...newCards];
 }

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { getCurrentUser, openDatabase } from '../database/db';
+import { getCurrentUser, openDatabase, getProfile } from '../database/db';
+import { applyDisplaySettings } from '../utils/display';
 
 const tabs = [
-  { to: '/app/home', label: 'Home', icon: '🏠' },
-  { to: '/app/learn', label: 'Learn', icon: '📚' },
-  { to: '/app/units', label: 'Units', icon: '🗺️' },
-  { to: '/app/stats', label: 'Stats', icon: '📊' },
-  { to: '/app/settings', label: 'Settings', icon: '⚙️' },
+  { to: '/app/home',    label: 'Home',    icon: '🏠' },
+  { to: '/app/learn',   label: 'Learn',   icon: '📚' },
+  { to: '/app/units',   label: 'Units',   icon: '🗺️' },
+  { to: '/app/gallery', label: 'Gallery', icon: '🔤' },
+  { to: '/app/stats',   label: 'Stats',   icon: '📊' },
+  { to: '/app/settings',label: 'Settings',icon: '⚙️' },
 ];
 
 export default function Layout() {
@@ -15,11 +17,18 @@ export default function Layout() {
   const [ready, setReady] = useState(getCurrentUser() !== null);
 
   useEffect(() => {
-    if (getCurrentUser() !== null) { setReady(true); return; }
+    if (getCurrentUser() !== null) {
+      setReady(true);
+      getProfile().then(p => { if (p) applyDisplaySettings(p.settings); });
+      return;
+    }
     const stored = sessionStorage.getItem('currentUser');
     if (!stored) { navigate('/', { replace: true }); return; }
     openDatabase(stored)
-      .then(() => setReady(true))
+      .then(() => {
+        setReady(true);
+        getProfile().then(p => { if (p) applyDisplaySettings(p.settings); });
+      })
       .catch(() => { sessionStorage.removeItem('currentUser'); navigate('/', { replace: true }); });
   }, []);
 
