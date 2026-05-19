@@ -180,27 +180,27 @@ export interface GrammarSeed {
 
 export const GRAMMAR_SEEDS: GrammarSeed[] = [
   // ── Subject prefixes (1sg → 2sg → 3sg → 1pl → 2pl → 3pl) ───────────────────
-  { id:'gr-001', sw:'ni-', en:'I — 1sg subject prefix', pr:'ni', tags:['grammar','subject-prefix','morphology'],
+  { id:'gr-001', sw:'ni-', en:'I — subject prefix (1st person singular)', pr:'ni', tags:['grammar','subject-prefix','morphology'],
     note:'Always the first slot in a Swahili verb — it means "I". Verb slot order: SUBJECT + TENSE + (OBJECT) + ROOT + FINAL.\n\nExample build: ni- + na- + pend- + a = ninapenda (I love).\n\nNegative: replace ni- with si- (never add both).',
     ex:{swahili:'Ni-na-penda = ni + na + pend + a', english:'I love = I + [present] + love + [active]'} },
 
-  { id:'gr-002', sw:'u-', en:'you — 2sg subject prefix', pr:'u', tags:['grammar','subject-prefix','morphology'],
+  { id:'gr-002', sw:'u-', en:'you — subject prefix (2nd person singular)', pr:'u', tags:['grammar','subject-prefix','morphology'],
     note:'The "you" slot — for talking to one person.\n\nAlso appears as the U-class noun prefix (u-furaha = happiness), but position in the verb makes it clear which is which.\n\nNegative: hau- (ha + u).',
     ex:{swahili:'U-na-kula = u + na + kul + a', english:'You are eating = you + [present] + eat + [active]'} },
 
-  { id:'gr-003', sw:'a-', en:'he / she — 3sg subject prefix', pr:'a', tags:['grammar','subject-prefix','morphology'],
+  { id:'gr-003', sw:'a-', en:'he / she — subject prefix (3rd person singular)', pr:'a', tags:['grammar','subject-prefix','morphology'],
     note:'Swahili has no grammatical gender — one prefix covers both he and she. Context tells you which.\n\nAlso the subject concord for M-Wa class nouns (people/animals) in the singular.\n\nNegative: ha- (ha + a contracts to ha).',
     ex:{swahili:'A-na-kuja = a + na + kuj + a', english:'He/she is coming = he/she + [present] + come + [active]'} },
 
-  { id:'gr-004', sw:'tu-', en:'we — 1pl subject prefix', pr:'tu', tags:['grammar','subject-prefix','morphology'],
+  { id:'gr-004', sw:'tu-', en:'we — subject prefix (1st person plural)', pr:'tu', tags:['grammar','subject-prefix','morphology'],
     note:'The "we" slot. Often the easiest plural to remember — it mirrors the object infix -tu- (meaning "us").\n\nNegative: hatu- (ha + tu). Example: hatu-pendi = we don\'t like.',
     ex:{swahili:'Tu-ta-kwenda = tu + ta + kwend + a', english:'We will go = we + [future] + go + [active]'} },
 
-  { id:'gr-005', sw:'m-', en:'you all — 2pl subject prefix', pr:'m', tags:['grammar','subject-prefix','morphology'],
+  { id:'gr-005', sw:'m-', en:'you all — subject prefix (2nd person plural)', pr:'m', tags:['grammar','subject-prefix','morphology'],
     note:'The "you all" slot — for talking to a group (like Southern US "y\'all").\n\nDon\'t confuse with the M-Mi noun class prefix (m-ti = tree) — position in the verb distinguishes them.\n\nNegative: ham- (ha + m). Example: ham-somi = you all don\'t study.',
     ex:{swahili:'M-na-sema = m + na + sem + a', english:'You all are speaking = you(pl) + [present] + speak + [active]'} },
 
-  { id:'gr-006', sw:'wa-', en:'they — 3pl subject prefix', pr:'wa', tags:['grammar','subject-prefix','morphology'],
+  { id:'gr-006', sw:'wa-', en:'they — subject prefix (3rd person plural)', pr:'wa', tags:['grammar','subject-prefix','morphology'],
     note:'The "they" slot — specifically for people (M-Wa class). Plural of a-.\n\nFor non-human subjects, the plural concord comes from the noun\'s class: vi- (things), zi- (N class), etc.\n\nNegative: hawa- (ha + wa). Example: hawa-somi = they don\'t study.',
     ex:{swahili:'Wa-ta-lala = wa + ta + lal + a', english:'They will sleep = they + [future] + sleep + [active]'} },
 
@@ -234,15 +234,15 @@ export const GRAMMAR_SEEDS: GrammarSeed[] = [
     ex:{swahili:'Ni-nge-penda kwenda Paris', english:'I would like/love to go to Paris'} },
 
   // ── Negative markers (1sg → 2sg → 3sg → negative tense → negative ending) ───
-  { id:'gr-014', sw:'si-', en:'I do not — 1sg negative prefix', pr:'si', tags:['grammar','negation','morphology'],
+  { id:'gr-014', sw:'si-', en:'I do not — negative prefix (1st person singular)', pr:'si', tags:['grammar','negation','morphology'],
     note:'Replaces ni- entirely in negative present — never combine ni- + si-.\n\nsi-pendi = I don\'t like (correct). *ni-si-pendi = wrong.\n\nAlso standalone: "si" alone means "is not" — si mwalimu = he/she is not a teacher.\n\nFull negative paradigm: si- (I), hau- (you), ha- (he/she), hatu- (we), ham- (you all), hawa- (they).',
     ex:{swahili:'Si-pendi kahawa', english:"I don't like coffee (si- replaces ni-)"} },
 
-  { id:'gr-015', sw:'hau-', en:'you do not — 2sg negative prefix', pr:'ha-u', tags:['grammar','negation','morphology'],
+  { id:'gr-015', sw:'hau-', en:'you do not — negative prefix (2nd person singular)', pr:'ha-u', tags:['grammar','negation','morphology'],
     note:'The "you don\'t" prefix — ha- + u- = hau-. The pattern "ha + subject prefix" works for all persons:\n\n• hau- (you don\'t)\n• hatu- (we don\'t)\n• ham- (you all don\'t)\n• hawa- (they don\'t)\n\nOnly 1sg is irregular: si- (not *ha-ni-).',
     ex:{swahili:'Hau-somi kwa bidii', english:"You don't study hard"} },
 
-  { id:'gr-016', sw:'ha-', en:'he / she does not — 3sg negative prefix', pr:'ha', tags:['grammar','negation','morphology'],
+  { id:'gr-016', sw:'ha-', en:'he / she does not — negative prefix (3rd person singular)', pr:'ha', tags:['grammar','negation','morphology'],
     note:'The "he/she doesn\'t" prefix — ha- + a- contracts to just ha- (the double-a merges).\n\nFull negative paradigm for people:\n• si- → I don\'t\n• hau- → you don\'t\n• ha- → he/she doesn\'t\n• hatu- → we don\'t\n• ham- → you all don\'t\n• hawa- → they don\'t\n\nFor non-human nouns, ha- combines with the noun-class concord (e.g. ha-ki- for Ki class).',
     ex:{swahili:'Ha-kuli chakula', english:"He/she doesn't eat food (ha- + a- → ha-)"} },
 
@@ -255,23 +255,23 @@ export const GRAMMAR_SEEDS: GrammarSeed[] = [
     ex:{swahili:'Si-pend-i = si + pend + i', english:"I don't love = [not-I] + love + [negative ending]"} },
 
   // ── Object infixes (1sg → 2sg → 3sg → 1pl → 3pl) ───────────────────────────
-  { id:'gr-019', sw:'-ni-', en:'me — 1sg object infix', pr:'ni', tags:['grammar','object-infix','morphology'],
+  { id:'gr-019', sw:'-ni-', en:'me — object infix (1st person singular)', pr:'ni', tags:['grammar','object-infix','morphology'],
     note:'Inserts "me" directly into the verb. Slot order: SUBJECT + TENSE + OBJECT + ROOT + FINAL.\n\na-na-ni-penda = he loves ME\n\nObject infixes are how Swahili embeds pronouns without needing separate words like "me", "him", "us".',
     ex:{swahili:'A-na-ni-ona = a + na + ni + on + a', english:'He/she sees ME = he/she + [present] + me + see + [active]'} },
 
-  { id:'gr-020', sw:'-ku-', en:'you — 2sg object infix', pr:'ku', tags:['grammar','object-infix','morphology'],
+  { id:'gr-020', sw:'-ku-', en:'you — object infix (2nd person singular)', pr:'ku', tags:['grammar','object-infix','morphology'],
     note:'Means "you" inside the verb: ni-na-ku-penda = I love YOU.\n\n-ku- has three identities — same spelling, different positions:\n• Infinitive prefix: ku-la (to eat)\n• Negative past marker: ha-ku-la (he didn\'t eat)\n• Object infix "you": ni-na-ku-ona (I see you)\n\nPosition in the verb reveals which.',
     ex:{swahili:'Ni-na-ku-penda', english:'I love you — ni(I) na(present) ku(you) pend(love) a(active)'} },
 
-  { id:'gr-021', sw:'-m- / -mw-', en:'him / her — 3sg object infix', pr:'m / mw', tags:['grammar','object-infix','morphology'],
+  { id:'gr-021', sw:'-m- / -mw-', en:'him / her — object infix (3rd person singular)', pr:'m / mw', tags:['grammar','object-infix','morphology'],
     note:'Inserts "him/her" into the verb — no gender distinction, just like the subject prefix a-.\n\n-m- before consonants: ni-na-m-penda (I love him/her)\n-mw- before vowels: ni-na-mw-ona (I see him/her)\n\nNote: -m- is very short and easy to miss when speaking quickly.',
     ex:{swahili:'A-na-m-saidia rafiki', english:'He/she is helping the friend (the friend = him/her)'} },
 
-  { id:'gr-022', sw:'-tu-', en:'us — 1pl object infix', pr:'tu', tags:['grammar','object-infix','morphology'],
+  { id:'gr-022', sw:'-tu-', en:'us — object infix (1st person plural)', pr:'tu', tags:['grammar','object-infix','morphology'],
     note:'Inserts "us" into the verb. The same -tu- that is the subject prefix for "we" — just in the object slot.\n\na-na-tu-ambia = he tells US\nwa-li-tu-saidia = they helped US\n\nEasy to remember: tu = us (object) = we (subject).',
     ex:{swahili:'A-na-tu-ambia ukweli', english:'He/she tells us the truth'} },
 
-  { id:'gr-023', sw:'-wa-', en:'them — 3pl object infix (people)', pr:'wa', tags:['grammar','object-infix','morphology'],
+  { id:'gr-023', sw:'-wa-', en:'them — object infix (3rd person plural)', pr:'wa', tags:['grammar','object-infix','morphology'],
     note:'Inserts "them" (for people, M-Wa class) into the verb.\n\nni-na-wa-saidia = I am helping THEM\ntu-li-wa-ambia = we told THEM\n\nFor non-human objects, use the noun-class concord instead (-vi- for books, -zi- for N class, etc.).',
     ex:{swahili:'Ni-na-wa-saidia watoto', english:'I am helping the children (them)'} },
 
