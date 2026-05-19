@@ -16,6 +16,13 @@ input, textarea {
   outline: none;
 }
 
+/* ── Custom scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+* { scrollbar-width: thin; scrollbar-color: #1e3a5f transparent; }
+
 /* ── E-01: Large text ─────────────────────────────────────────────────────── */
 html.large-text {
   font-size: 20px; /* scales all rem-based Tailwind sizes proportionally */
