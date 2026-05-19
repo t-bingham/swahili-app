@@ -199,6 +199,8 @@ function PracticePhase({
   results,
   lessonIndex,
   totalLessons,
+  showHint,
+  onToggleHint,
   onAnswer,
 }: {
   card: CardWithState;
@@ -208,6 +210,8 @@ function PracticePhase({
   results: PracticeResult[];
   lessonIndex: number;
   totalLessons: number;
+  showHint: boolean;
+  onToggleHint: () => void;
   onAnswer: (correct: boolean) => void;
 }) {
   const [options] = useState(() => getOptions(card, allLessonCards));
@@ -245,9 +249,19 @@ function PracticePhase({
             <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
           )}
           {card.type === 'grammar' && card.example_sentences?.[0] && (
-            <p className="text-slate-500 text-xs pt-1 italic">
-              e.g. "{card.example_sentences[0].english}"
-            </p>
+            <div className="pt-1 space-y-1">
+              {showHint && (
+                <p className="text-slate-500 text-xs italic">
+                  e.g. "{card.example_sentences[0].english}"
+                </p>
+              )}
+              <button
+                onClick={onToggleHint}
+                className="text-slate-700 hover:text-slate-500 text-xs transition-colors"
+              >
+                {showHint ? 'hide hint' : 'show hint'}
+              </button>
+            </div>
           )}
         </div>
 
@@ -389,6 +403,7 @@ export default function UnitLessonScreen() {
   const [practiceIndex, setPracticeIndex] = useState(0);
   const [results, setResults] = useState<PracticeResult[]>([]);
   const [passed, setPassed] = useState(false);
+  const [showHint, setShowHint] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -518,6 +533,8 @@ export default function UnitLessonScreen() {
             results={results}
             lessonIndex={lessonIndex}
             totalLessons={totalLessons}
+            showHint={showHint}
+            onToggleHint={() => setShowHint(h => !h)}
             onAnswer={handleAnswer}
           />
         )}
