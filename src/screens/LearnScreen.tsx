@@ -39,6 +39,12 @@ function pickExercise(
   if (card.type === 'grammar' && exercise === 'type_answer') {
     exercise = 'multiple_choice';
   }
+  // Phrase cards have full sentences on both sides. The English is often a descriptive
+  // phrase (e.g. "Respectful greeting to elders") and the Swahili is a complete utterance
+  // — neither is a reasonable type-answer target. Cap at multiple_choice.
+  if (card.type === 'phrase' && exercise === 'type_answer') {
+    exercise = 'multiple_choice';
+  }
   // Apply disable preferences — fall back up the scaffold ladder
   if (exercise === 'type_answer' && settings.disable_type_answer) {
     exercise = 'multiple_choice';
