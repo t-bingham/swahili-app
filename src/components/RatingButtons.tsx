@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface Props {
   onRate: (rating: 1 | 2 | 3 | 4 | 5) => void;
   // simplified: wrong answer — just Again vs Got It
@@ -15,6 +17,8 @@ const ALL_RATINGS: Array<{ value: 1 | 2 | 3 | 4 | 5; label: string; sub: string;
 ];
 
 export default function RatingButtons({ onRate, showSimplified = false, showDidntKnow = false }: Props) {
+  const [expanded, setExpanded] = useState(false);
+
   // "Show me" path — they admitted they didn't know it; just confirm and move on
   if (showDidntKnow) {
     return (
@@ -30,22 +34,26 @@ export default function RatingButtons({ onRate, showSimplified = false, showDidn
     );
   }
 
-  // Wrong answer on a non-new card — Again or Got It
-  if (showSimplified) {
+  // Wrong answer — Again or Good; Good expands to the full scale for honest self-grading
+  if (showSimplified && !expanded) {
     return (
       <div>
         <p className="text-slate-500 text-xs text-center mb-3">How well did you recall it?</p>
         <div className="grid grid-cols-2 gap-3">
-          {ALL_RATINGS.filter(r => r.value === 1 || r.value === 3).map(r => (
-            <button
-              key={r.value}
-              onClick={() => onRate(r.value)}
-              className={`py-3 rounded-xl border text-center transition-all ${r.cls}`}
-            >
-              <div className="font-semibold text-sm">{r.label}</div>
-              <div className="text-xs opacity-70">{r.sub}</div>
-            </button>
-          ))}
+          <button
+            onClick={() => onRate(1)}
+            className={`py-3 rounded-xl border text-center transition-all ${ALL_RATINGS[0].cls}`}
+          >
+            <div className="font-semibold text-sm">Again</div>
+            <div className="text-xs opacity-70">Forgot</div>
+          </button>
+          <button
+            onClick={() => setExpanded(true)}
+            className={`py-3 rounded-xl border text-center transition-all ${ALL_RATINGS[2].cls}`}
+          >
+            <div className="font-semibold text-sm">Good</div>
+            <div className="text-xs opacity-70">I knew it</div>
+          </button>
         </div>
       </div>
     );

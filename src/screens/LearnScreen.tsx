@@ -34,6 +34,11 @@ function pickExercise(
     level >= 5 ? 'flashcard' :
     level >= 3 ? 'multiple_choice' :
     'type_answer';
+  // Grammar cards have complex multi-part Swahili fields (e.g. 'M-Wa class: m- / wa-')
+  // that can't be typed as answers — cap them at multiple_choice.
+  if (card.type === 'grammar' && exercise === 'type_answer') {
+    exercise = 'multiple_choice';
+  }
   // Apply disable preferences — fall back up the scaffold ladder
   if (exercise === 'type_answer' && settings.disable_type_answer) {
     exercise = 'multiple_choice';
