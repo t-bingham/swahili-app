@@ -97,15 +97,14 @@ export default function UserPickerScreen() {
 
   async function continueAsGoogle() {
     if (!googleProfile) return;
+    const token = getGoogleToken();
+    // Token expired — re-authenticate rather than failing with a confusing error
+    if (!token) { googleLogin(); return; }
     const username = googleUsername(googleProfile);
     setOpening('google');
     try {
-      // If token is still valid, check Drive for a newer copy
-      const token = getGoogleToken();
-      if (token) {
-        const driveData = await downloadIfNewer(token);
-        if (driveData) await importDatabase(username, driveData);
-      }
+      const driveData = await downloadIfNewer(token);
+      if (driveData) await importDatabase(username, driveData);
       await openDatabase(username);
       sessionStorage.setItem('currentUser', username);
       const profile = await getProfile();
