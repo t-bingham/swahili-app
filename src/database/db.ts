@@ -388,14 +388,14 @@ export async function openDatabase(userName: string): Promise<void> {
     { id:'phr-075', sw:'Ndiyo, kweli',             en:'Yes, really',                  pr:'NDI-yo KWE-li',                  tags:['phrases','conversation'], register:'neutral', senses:[{english:'Yes, really'},{english:'Yes, indeed'},{english:'Yes, truly'}], ex:{swahili:'Nilimwona Jana. — Ndiyo, kweli?', english:'I saw him yesterday. — Yes, really?'} },
   ];
 
-  for (const p of PHRASE_SEEDS) {
+  PHRASE_SEEDS.forEach((p, idx) => {
     _db.run(
       `INSERT OR IGNORE INTO cards
          (id, swahili, english, pronunciation, type, tags, base_difficulty, frequency_rank,
           quick_learn, unit_id, source, example_sentences, register, part_of_speech,
           senses, placement_only, cultural_note)
        VALUES (?,?,?,?,?,?,?,?,1,'unit-00-phrases','handwritten',?,?,?,?,0,?)`,
-      [p.id, p.sw, p.en, p.pr, 'phrase', JSON.stringify(p.tags), 0.3, 1,
+      [p.id, p.sw, p.en, p.pr, 'phrase', JSON.stringify(p.tags), 0.3, idx + 1,
        JSON.stringify([p.ex]), p.register, 'phrase', JSON.stringify(p.senses), p.note ?? null],
     );
     _db.run(
@@ -406,7 +406,9 @@ export async function openDatabase(userName: string): Promise<void> {
        VALUES (?,1,0,0.3,1,NULL,NULL,0,0,0,0,0)`,
       [p.id],
     );
-  }
+  });
+  // Fix frequency_rank for existing users
+  _db.run(`UPDATE cards SET frequency_rank = CAST(SUBSTR(id, 5) AS INTEGER) WHERE id LIKE 'phr-%' AND unit_id = 'unit-00-phrases'`);
 
   // B-02: Morphological rule cards (idempotent — INSERT OR IGNORE)
   _db.run(`INSERT OR IGNORE INTO units
@@ -485,14 +487,14 @@ export async function openDatabase(userName: string): Promise<void> {
     { id:'gr-042', sw:'-eka / -ikana', en:'stative suffix (able to be / in a state)',   pr:'e-ka / i-ka-na', tags:['grammar','derivation','morphology'], note:'Marks a state or possibility. fungua (open) → fugu-ka (be opened, be openable). vunja (break) → vonj-eka (be breakable). Expresses inherent properties or states.', ex:{swahili:'fungu-ka (be opened), vunj-ika (be broken)', english:'to be openable, to be breakable'} },
   ];
 
-  for (const g of GRAMMAR_SEEDS) {
+  GRAMMAR_SEEDS.forEach((g, idx) => {
     _db.run(
       `INSERT OR IGNORE INTO cards
          (id, swahili, english, pronunciation, type, tags, base_difficulty, frequency_rank,
           quick_learn, unit_id, source, example_sentences, register, part_of_speech,
           senses, placement_only, cultural_note)
        VALUES (?,?,?,?,?,?,?,?,1,'unit-00-grammar','handwritten',?,?,?,?,0,?)`,
-      [g.id, g.sw, g.en, g.pr, 'grammar', JSON.stringify(g.tags), 0.4, 1,
+      [g.id, g.sw, g.en, g.pr, 'grammar', JSON.stringify(g.tags), 0.4, idx + 1,
        JSON.stringify([g.ex]), 'neutral', 'particle',
        JSON.stringify([{english: g.en}]), g.note],
     );
@@ -504,7 +506,9 @@ export async function openDatabase(userName: string): Promise<void> {
        VALUES (?,1,0,0.3,1,NULL,NULL,0,0,0,0,0)`,
       [g.id],
     );
-  }
+  });
+  // Fix frequency_rank for existing users (INSERT OR IGNORE won't update already-inserted rows)
+  _db.run(`UPDATE cards SET frequency_rank = CAST(SUBSTR(id, 4) AS INTEGER) WHERE id LIKE 'gr-%' AND unit_id = 'unit-00-grammar'`);
 
   // B-05: Back-fill register column on generated cards using tag patterns (idempotent)
   // Cards that already have an explicit non-neutral register (e.g. handwritten seeds) are left untouched.

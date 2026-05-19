@@ -94,6 +94,7 @@ export default function UnitDetailScreen() {
   const [cards, setCards] = useState<CardWithState[]>([]);
   const [unitStatus, setUnitStatus] = useState<UnitProgress['status']>('locked');
   const [prereqName, setPrereqName] = useState<string | null>(null);
+  const [displayNum, setDisplayNum] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -102,6 +103,12 @@ export default function UnitDetailScreen() {
       const progressMap = new Map(allProgress.map(p => [p.unit_id, p]));
       const found = allUnits.find(u => u.id === id);
       if (!found) { navigate('/app/units'); return; }
+
+      const visibleUnits = [...allUnits]
+        .filter(u => u.id !== 'unit-00-placement')
+        .sort((a, b) => a.level !== b.level ? a.level - b.level : a.order_index - b.order_index);
+      const numMap = new Map(visibleUnits.map((u, i) => [u.id, i + 1]));
+      setDisplayNum(numMap.get(found.id) ?? null);
 
       setUnit(found);
       setUnitStatus(computeStatus(found, progressMap));
@@ -138,7 +145,7 @@ export default function UnitDetailScreen() {
           ←
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-slate-500">Unit {unit.order_index}</p>
+          {displayNum !== null && <p className="text-xs text-slate-500">Unit {displayNum}</p>}
           <h1 className="font-bold text-slate-100 truncate">{unit.name}</h1>
         </div>
       </div>
