@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUnits, getAllUnitProgress, getUnitMasteryStats } from '../database/db';
+import { computeStatus } from '../utils/unitStatus';
 import type { Unit, UnitProgress } from '../types';
 
 const LEVEL_LABELS: Record<number, string> = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
-
-function computeStatus(unit: Unit, progress: Map<string, UnitProgress>): UnitProgress['status'] {
-  const prog = progress.get(unit.id);
-  if (prog?.status === 'completed') return 'completed';
-  if (prog?.status === 'in_progress') return 'in_progress';
-  const prereqsMet =
-    unit.prerequisite_ids.length === 0 ||
-    unit.prerequisite_ids.every(id => progress.get(id)?.status === 'completed');
-  if (!prereqsMet) return 'locked';
-  return 'available';
-}
 
 function RetentionBar({ retained, total }: { retained: number; total: number }) {
   const pct = total > 0 ? Math.round((retained / total) * 100) : 0;

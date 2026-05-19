@@ -225,6 +225,12 @@ export default function LearnScreen() {
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
+  const MODES = [
+    { value: 'review'  as const, icon: '🔁', title: 'Review',        desc: 'Practice words you already know — no new words.',  active: 'border-cyan-500 bg-cyan-500/10',   check: 'text-cyan-400'   },
+    { value: 'learn'   as const, icon: '🌱', title: 'Learn',         desc: 'Mix reviews with new words as you go.',             active: 'border-cyan-500 bg-cyan-500/10',   check: 'text-cyan-400'   },
+    { value: 'starred' as const, icon: '⭐', title: 'Starred Words', desc: "Practice only the words you've starred.",           active: 'border-yellow-500 bg-yellow-500/10', check: 'text-yellow-400' },
+  ];
+
   if (phase === 'idle') {
     return (
       <div className="p-5 space-y-6 max-w-lg mx-auto">
@@ -232,59 +238,24 @@ export default function LearnScreen() {
 
         {/* Mode selector */}
         <div className="space-y-3">
-          <button
-            onClick={() => setMode('review')}
-            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
-              mode === 'review'
-                ? 'border-cyan-500 bg-cyan-500/10'
-                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🔁</span>
-              <div>
-                <p className="text-slate-100 font-semibold">Review</p>
-                <p className="text-slate-400 text-sm">Practice words you already know — no new words.</p>
+          {MODES.map(m => (
+            <button
+              key={m.value}
+              onClick={() => setMode(m.value)}
+              className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
+                mode === m.value ? m.active : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{m.icon}</span>
+                <div>
+                  <p className="text-slate-100 font-semibold">{m.title}</p>
+                  <p className="text-slate-400 text-sm">{m.desc}</p>
+                </div>
+                {mode === m.value && <span className={`ml-auto ${m.check}`}>✓</span>}
               </div>
-              {mode === 'review' && <span className="ml-auto text-cyan-400">✓</span>}
-            </div>
-          </button>
-
-          <button
-            onClick={() => setMode('learn')}
-            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
-              mode === 'learn'
-                ? 'border-cyan-500 bg-cyan-500/10'
-                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🌱</span>
-              <div>
-                <p className="text-slate-100 font-semibold">Learn</p>
-                <p className="text-slate-400 text-sm">Mix reviews with new words as you go.</p>
-              </div>
-              {mode === 'learn' && <span className="ml-auto text-cyan-400">✓</span>}
-            </div>
-          </button>
-
-          <button
-            onClick={() => setMode('starred')}
-            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${
-              mode === 'starred'
-                ? 'border-yellow-500 bg-yellow-500/10'
-                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">⭐</span>
-              <div>
-                <p className="text-slate-100 font-semibold">Starred Words</p>
-                <p className="text-slate-400 text-sm">Practice only the words you've starred.</p>
-              </div>
-              {mode === 'starred' && <span className="ml-auto text-yellow-400">✓</span>}
-            </div>
-          </button>
+            </button>
+          ))}
         </div>
 
         <button
@@ -358,6 +329,7 @@ export default function LearnScreen() {
 
   if (!card) return null;
 
+  const showMorphemeHints = !!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist');
   const reviewedCount = store.reviews.length;
   const isNewCard = card.state.depth_level === 1 || card.state.review_count === 0;
 
@@ -463,7 +435,7 @@ export default function LearnScreen() {
                 direction={direction}
                 showPronunciation={settingsRef.current.pronunciation_style !== 'none'}
                 showExamples={settingsRef.current.show_example_sentences !== false}
-                showMorphemeHints={!!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist')}
+                showMorphemeHints={showMorphemeHints}
               />
             )}
             {exercise === 'multiple_choice' && (
@@ -473,7 +445,7 @@ export default function LearnScreen() {
                 onAnswer={onExerciseAnswer}
                 easy={level >= 4}
                 direction={direction}
-                showMorphemeHints={!!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist')}
+                showMorphemeHints={showMorphemeHints}
               />
             )}
             {exercise === 'type_answer' && (
@@ -482,7 +454,7 @@ export default function LearnScreen() {
                 onAnswer={onExerciseAnswer}
                 direction={direction}
                 showPronunciation={settingsRef.current.pronunciation_style !== 'none'}
-                showMorphemeHints={!!(settingsRef.current.show_morpheme_hints || settingsRef.current.grammar_depth === 'linguist')}
+                showMorphemeHints={showMorphemeHints}
               />
             )}
             {exercise === 'fill_blank' && (
@@ -494,17 +466,14 @@ export default function LearnScreen() {
 
       {/* Rating buttons */}
       <div className="mt-4 shrink-0">
-        {phase === 'recall_reveal' && recallKnew && (
-          <RatingButtons onRate={submitRating} />
-        )}
-        {phase === 'recall_reveal' && !recallKnew && (
-          <RatingButtons onRate={submitRating} showDidntKnow />
-        )}
-        {phase === 'exercise' && exercise === 'flashcard' && revealed && (
-          <RatingButtons onRate={submitRating} />
-        )}
-        {phase === 'rating' && (
-          <RatingButtons onRate={submitRating} showSimplified={autoCorrect === false} />
+        {(phase === 'recall_reveal' ||
+          (phase === 'exercise' && exercise === 'flashcard' && revealed) ||
+          phase === 'rating') && (
+          <RatingButtons
+            onRate={submitRating}
+            showDidntKnow={phase === 'recall_reveal' && !recallKnew}
+            showSimplified={phase === 'rating' && autoCorrect === false}
+          />
         )}
       </div>
     </div>

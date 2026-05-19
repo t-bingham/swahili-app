@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { processReview, learningIntervalMinutes } from '../algorithms/fsrs';
+import {
+  upsertCardState, insertReviewLog, insertSession,
+  recordActivity, updateSkillMastery, updateErrorPattern,
+  setCardStarred,
+} from '../database/db';
+import { drawWeightedCard, type SessionModifiers } from '../scheduling/sessionAssembly';
+import { classifyError } from '../algorithms/errorClassifier';
+import type { CardWithState, ExerciseType, Profile, CardState, DepthLevel, SessionReview } from '../types';
 
 // ─── C-02: Response-time FSRS modifier ───────────────────────────────────────
 
@@ -35,14 +43,6 @@ function adjustedRecallMs(
   }
   return capped;
 }
-import {
-  upsertCardState, insertReviewLog, insertSession,
-  recordActivity, updateSkillMastery, updateErrorPattern,
-  setCardStarred,
-} from '../database/db';
-import { drawWeightedCard, type SessionModifiers } from '../scheduling/sessionAssembly';
-import { classifyError } from '../algorithms/errorClassifier';
-import type { CardWithState, ExerciseType, Profile, CardState, DepthLevel, SessionReview } from '../types';
 
 interface SessionState {
   sessionId: string;

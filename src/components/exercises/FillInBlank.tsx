@@ -1,13 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import { normalize } from '../../utils/normalize';
 
 interface Props {
   card: CardWithState;
   onAnswer: (correct: boolean, typed: string) => void;
-}
-
-function normalize(s: string) {
-  return s.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
 }
 
 export default function FillInBlank({ card, onAnswer }: Props) {

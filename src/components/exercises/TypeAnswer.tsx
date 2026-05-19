@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
+import { normalize } from '../../utils/normalize';
 
 interface Props {
   card: CardWithState;
@@ -8,10 +9,6 @@ interface Props {
   direction?: 'sw_to_en' | 'en_to_sw';
   showPronunciation?: boolean;
   showMorphemeHints?: boolean;
-}
-
-function normalize(s: string) {
-  return s.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
 }
 
 // Strip parenthetical context notes: "hello (to one person)" → "hello"

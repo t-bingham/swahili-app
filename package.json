@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "copy-db": "node -e \"require('fs').copyFileSync('../SwahiliApp/data/swahili_default.db','public/swahili_default.db')\""
+    "preview": "vite preview"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

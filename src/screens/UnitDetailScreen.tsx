@@ -3,20 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getUnits, getAllUnitProgress, getUnitCardsWithState } from '../database/db';
 import GrammarNotes from '../components/GrammarNotes';
 import { computeLessons } from '../utils/lessons';
+import { computeStatus } from '../utils/unitStatus';
 import type { Unit, UnitProgress, CardWithState } from '../types';
 import type { LessonInfo } from '../utils/lessons';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function computeStatus(unit: Unit, progress: Map<string, UnitProgress>): UnitProgress['status'] {
-  const prog = progress.get(unit.id);
-  if (prog?.status === 'completed') return 'completed';
-  if (prog?.status === 'in_progress') return 'in_progress';
-  const prereqsMet =
-    unit.prerequisite_ids.length === 0 ||
-    unit.prerequisite_ids.every(id => progress.get(id)?.status === 'completed');
-  return prereqsMet ? 'available' : 'locked';
-}
 
 // ─── Lesson row ───────────────────────────────────────────────────────────────
 

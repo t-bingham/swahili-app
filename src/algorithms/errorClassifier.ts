@@ -1,4 +1,6 @@
-export type ErrorType = 'phonological' | 'semantic' | 'structural';
+import { normalize as norm } from '../utils/normalize';
+import type { ErrorType } from '../types';
+export type { ErrorType } from '../types';
 
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;
@@ -11,10 +13,6 @@ function levenshtein(a: string, b: string): number {
         ? dp[i - 1][j - 1]
         : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
   return dp[m][n];
-}
-
-function norm(s: string): string {
-  return s.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
 }
 
 // For slash-separated english fields, return the closest alternative to `given`

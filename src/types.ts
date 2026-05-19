@@ -27,7 +27,6 @@ export type PartOfSpeech =
   | 'noun' | 'verb' | 'adjective' | 'adverb'
   | 'conjunction' | 'interjection' | 'phrase' | 'particle';
 
-// A single sense entry within the senses array — replaces slash-separated english for polysemous words
 export interface CardSense {
   english:  string;
   pos?:     PartOfSpeech;
@@ -61,7 +60,6 @@ export interface Card {
   source: 'handwritten' | 'generated' | 'reviewed';
   prerequisite_card_id?: string;
   example_sentences: Array<{ swahili: string; english: string }>;
-  // New metadata fields (A-01)
   register?:            CardRegister;
   morpheme_breakdown?:  MorphemeSlot[];
   part_of_speech?:      PartOfSpeech;
@@ -87,7 +85,6 @@ export interface CardState {
   consecutive_correct: number;
   fast_learn_level: 0 | 2 | 4;
   fast_learn_fail_count: number;
-  // New fields (A-02, A-06)
   response_time_avg_ms?: number | null;
   starred?: boolean;
 }
@@ -103,7 +100,6 @@ export interface ProfileSettings {
   new_words_per_day: number;
   reviews_per_day:   number;
   new_word_rate:     number; // 0–100: % chance of drawing a new word in Learn mode
-  // Learning path (A-04, A-05)
   learning_goal?:       LearningGoal;
   grammar_depth?:       GrammarDepth;
   exercise_direction?:  ExerciseDirection;
@@ -118,7 +114,6 @@ export interface ProfileSettings {
   large_text?:             boolean;
   high_contrast?:          boolean;
   gamification_enabled?:   boolean;
-  // Dialect (future-ready, defaults to 'standard')
   dialect_preference?:     CardDialect;
 }
 
