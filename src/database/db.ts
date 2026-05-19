@@ -306,6 +306,11 @@ export async function openDatabase(userName: string): Promise<void> {
   // Fix frequency_rank for existing users (INSERT OR IGNORE won't update already-inserted rows)
   _db.run(`UPDATE cards SET frequency_rank = CAST(SUBSTR(id, 4) AS INTEGER) WHERE id LIKE 'gr-%' AND unit_id = 'unit-00-grammar'`);
 
+  // Sync improved grammar card content for existing users (idempotent — always runs, 42 rows, negligible cost)
+  for (const g of GRAMMAR_SEEDS) {
+    _db.run(`UPDATE cards SET en = ?, cultural_note = ? WHERE id = ? AND type = 'grammar'`, [g.en, g.note, g.id]);
+  }
+
   // B-05: Back-fill register column on generated cards using tag patterns (idempotent)
   // Cards that already have an explicit non-neutral register (e.g. handwritten seeds) are left untouched.
   _db.run(`UPDATE cards SET register = 'neutral' WHERE register IS NULL`);

@@ -34,6 +34,29 @@ interface PracticeResult {
   correct: boolean;
 }
 
+// ─── Info bubble ─────────────────────────────────────────────────────────────
+
+function InfoNote({ note }: { note: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-slate-700 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-4 py-3 text-left text-slate-400 hover:text-slate-200 transition-colors"
+      >
+        <span className="text-sm">ℹ</span>
+        <span className="text-sm flex-1 text-slate-400">Grammar explanation</span>
+        <span className="text-xs text-slate-600">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 pt-3 text-sm text-slate-300 leading-relaxed border-t border-slate-700 whitespace-pre-line">
+          {note}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 
 function ProgressBar({ current, total, label }: { current: number; total: number; label: string }) {
@@ -151,10 +174,8 @@ function WordsPhase({
           </div>
         )}
 
-        {card.type === 'grammar' && (
-          <div className="bg-cyan-500/10 rounded-xl p-3 border border-cyan-500/20 text-center">
-            <p className="text-cyan-400 text-xs">Grammar pattern — notice the structure</p>
-          </div>
+        {card.type === 'grammar' && card.cultural_note && (
+          <InfoNote note={card.cultural_note} />
         )}
       </div>
 
@@ -222,6 +243,11 @@ function PracticePhase({
           <div className="text-3xl font-bold text-slate-100">{card.swahili}</div>
           {card.pronunciation && (
             <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
+          )}
+          {card.type === 'grammar' && card.example_sentences?.[0] && (
+            <p className="text-slate-500 text-xs pt-1 italic">
+              e.g. "{card.example_sentences[0].english}"
+            </p>
           )}
         </div>
 

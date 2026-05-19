@@ -72,7 +72,7 @@ export interface PhraseSeed {
 }
 
 export const PHRASE_SEEDS: PhraseSeed[] = [
-  // ── Extended greetings ──────────────────────────────────────────────────
+  // ── Extended greetings ──────────────────────────────────────────────────────
   { id:'phr-001', sw:'Habari za asubuhi?',       en:'Good morning?',                pr:'ha-BA-ri za a-su-BU-hi',         tags:['phrases','greetings'], register:'neutral',  senses:[{english:'Good morning?'},{english:'How are things this morning?'}], note:'Literally "News of the morning?" Reply: "Nzuri" or "Nzuri sana, asante".', ex:{swahili:'Habari za asubuhi? — Nzuri sana!', english:'Good morning? — Very well!'} },
   { id:'phr-002', sw:'Habari za jioni?',          en:'Good evening?',                pr:'ha-BA-ri za ji-O-ni',             tags:['phrases','greetings'], register:'neutral',  senses:[{english:'Good evening?'},{english:'How are things this evening?'}], ex:{swahili:'Habari za jioni, mama.', english:"Good evening, ma'am."} },
   { id:'phr-003', sw:'Habari yako?',              en:'How are you?',                 pr:'ha-BA-ri YA-ko',                 tags:['phrases','greetings'], register:'neutral',  senses:[{english:'How are you?'},{english:'How are things with you?'}], note:'Singular "you". Reply: "Nzuri" or "Sijambo".', ex:{swahili:'Habari yako? Habari za kazi?', english:"How are you? How's work?"} },
@@ -85,7 +85,7 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-010', sw:'Karibu tena',              en:'Welcome again',                pr:'ka-RI-bu TE-na',                 tags:['phrases','greetings'], register:'neutral',  senses:[{english:'Welcome again'},{english:'Come again'},{english:"You're welcome back"}], ex:{swahili:'Karibu tena dukani kwetu!', english:'Welcome back to our shop!'} },
   { id:'phr-011', sw:'Habari ya kazi?',          en:"How's work?",                  pr:'ha-BA-ri ya KA-zi',              tags:['phrases','greetings'], register:'neutral',  senses:[{english:"How's work?"},{english:'How are things at work?'}], ex:{swahili:'Habari yako? — Nzuri. Habari ya kazi?', english:"How are you? — Fine. How's work?"} },
 
-  // ── Farewells ───────────────────────────────────────────────────────────
+  // ── Farewells ───────────────────────────────────────────────────────────────
   { id:'phr-012', sw:'Kwaheri ya kuonana',       en:'Goodbye until we meet again',  pr:'kwa-HE-ri ya ku-o-NA-na',        tags:['phrases','farewells'], register:'neutral',  senses:[{english:'Goodbye until we meet again'},{english:'Farewell till we see each other'}], note:'More heartfelt than plain "Kwaheri" — implies you look forward to meeting again.', ex:{swahili:'Kwaheri ya kuonana, safari njema!', english:'Goodbye until we meet again, safe travels!'} },
   { id:'phr-013', sw:'Tutaonana',                en:"We'll meet again",             pr:'tu-ta-o-NA-na',                  tags:['phrases','farewells'], register:'neutral',  senses:[{english:"We'll meet again"},{english:'See you'},{english:"I'll see you"}], ex:{swahili:'Tutaonana kesho asubuhi.', english:"We'll see each other tomorrow morning."} },
   { id:'phr-014', sw:'Lala salama',              en:'Good night',                   pr:'LA-la sa-LA-ma',                 tags:['phrases','farewells'], register:'neutral',  senses:[{english:'Good night'},{english:'Sleep well'},{english:'Sleep peacefully'}], note:'Literally "Sleep in peace/safety". Warmer than "Usiku mwema".', ex:{swahili:'Lala salama, mtoto wangu.', english:'Good night, my child.'} },
@@ -94,7 +94,7 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-017', sw:'Baadaye',                  en:'Later',                        pr:'ba-a-DA-ye',                     tags:['phrases','farewells'], register:'neutral',  senses:[{english:'Later'},{english:'See you later'},{english:'Goodbye for now'}], ex:{swahili:'Ninahangaika sasa — baadaye!', english:"I'm busy now — later!"} },
   { id:'phr-018', sw:'Tutaonana baadaye',        en:'See you later',                pr:'tu-ta-o-NA-na ba-a-DA-ye',       tags:['phrases','farewells'], register:'neutral',  senses:[{english:'See you later'},{english:"We'll meet later"}], ex:{swahili:'Lazima niende sasa — tutaonana baadaye.', english:"I have to go now — see you later."} },
 
-  // ── Politeness ──────────────────────────────────────────────────────────
+  // ── Politeness ──────────────────────────────────────────────────────────────
   { id:'phr-019', sw:'Samahani',                 en:'Excuse me',                    pr:'sa-ma-HA-ni',                    tags:['phrases','politeness'], register:'neutral', senses:[{english:'Excuse me'},{english:"I'm sorry"},{english:'Pardon me'},{english:'Forgive me'}], note:'Used both to get attention and to apologise. Very versatile.', ex:{swahili:'Samahani, unajua hoteli iko wapi?', english:'Excuse me, do you know where the hotel is?'} },
   { id:'phr-020', sw:'Pole sana',                en:"I'm very sorry",               pr:'PO-le SA-na',                    tags:['phrases','politeness'], register:'neutral', senses:[{english:"I'm very sorry"},{english:'So sorry'},{english:'My condolences'}], note:"Expresses sympathy for someone's misfortune or loss — not just a generic apology. Very important culturally.", ex:{swahili:'Pole sana kwa habari hiyo mbaya.', english:"I'm so sorry to hear that bad news."} },
   { id:'phr-021', sw:'Asante sana',              en:'Thank you very much',           pr:'a-SAN-te SA-na',                 tags:['phrases','politeness'], register:'neutral', senses:[{english:'Thank you very much'},{english:'Thanks a lot'},{english:'Many thanks'}], ex:{swahili:'Asante sana kwa msaada wako!', english:'Thank you very much for your help!'} },
@@ -102,7 +102,7 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-023', sw:'Unaweza kunisaidia?',      en:'Can you help me?',             pr:'u-na-WE-za ku-ni-sa-i-DI-a',     tags:['phrases','requests'],   register:'neutral', senses:[{english:'Can you help me?'},{english:'Would you be able to help me?'}], ex:{swahili:'Unaweza kunisaidia kupata gari?', english:'Can you help me get a car?'} },
   { id:'phr-024', sw:'Tafadhali nisaidie',       en:'Please help me',               pr:'ta-fa-DHA-li ni-sa-i-DI-e',      tags:['phrases','requests'],   register:'neutral', senses:[{english:'Please help me'},{english:'Help me please'}], ex:{swahili:'Tafadhali nisaidie kubeba mzigo huu.', english:'Please help me carry this luggage.'} },
 
-  // ── Understanding & communication ────────────────────────────────────────
+  // ── Understanding & communication ────────────────────────────────────────────
   { id:'phr-025', sw:'Naelewa',                  en:'I understand',                 pr:'na-e-LE-wa',                     tags:['phrases','communication'], register:'neutral', senses:[{english:'I understand'},{english:'I see'},{english:'I get it'}], ex:{swahili:'Naelewa, asante kwa maelezo.', english:'I understand, thank you for the explanation.'} },
   { id:'phr-026', sw:'Sijaelewa',                en:"I don't understand",           pr:'si-ja-e-LE-wa',                  tags:['phrases','communication'], register:'neutral', senses:[{english:"I don't understand"},{english:"I haven't understood"},{english:"I'm not following"}], ex:{swahili:"Sijaelewa vizuri — unaweza kusema tena?", english:"I don't quite understand — can you say it again?"} },
   { id:'phr-027', sw:'Tena tafadhali',           en:'Again please',                 pr:'TE-na ta-fa-DHA-li',             tags:['phrases','communication'], register:'neutral', senses:[{english:'Again please'},{english:'Could you repeat that?'},{english:'Say it again please'}], ex:{swahili:'Tena tafadhali, polepole zaidi.', english:'Again please, more slowly.'} },
@@ -111,7 +111,7 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-030', sw:'Ninasema Kiswahili kidogo',en:'I speak a little Swahili',      pr:'ni-na-SE-ma ki-swa-HI-li ki-DO-go', tags:['phrases','communication'], register:'neutral', senses:[{english:'I speak a little Swahili'},{english:'My Swahili is limited'}], ex:{swahili:'Ninasema Kiswahili kidogo — pole!', english:"I speak a little Swahili — sorry!"} },
   { id:'phr-031', sw:'Ninajaribu kujifunza',     en:'I am trying to learn',         pr:'ni-na-ja-RI-bu ku-ji-FU-nza',    tags:['phrases','communication'], register:'neutral', senses:[{english:'I am trying to learn'},{english:"I'm studying"}], note:'Saying this usually earns encouragement and patience from native speakers.', ex:{swahili:'Ninajaribu kujifunza Kiswahili.', english:'I am trying to learn Swahili.'} },
 
-  // ── Practical questions ──────────────────────────────────────────────────
+  // ── Practical questions ──────────────────────────────────────────────────────
   { id:'phr-032', sw:'Ni saa ngapi?',            en:'What time is it?',             pr:'ni sa-a NGA-pi',                 tags:['phrases','time'],       register:'neutral', senses:[{english:'What time is it?'},{english:'What hour is it?'}], note:'Swahili clock (saa) starts at 6am = saa moja (hour one). Add 6 hours to convert to Western time.', ex:{swahili:'Samahani, ni saa ngapi sasa?', english:'Excuse me, what time is it now?'} },
   { id:'phr-033', sw:'Hii ni nini?',             en:'What is this?',                pr:'HI-i ni NI-ni',                  tags:['phrases','questions'],   register:'neutral', senses:[{english:'What is this?'},{english:'What is it?'}], ex:{swahili:'Hii ni nini? Sijawahi kuona.', english:"What is this? I've never seen it before."} },
   { id:'phr-034', sw:'Ni bei gani?',             en:"What's the price?",            pr:'ni BE-i GA-ni',                  tags:['phrases','shopping'],    register:'neutral', senses:[{english:"What's the price?"},{english:'How much does it cost?'},{english:'How much?'}], ex:{swahili:'Embe hizi ni bei gani?', english:"What's the price of these mangoes?"} },
@@ -119,7 +119,7 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-036', sw:'Naweza kupita?',           en:'Can I pass?',                  pr:'na-WE-za ku-PI-ta',              tags:['phrases','questions'],   register:'neutral', senses:[{english:'Can I pass?'},{english:'May I come through?'},{english:'Excuse me, coming through'}], ex:{swahili:'Naweza kupita, tafadhali?', english:'Can I pass through, please?'} },
   { id:'phr-037', sw:'Uko wapi?',                en:'Where are you?',               pr:'U-ko WA-pi',                     tags:['phrases','questions'],   register:'neutral', senses:[{english:'Where are you?'},{english:'Where are you located?'}], ex:{swahili:'Uko wapi? Nimekungoja kwa muda.', english:"Where are you? I've been waiting for you for a while."} },
 
-  // ── Daily expressions ────────────────────────────────────────────────────
+  // ── Daily expressions ────────────────────────────────────────────────────────
   { id:'phr-038', sw:'Niko tayari',              en:'I am ready',                   pr:'NI-ko ta-YA-ri',                 tags:['phrases','daily-life'], register:'neutral',  senses:[{english:'I am ready'},{english:"I'm all set"},{english:'Ready to go'}], ex:{swahili:'Niko tayari — twende!', english:"I'm ready — let's go!"} },
   { id:'phr-039', sw:'Bado',                     en:'Not yet',                      pr:'BA-do',                          tags:['phrases','daily-life'], register:'neutral',  senses:[{english:'Not yet'},{english:'Still'},{english:'Not done yet'}], ex:{swahili:'Umekwisha kula? — Bado.', english:'Have you eaten yet? — Not yet.'} },
   { id:'phr-040', sw:'Sawa sawa',                en:"It's fine",                    pr:'SA-wa SA-wa',                    tags:['phrases','daily-life'], register:'informal', senses:[{english:"It's fine"},{english:'Alright alright'},{english:'No problem'}], note:'Informal, slightly casual — more emphatic version of "sawa". Very common in everyday speech.', ex:{swahili:'Pole kwa kuchelewa. — Sawa sawa!', english:"Sorry for being late. — It's totally fine!"} },
@@ -134,7 +134,7 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-049', sw:'Ninaangalia tu',           en:'Just looking',                 pr:'ni-na-a-NGA-li-a TU',            tags:['phrases','shopping'],   register:'neutral',  senses:[{english:'Just looking'},{english:'Just browsing'},{english:'Only looking'}], ex:{swahili:'Ninaweza kukusaidia? — Ninaangalia tu, asante.', english:'Can I help you? — Just looking, thank you.'} },
   { id:'phr-050', sw:'Nipe muda kidogo',         en:'Give me a little time',        pr:'NI-pe MU-da ki-DO-go',           tags:['phrases','requests'],   register:'neutral',  senses:[{english:'Give me a little time'},{english:'Just a moment'},{english:'Bear with me'}], ex:{swahili:'Nipe muda kidogo — ninafikiria.', english:'Give me a little time — I am thinking.'} },
 
-  // ── Discourse markers ────────────────────────────────────────────────────
+  // ── Discourse markers ────────────────────────────────────────────────────────
   { id:'phr-051', sw:'Kwa kweli',                en:'Truly',                        pr:'kwa KWE-li',                     tags:['phrases','discourse'],  register:'neutral',  senses:[{english:'Truly'},{english:'Really'},{english:'Indeed'},{english:'In truth'}], ex:{swahili:'Kwa kweli, sikujua hivyo.', english:"Truly, I didn't know that."} },
   { id:'phr-052', sw:'Bila shaka',               en:'Without doubt',                pr:'BI-la SHA-ka',                   tags:['phrases','discourse'],  register:'neutral',  senses:[{english:'Without doubt'},{english:'Certainly'},{english:'Definitely'},{english:'Of course'}], ex:{swahili:'Bila shaka, atakuja.', english:'Without doubt, he will come.'} },
   { id:'phr-053', sw:'Hata hivyo',               en:'Even so',                      pr:'HA-ta HI-vyo',                   tags:['phrases','discourse'],  register:'neutral',  senses:[{english:'Even so'},{english:'Nevertheless'},{english:'However'},{english:'Despite that'}], ex:{swahili:'Hata hivyo, tutaendelea.', english:'Even so, we will continue.'} },
@@ -145,28 +145,28 @@ export const PHRASE_SEEDS: PhraseSeed[] = [
   { id:'phr-058', sw:'Kwa bahati mbaya',         en:'Unfortunately',                pr:'kwa ba-HA-ti MBA-ya',            tags:['phrases','discourse'],  register:'neutral',  senses:[{english:'Unfortunately'},{english:'Sadly'},{english:'By bad luck'}], ex:{swahili:'Kwa bahati mbaya, tikiti hazikuwepo.', english:'Unfortunately, there were no tickets.'} },
   { id:'phr-059', sw:'Kwa mfano',                en:'For example',                  pr:'kwa m-FA-no',                    tags:['phrases','discourse'],  register:'neutral',  senses:[{english:'For example'},{english:'For instance'},{english:'Such as'}], ex:{swahili:'Kuna matunda mengi, kwa mfano maembe na ndizi.', english:'There are many fruits, for example mangoes and bananas.'} },
 
-  // ── Requests ────────────────────────────────────────────────────────────
+  // ── Requests ────────────────────────────────────────────────────────────────
   { id:'phr-060', sw:'Niambie',                  en:'Tell me',                      pr:'ni-am-BI-e',                     tags:['phrases','requests'],   register:'neutral',  senses:[{english:'Tell me'},{english:'Let me know'}], ex:{swahili:'Niambie ukweli, tafadhali.', english:'Tell me the truth, please.'} },
   { id:'phr-061', sw:'Nionyeshe',                en:'Show me',                      pr:'ni-o-NYE-she',                   tags:['phrases','requests'],   register:'neutral',  senses:[{english:'Show me'},{english:'Demonstrate to me'},{english:'Let me see'}], ex:{swahili:'Nionyeshe jinsi ya kufanya hivyo.', english:'Show me how to do that.'} },
   { id:'phr-062', sw:'Ninaomba',                 en:'I humbly request',             pr:'ni-na-OM-ba',                    tags:['phrases','requests'],   register:'formal',   senses:[{english:'I request'},{english:'I ask'},{english:'I humbly ask'}], note:'More formal or humble than "ninataka". Common in official contexts or when being very polite.', ex:{swahili:'Ninaomba msamaha kwa ucheleweshaji.', english:'I ask for forgiveness for the delay.'} },
 
-  // ── Shopping ────────────────────────────────────────────────────────────
+  // ── Shopping ────────────────────────────────────────────────────────────────
   { id:'phr-063', sw:'Ni ghali sana',            en:"It's very expensive",          pr:'ni GHA-li SA-na',                tags:['phrases','shopping'],   register:'neutral',  senses:[{english:"It's very expensive"},{english:"That's too expensive"},{english:'Very pricey'}], ex:{swahili:'Elfu thelathini? Ni ghali sana!', english:"Thirty thousand? That's very expensive!"} },
   { id:'phr-064', sw:'Punguza bei',              en:'Reduce the price',             pr:'pu-NGU-za BE-i',                 tags:['phrases','shopping'],   register:'neutral',  senses:[{english:'Reduce the price'},{english:'Give a discount'},{english:'Lower the cost'}], note:'Common phrase in market bargaining — politely asking for a discount.', ex:{swahili:'Unaweza punguza bei kidogo?', english:'Can you reduce the price a little?'} },
 
-  // ── Health & emergency ───────────────────────────────────────────────────
+  // ── Health & emergency ───────────────────────────────────────────────────────
   { id:'phr-065', sw:'Msaada!',                  en:'Help!',                        pr:'m-SA-a-da',                      tags:['phrases','emergency'],  register:'neutral',  senses:[{english:'Help!'},{english:'Assistance!'},{english:'Aid!'}], ex:{swahili:'Msaada! Mtu amepotea!', english:'Help! Someone is missing!'} },
   { id:'phr-066', sw:'Ninahisi vibaya',          en:'I feel unwell',                pr:'ni-na-HI-si vi-BA-ya',           tags:['phrases','health'],     register:'neutral',  senses:[{english:'I feel unwell'},{english:'I feel bad'},{english:"I don't feel well"}], ex:{swahili:"Ninahisi vibaya — ninahitaji daktari.", english:"I feel unwell — I need a doctor."} },
   { id:'phr-067', sw:'Ninahisi vizuri',          en:'I feel well',                  pr:'ni-na-HI-si vi-ZU-ri',           tags:['phrases','health'],     register:'neutral',  senses:[{english:'I feel well'},{english:'I feel good'},{english:"I'm feeling fine"}], ex:{swahili:"Habari ya afya? — Ninahisi vizuri, asante.", english:"How's your health? — I feel well, thank you."} },
   { id:'phr-068', sw:'Nimepotea',                en:"I'm lost",                     pr:'ni-me-po-TE-a',                  tags:['phrases','emergency'],  register:'neutral',  senses:[{english:"I'm lost"},{english:'I have lost my way'}], ex:{swahili:"Samahani, nimepotea — unaweza kunisaidia?", english:"Excuse me, I'm lost — can you help me?"} },
 
-  // ── Encouragement & social ───────────────────────────────────────────────
+  // ── Encouragement & social ───────────────────────────────────────────────────
   { id:'phr-069', sw:'Hongera!',                 en:'Congratulations!',             pr:'hon-GE-ra',                      tags:['phrases','emotions'],   register:'neutral',  senses:[{english:'Congratulations!'},{english:'Well done!'},{english:'Bravo!'}], note:'Used for achievements, births, graduations, weddings — any positive milestone.', ex:{swahili:'Hongera kwa kuhitimu!', english:'Congratulations on graduating!'} },
   { id:'phr-070', sw:'Kazi nzuri!',              en:'Good work!',                   pr:'KA-zi NZU-ri',                   tags:['phrases','encouragement'], register:'neutral', senses:[{english:'Good work!'},{english:'Well done!'},{english:'Nice job!'}], ex:{swahili:"Umefanikisha kazi hiyo — kazi nzuri!", english:"You've accomplished that task — good work!"} },
   { id:'phr-071', sw:'Endelea',                  en:'Continue',                     pr:'en-de-LE-a',                     tags:['phrases','encouragement'], register:'neutral', senses:[{english:'Continue'},{english:'Keep going'},{english:'Carry on'},{english:'Go ahead'}], ex:{swahili:'Endelea, unafanya vizuri sana!', english:"Keep going, you're doing very well!"} },
   { id:'phr-072', sw:'Usijali',                  en:"Don't worry",                  pr:'u-si-JA-li',                     tags:['phrases','encouragement'], register:'neutral', senses:[{english:"Don't worry"},{english:"Don't stress"},{english:"Don't be troubled"}], ex:{swahili:'Usijali, kila kitu kitakuwa sawa.', english:"Don't worry, everything will be okay."} },
 
-  // ── Conversation fillers ─────────────────────────────────────────────────
+  // ── Conversation fillers ─────────────────────────────────────────────────────
   { id:'phr-073', sw:'Kwa kweli?',               en:'Really?',                      pr:'kwa KWE-li',                     tags:['phrases','conversation'], register:'neutral', senses:[{english:'Really?'},{english:'Is that so?'},{english:'Truly?'}], ex:{swahili:'Alifaulu mitihani yote. — Kwa kweli?', english:'He passed all the exams. — Really?'} },
   { id:'phr-074', sw:'Si mbaya',                 en:'Not bad',                      pr:'si MBA-ya',                      tags:['phrases','conversation'], register:'informal',senses:[{english:'Not bad'},{english:'Pretty good'},{english:'Not too bad'}], ex:{swahili:'Ulifanya vipi mtihani? — Si mbaya!', english:'How did the exam go? — Not bad!'} },
   { id:'phr-075', sw:'Ndiyo, kweli',             en:'Yes, really',                  pr:'NDI-yo KWE-li',                  tags:['phrases','conversation'], register:'neutral', senses:[{english:'Yes, really'},{english:'Yes, indeed'},{english:'Yes, truly'}], ex:{swahili:'Nilimwona Jana. — Ndiyo, kweli?', english:'I saw him yesterday. — Yes, really?'} },
@@ -179,63 +179,180 @@ export interface GrammarSeed {
 }
 
 export const GRAMMAR_SEEDS: GrammarSeed[] = [
-  // ── Subject prefixes ─────────────────────────────────────────────────────
-  { id:'gr-001', sw:'ni-',      en:'I (1st person singular subject)',       pr:'ni',      tags:['grammar','subject-prefix','morphology'], note:'Verb structure: SUBJECT + TENSE + (OBJECT) + ROOT + FINAL. "ni-" is always first. Example pattern: ni-na-pend-a (I love).', ex:{swahili:'Ni-na-penda = ni + na + pend + a', english:'I love = I + [present] + love + [active]'} },
-  { id:'gr-002', sw:'u-',       en:'you (2nd person singular subject)',      pr:'u',       tags:['grammar','subject-prefix','morphology'], note:'"u-" is the 2nd person singular subject prefix. Also used as the U-noun class prefix — context distinguishes them.', ex:{swahili:'U-na-kula = u + na + kul + a', english:'You are eating = you + [present] + eat + [active]'} },
-  { id:'gr-003', sw:'a-',       en:'he / she (3rd person singular subject)', pr:'a',       tags:['grammar','subject-prefix','morphology'], note:'Swahili has no grammatical gender — "a-" covers both he and she.', ex:{swahili:'A-na-kuja = a + na + kuj + a', english:'He/she is coming = he/she + [present] + come + [active]'} },
-  { id:'gr-004', sw:'tu-',      en:'we (1st person plural subject)',         pr:'tu',      tags:['grammar','subject-prefix','morphology'], note:'"tu-" for we. Negative: "hatu-".', ex:{swahili:'Tu-ta-kwenda = tu + ta + kwend + a', english:'We will go = we + [future] + go + [active]'} },
-  { id:'gr-005', sw:'m-',       en:'you all (2nd person plural subject)',    pr:'m',       tags:['grammar','subject-prefix','morphology'], note:'"m-" for plural you. Not to be confused with the M-Mi noun class prefix. Negative: "ham-".', ex:{swahili:'M-na-sema = m + na + sem + a', english:'You all are speaking = you(pl) + [present] + speak + [active]'} },
-  { id:'gr-006', sw:'wa-',      en:'they (3rd person plural subject)',       pr:'wa',      tags:['grammar','subject-prefix','morphology'], note:'"wa-" is the plural of "a-" for M-Wa class nouns (people). Other noun classes have different plural subject prefixes.', ex:{swahili:'Wa-ta-lala = wa + ta + lal + a', english:'They will sleep = they + [future] + sleep + [active]'} },
+  // ── Subject prefixes (1sg → 2sg → 3sg → 1pl → 2pl → 3pl) ───────────────────
+  { id:'gr-001', sw:'ni-', en:'I — 1sg subject prefix', pr:'ni', tags:['grammar','subject-prefix','morphology'],
+    note:'Always the first slot in a Swahili verb — it means "I". Verb slot order: SUBJECT + TENSE + (OBJECT) + ROOT + FINAL.\n\nExample build: ni- + na- + pend- + a = ninapenda (I love).\n\nNegative: replace ni- with si- (never add both).',
+    ex:{swahili:'Ni-na-penda = ni + na + pend + a', english:'I love = I + [present] + love + [active]'} },
 
-  // ── Tense markers ────────────────────────────────────────────────────────
-  { id:'gr-007', sw:'-na-',     en:'present / ongoing tense marker',        pr:'na',      tags:['grammar','tense-marker','morphology','present-tense'], note:'Marks ongoing or habitual present action. Position: after subject prefix. ni-NA-penda (I love / I am loving).', ex:{swahili:'Ni-na-soma vitabu', english:'I am reading books (right now / habitually)'} },
-  { id:'gr-008', sw:'-li-',     en:'simple past tense marker',              pr:'li',      tags:['grammar','tense-marker','morphology','past-tense'], note:'Marks completed past action. ni-LI-kula = I ate. Negative past uses -ku- instead of -li-.', ex:{swahili:'A-li-maliza kazi', english:'He/she finished work'} },
-  { id:'gr-009', sw:'-ta-',     en:'future tense marker',                   pr:'ta',      tags:['grammar','tense-marker','morphology','future-tense'], note:'Marks future action. ni-TA-kwenda = I will go. No negative form — use subjunctive or "sitakwenda".', ex:{swahili:'Tu-ta-ona kesho', english:'We will see (each other) tomorrow'} },
-  { id:'gr-010', sw:'-me-',     en:'perfect tense marker (completed action)', pr:'me',    tags:['grammar','tense-marker','morphology','perfect-tense'], note:'Marks an action completed with present relevance. ni-ME-kula = I have eaten (and I\'m full now). Different from -li- which is simple past.', ex:{swahili:'A-me-fika tayari', english:'He/she has already arrived'} },
-  { id:'gr-011', sw:'-ki-',     en:'simultaneous / conditional tense marker', pr:'ki',   tags:['grammar','tense-marker','morphology','conditional'], note:'Marks an action happening at the same time as another, or a conditional ("if/when"). ni-KI-kuja = when I come / if I come.', ex:{swahili:'U-ki-taka, nipe', english:'If/when you want, give me (it)'} },
-  { id:'gr-012', sw:'-ka-',     en:'narrative / sequential past marker',    pr:'ka',      tags:['grammar','tense-marker','morphology','past-tense'], note:'Used in storytelling to chain events: "then he did X, then Y". Cannot start a sentence — always follows another verb. ni-ka-ona = and then I saw.', ex:{swahili:'Alikimbia, a-ka-anguka', english:'He ran, and then he fell'} },
-  { id:'gr-013', sw:'-nge-',    en:'hypothetical / conditional marker',     pr:'nge',     tags:['grammar','tense-marker','morphology','conditional'], note:'"If I were to…" — counterfactual. ni-NGE-penda = I would love (if conditions were met). With -li-: ningeli- for past hypotheticals.', ex:{swahili:'Ni-nge-penda kwenda Paris', english:'I would like to go to Paris'} },
+  { id:'gr-002', sw:'u-', en:'you — 2sg subject prefix', pr:'u', tags:['grammar','subject-prefix','morphology'],
+    note:'The "you" slot — for talking to one person.\n\nAlso appears as the U-class noun prefix (u-furaha = happiness), but position in the verb makes it clear which is which.\n\nNegative: hau- (ha + u).',
+    ex:{swahili:'U-na-kula = u + na + kul + a', english:'You are eating = you + [present] + eat + [active]'} },
 
-  // ── Negative markers ─────────────────────────────────────────────────────
-  { id:'gr-014', sw:'si-',      en:'I do not / I am not (1sg negative)',    pr:'si',      tags:['grammar','negation','morphology'], note:'Negative counterpart of "ni-". Replaces the subject prefix in negative present. si-pendi = I don\'t like. NOTE: "si" alone means "is not" (si mwalimu = is not a teacher).', ex:{swahili:'Si-pendi kahawa', english:"I don't like coffee"} },
-  { id:'gr-015', sw:'hau-',     en:'you do not (2sg negative present)',     pr:'ha-u',    tags:['grammar','negation','morphology'], note:'Negative of "u-". ha + u = hau. Similarly: hatu- (we don\'t), ham- (you all don\'t), hawa- (they don\'t).', ex:{swahili:'Hau-somi kwa bidii', english:"You don't study hard"} },
-  { id:'gr-016', sw:'ha-',      en:'negative prefix (3rd person / plural)', pr:'ha',      tags:['grammar','negation','morphology'], note:'"ha-" is added before 3sg and plural subject prefixes in the negative: ha+a=ha (he/she), ha+wa=hawa (they), ha+ki=haki (Ki class), etc.', ex:{swahili:'Ha-kuli chakula', english:"He/she doesn't eat food"} },
-  { id:'gr-017', sw:'-ku-',     en:'negative tense marker (past & general)', pr:'ku',    tags:['grammar','negation','morphology'], note:'In negative past, -li- becomes -ku-: ha-KU-kula = he didn\'t eat. In general negatives (timeless), -ku- also appears: si-KU-penda = I didn\'t/don\'t like.', ex:{swahili:'Ha-ku-maliza kazi', english:"He/she didn't finish work"} },
-  { id:'gr-018', sw:'-i',       en:'negative final vowel (replaces -a)',    pr:'i',       tags:['grammar','negation','morphology'], note:'The standard verb final vowel -a changes to -i in the negative present. kupenda → sipend-I (I don\'t love). Exception: monosyllabic roots keep -a.', ex:{swahili:'Si-pend-i = si + pend + i', english:"I don't love = not + love + [negative final]"} },
+  { id:'gr-003', sw:'a-', en:'he / she — 3sg subject prefix', pr:'a', tags:['grammar','subject-prefix','morphology'],
+    note:'Swahili has no grammatical gender — one prefix covers both he and she. Context tells you which.\n\nAlso the subject concord for M-Wa class nouns (people/animals) in the singular.\n\nNegative: ha- (ha + a contracts to ha).',
+    ex:{swahili:'A-na-kuja = a + na + kuj + a', english:'He/she is coming = he/she + [present] + come + [active]'} },
 
-  // ── Object infixes ───────────────────────────────────────────────────────
-  { id:'gr-019', sw:'-ni-',     en:'me (1st person singular object infix)', pr:'ni',      tags:['grammar','object-infix','morphology'], note:'Object infixes go between the tense marker and the verb root. a-na-NI-penda = he loves ME. Position: SUBJ + TENSE + OBJ + ROOT + FINAL.', ex:{swahili:'A-na-ni-ona = a + na + ni + on + a', english:'He/she sees me = he/she + [present] + me + see + [active]'} },
-  { id:'gr-020', sw:'-ku-',     en:'you (2nd person singular object infix)', pr:'ku',     tags:['grammar','object-infix','morphology'], note:'"ku-" as object infix means "you". Identical to the negative tense marker and infinitive prefix — context distinguishes them. ni-na-KU-ona = I see you.', ex:{swahili:'Ni-na-ku-penda = I love you', english:'ni + na + ku + pend + a'} },
-  { id:'gr-021', sw:'-m- / -mw-',en:'him / her (3sg object infix)',         pr:'m / mw',  tags:['grammar','object-infix','morphology'], note:'-m- before consonants, -mw- before vowels. ni-na-M-penda = I love him/her. ni-na-MW-ona = I see him/her.', ex:{swahili:'A-na-m-saidia rafiki', english:'He/she is helping the friend'} },
-  { id:'gr-022', sw:'-tu-',     en:'us (1st person plural object infix)',   pr:'tu',      tags:['grammar','object-infix','morphology'], note:'Object infix for "us". a-na-TU-ambia = he tells us.', ex:{swahili:'A-na-tu-ambia ukweli', english:'He/she tells us the truth'} },
-  { id:'gr-023', sw:'-wa-',     en:'them (3rd person plural object infix)', pr:'wa',      tags:['grammar','object-infix','morphology'], note:'Object infix for "them" (M-Wa class). ni-na-WA-ona = I see them.', ex:{swahili:'Ni-na-wa-saidia watoto', english:'I am helping the children'} },
+  { id:'gr-004', sw:'tu-', en:'we — 1pl subject prefix', pr:'tu', tags:['grammar','subject-prefix','morphology'],
+    note:'The "we" slot. Often the easiest plural to remember — it mirrors the object infix -tu- (meaning "us").\n\nNegative: hatu- (ha + tu). Example: hatu-pendi = we don\'t like.',
+    ex:{swahili:'Tu-ta-kwenda = tu + ta + kwend + a', english:'We will go = we + [future] + go + [active]'} },
 
-  // ── Infinitive & verb structure ──────────────────────────────────────────
-  { id:'gr-024', sw:'ku-',      en:'infinitive prefix (to do…)',            pr:'ku',      tags:['grammar','infinitive','morphology'], note:'Marks verb infinitives. ku-penda = to love, ku-la = to eat. Dropped when conjugated (except monosyllabic roots which keep -ku- as a buffer).', ex:{swahili:'Ninataka ku-lala', english:'I want to sleep'} },
-  { id:'gr-025', sw:'SUBJ + TENSE + (OBJ) + ROOT + FINAL', en:'Swahili verb conjugation template', pr:'', tags:['grammar','morphology','verb-structure'], note:'Every conjugated Swahili verb follows this slot order. Example: ni-li-m-penda = I (ni) + past (li) + him/her (m) + love (pend) + active (a). Learning the slots means you can decode any conjugation.', ex:{swahili:'ni-li-m-pend-a', english:'I loved him/her — ni(I) li(past) m(him) pend(love) a(active)'} },
+  { id:'gr-005', sw:'m-', en:'you all — 2pl subject prefix', pr:'m', tags:['grammar','subject-prefix','morphology'],
+    note:'The "you all" slot — for talking to a group (like Southern US "y\'all").\n\nDon\'t confuse with the M-Mi noun class prefix (m-ti = tree) — position in the verb distinguishes them.\n\nNegative: ham- (ha + m). Example: ham-somi = you all don\'t study.',
+    ex:{swahili:'M-na-sema = m + na + sem + a', english:'You all are speaking = you(pl) + [present] + speak + [active]'} },
 
-  // ── Final vowels ─────────────────────────────────────────────────────────
-  { id:'gr-026', sw:'-a',       en:'active / affirmative final vowel',      pr:'a',       tags:['grammar','final-vowel','morphology'], note:'The standard final vowel for affirmative verbs. kupend-A, kula (ku + l + a). Almost all affirmative conjugations end in -a.', ex:{swahili:'Anasoma, anaimba, anacheza', english:'He reads, sings, plays — all end in -a'} },
-  { id:'gr-027', sw:'-e',       en:'subjunctive / polite imperative final vowel', pr:'e', tags:['grammar','final-vowel','morphology','subjunctive'], note:'Used in the subjunctive ("let him…", "so that he…") and polite commands. tafadhali niambi-E = please tell me. Nisaidie = help me (polite request).', ex:{swahili:'Tafadhali niambie', english:'Please tell me (subjunctive -e)'} },
-  { id:'gr-028', sw:'-wa',      en:'passive suffix (-wa / -liwa / -iwa)',    pr:'wa',      tags:['grammar','final-vowel','morphology','passive'], note:'Added to the verb root to make it passive. kupenda (to love) → kupendwa (to be loved). kupigwa (to be hit). The agent can be added with "na".', ex:{swahili:'Watoto wa-na-pend-wa', english:'The children are loved (-wa passive)'} },
+  { id:'gr-006', sw:'wa-', en:'they — 3pl subject prefix', pr:'wa', tags:['grammar','subject-prefix','morphology'],
+    note:'The "they" slot — specifically for people (M-Wa class). Plural of a-.\n\nFor non-human subjects, the plural concord comes from the noun\'s class: vi- (things), zi- (N class), etc.\n\nNegative: hawa- (ha + wa). Example: hawa-somi = they don\'t study.',
+    ex:{swahili:'Wa-ta-lala = wa + ta + lal + a', english:'They will sleep = they + [future] + sleep + [active]'} },
 
-  // ── Noun classes ─────────────────────────────────────────────────────────
-  { id:'gr-029', sw:'M-Wa class: m- / wa-', en:'People noun class (singular/plural)', pr:'m / wa', tags:['grammar','noun-class','morphology'], note:'The most important noun class — all people words. Singular prefix m-/mw- (mtu, mwalimu), plural prefix wa- (watu, walimu). Subject concord: a- (sg) / wa- (pl).', ex:{swahili:'m-tu → wa-tu, m-walimu → wa-limu', english:'person → people, teacher → teachers'} },
-  { id:'gr-030', sw:'M-Mi class: m- / mi-', en:'Plants & objects noun class',        pr:'m / mi', tags:['grammar','noun-class','morphology'], note:'Trees, plants, and some objects. m-ti (tree) → mi-ti (trees). Subject concord: u- (sg) / i- (pl). Adjective: mzuri (sg) / mizuri (pl).', ex:{swahili:'m-ti → mi-ti, m-to → mi-to', english:'tree → trees, river → rivers'} },
-  { id:'gr-031', sw:'Ki-Vi class: ki- / vi-', en:'Things noun class',               pr:'ki / vi', tags:['grammar','noun-class','morphology'], note:'Things, tools, languages. ki-tabu (book) → vi-tabu (books). ki-tu (thing) → vi-tu (things). Kiswahili is in this class. Subject concord: ki- (sg) / vi- (pl).', ex:{swahili:'ki-tabu → vi-tabu, ki-tu → vi-tu', english:'book → books, thing → things'} },
-  { id:'gr-032', sw:'N class: n- / n- (or Ø)',en:'Animals & loanwords noun class',  pr:'n',      tags:['grammar','noun-class','morphology'], note:'Animals, insects, loanwords. No change between singular and plural (ndizi = banana/bananas). Subject concord: i- (sg) / zi- (pl). Many loanwords fall here: simu (phone).', ex:{swahili:'n-dizi → n-dizi, n-jiwa → n-jiwa', english:'banana(s), dove(s) — same form'} },
-  { id:'gr-033', sw:'Ma class: Ø / ma-',    en:'Collective & augmentative noun class', pr:'ma',   tags:['grammar','noun-class','morphology'], note:'Collectives, liquids, abstracts, and some augmentatives. Singular often has no prefix. ji-cho (eye) → ma-cho (eyes). Subject concord: li- (sg) / ya- (pl).', ex:{swahili:'tunda → ma-tunda, ji-cho → ma-cho', english:'fruit → fruits, eye → eyes'} },
-  { id:'gr-034', sw:'U class: u- / Ø or ny-', en:'Abstract & long things noun class', pr:'u',   tags:['grammar','noun-class','morphology'], note:'Abstract nouns, long thin things, some body parts. u-kuta (wall) → kuta (walls). u-furaha (happiness) — abstract, no plural. Subject concord: u- (sg) / zi- (pl) for concrete; u- only for abstract.', ex:{swahili:'u-kuta → kuta, u-furaha (no plural)', english:'wall → walls, happiness (abstract)'} },
+  // ── Tense markers ────────────────────────────────────────────────────────────
+  { id:'gr-007', sw:'-na-', en:'present tense marker', pr:'na', tags:['grammar','tense-marker','morphology','present-tense'],
+    note:'In English, we distinguish "I eat" (habit) from "I am eating" (right now). Swahili uses -na- for BOTH.\n\nPosition: always after the subject prefix. Slot: SUBJECT + -na- + ROOT + -a.\n\nImportant: drop -na- entirely in negative present. si-pend-i (not *si-na-pendi).',
+    ex:{swahili:'Ni-na-soma vitabu', english:'I am reading books (right now, or as a habit)'} },
 
-  // ── Concord ──────────────────────────────────────────────────────────────
-  { id:'gr-035', sw:'M-Wa adjective concord: mzuri / wazuri', en:'M-Wa class adjective agreement', pr:'m / wa', tags:['grammar','concord','morphology'], note:'Adjectives must agree with the noun\'s class and number. M-Wa class: m-zuri (good person, sg), wa-zuri (good people, pl). The adjective prefix mirrors the noun prefix.', ex:{swahili:'mtu m-zuri → watu wa-zuri', english:'a good person → good people'} },
-  { id:'gr-036', sw:'Ki-Vi adjective concord: kizuri / vizuri', en:'Ki-Vi class adjective agreement', pr:'ki / vi', tags:['grammar','concord','morphology'], note:'Ki-Vi class: ki-zuri (good thing, sg), vi-zuri (good things, pl). The same root -zuri takes different prefixes depending on the noun class.', ex:{swahili:'kitu ki-zuri → vitu vi-zuri', english:'a good thing → good things'} },
-  { id:'gr-037', sw:'M-Mi subject concord: u-na / i-na', en:'M-Mi class subject-verb agreement', pr:'u / i', tags:['grammar','concord','morphology'], note:'When an M-Mi noun is the subject, the verb uses u- (sg) or i- (pl). mti u-na-anguka (the tree falls), miti i-na-anguka (the trees fall).', ex:{swahili:'m-ti u-na-anguka → mi-ti i-na-anguka', english:'the tree falls → the trees fall'} },
-  { id:'gr-038', sw:'Ki-Vi subject concord: ki-na / vi-na', en:'Ki-Vi class subject-verb agreement', pr:'ki / vi', tags:['grammar','concord','morphology'], note:'Ki-Vi subject concord: ki- (sg), vi- (pl). kitabu ki-na-anguka (the book falls), vitabu vi-na-anguka (the books fall).', ex:{swahili:'ki-tabu ki-na-anguka → vi-tabu vi-na-anguka', english:'the book falls → the books fall'} },
+  { id:'gr-008', sw:'-li-', en:'simple past tense marker', pr:'li', tags:['grammar','tense-marker','morphology','past-tense'],
+    note:'In English: simple past — "I ate", "she went", "we saw". The action is finished with no connection to the present moment.\n\nFor "I have eaten" (still relevant now), use -me- instead.\n\nNegative past: -li- is replaced by -ku-. a-li-kula (he ate) → ha-ku-kula (he didn\'t eat).',
+    ex:{swahili:'A-li-maliza kazi', english:'He/she finished work (simple past — it\'s done)'} },
 
-  // ── Useful derivational morphology ───────────────────────────────────────
-  { id:'gr-039', sw:'-sha / -isha',  en:'causative suffix (to cause/make someone do)', pr:'sha / isha', tags:['grammar','derivation','morphology'], note:'Added to a verb root to make it causative. kula (eat) → ku-lisha (to feed = to cause to eat). soma (read/study) → somesha (to teach = to cause to learn). Very productive.', ex:{swahili:'kula → ku-l-isha (to feed), lala → lal-isha (to put to sleep)', english:'eat → to feed, sleep → to put to sleep'} },
-  { id:'gr-040', sw:'-ni',           en:'locative suffix (at/in a place)',             pr:'ni',         tags:['grammar','locative','morphology'], note:'Added to place nouns to mean "at/in". nyumba-NI (at home), shule-NI (at school), sokoni (at the market). The noun loses its final vowel before -ni if it ends in -a.', ex:{swahili:'nyumba → nyumba-ni, shule → shule-ni', english:'house → at home, school → at school'} },
-  { id:'gr-041', sw:'-ana',          en:'reciprocal suffix (each other)',              pr:'a-na',       tags:['grammar','derivation','morphology'], note:'Added to a verb root to express mutual action. penda (love) → pend-ana (love each other). ona (see) → on-ana (see each other / meet). Very common in daily speech.', ex:{swahili:'kupend-ana, kuon-ana, kusalim-ana', english:'to love each other, to meet, to greet each other'} },
-  { id:'gr-042', sw:'-eka / -ikana', en:'stative suffix (able to be / in a state)',   pr:'e-ka / i-ka-na', tags:['grammar','derivation','morphology'], note:'Marks a state or possibility. fungua (open) → fugu-ka (be opened, be openable). vunja (break) → vonj-eka (be breakable). Expresses inherent properties or states.', ex:{swahili:'fungu-ka (be opened), vunj-ika (be broken)', english:'to be openable, to be breakable'} },
+  { id:'gr-009', sw:'-ta-', en:'future tense marker', pr:'ta', tags:['grammar','tense-marker','morphology','future-tense'],
+    note:'In English: "will" — "I will go", "they will see", "we will eat".\n\nSimply swap -na- for -ta- to shift any present sentence into the future.\n\nNegative future keeps -ta-: si-ta-kwenda = I will not go. (Notice si- replaces ni-, but ta- stays.)',
+    ex:{swahili:'Tu-ta-ona kesho', english:'We will see each other tomorrow'} },
+
+  { id:'gr-010', sw:'-me-', en:'perfect tense marker', pr:'me', tags:['grammar','tense-marker','morphology','perfect-tense'],
+    note:'In English: "have" — "I have eaten" (I\'m full now), "she has arrived" (she\'s here).\n\nThe KEY difference from -li-: -me- means the past action STILL MATTERS RIGHT NOW. It has a present result.\n\nCompare: ni-li-kula jana (I ate yesterday — finished) vs. ni-me-kula (I have eaten — I\'m satisfied now).',
+    ex:{swahili:'A-me-fika tayari', english:'He/she has already arrived (and is here now)'} },
+
+  { id:'gr-011', sw:'-ki-', en:'"if / when" — conditional marker', pr:'ki', tags:['grammar','tense-marker','morphology','conditional'],
+    note:'In English: "if" or "when" linking two events — "if you want it, take it" / "when I come, call me".\n\nConnects two actions happening together or conditionally. Very common in Swahili proverbs and everyday instructions.\n\nExample: u-ki-taka = if/when you want. (You can\'t use -na- here.)',
+    ex:{swahili:'U-ki-taka, nipe', english:'If/when you want (it), give it to me'} },
+
+  { id:'gr-012', sw:'-ka-', en:'"and then" — narrative sequential marker', pr:'ka', tags:['grammar','tense-marker','morphology','past-tense'],
+    note:'In English: "and then..." in storytelling — "he ran, and then he fell".\n\nChains past events in sequence. The key rule: -ka- can NEVER start a sentence. It must always follow another verb.\n\nVery common in Swahili narratives, folktales, and Bible texts.',
+    ex:{swahili:'Alikimbia, a-ka-anguka', english:'He ran, and then he fell'} },
+
+  { id:'gr-013', sw:'-nge-', en:'"would" — hypothetical conditional marker', pr:'nge', tags:['grammar','tense-marker','morphology','conditional'],
+    note:'In English: "would" — "I would love to", "I would go if..."\n\nUsed for hypotheticals, wishes, and polite requests (softer than -ta-).\n\nPast hypothetical adds -li-: ni-nge-li-kwenda = I would have gone (but didn\'t).\n\nTip: ningependa (I would like) is more polite than ninataka (I want) — use it in formal situations.',
+    ex:{swahili:'Ni-nge-penda kwenda Paris', english:'I would like/love to go to Paris'} },
+
+  // ── Negative markers (1sg → 2sg → 3sg → negative tense → negative ending) ───
+  { id:'gr-014', sw:'si-', en:'I do not — 1sg negative prefix', pr:'si', tags:['grammar','negation','morphology'],
+    note:'Replaces ni- entirely in negative present — never combine ni- + si-.\n\nsi-pendi = I don\'t like (correct). *ni-si-pendi = wrong.\n\nAlso standalone: "si" alone means "is not" — si mwalimu = he/she is not a teacher.\n\nFull negative paradigm: si- (I), hau- (you), ha- (he/she), hatu- (we), ham- (you all), hawa- (they).',
+    ex:{swahili:'Si-pendi kahawa', english:"I don't like coffee (si- replaces ni-)"} },
+
+  { id:'gr-015', sw:'hau-', en:'you do not — 2sg negative prefix', pr:'ha-u', tags:['grammar','negation','morphology'],
+    note:'The "you don\'t" prefix — ha- + u- = hau-. The pattern "ha + subject prefix" works for all persons:\n\n• hau- (you don\'t)\n• hatu- (we don\'t)\n• ham- (you all don\'t)\n• hawa- (they don\'t)\n\nOnly 1sg is irregular: si- (not *ha-ni-).',
+    ex:{swahili:'Hau-somi kwa bidii', english:"You don't study hard"} },
+
+  { id:'gr-016', sw:'ha-', en:'he / she does not — 3sg negative prefix', pr:'ha', tags:['grammar','negation','morphology'],
+    note:'The "he/she doesn\'t" prefix — ha- + a- contracts to just ha- (the double-a merges).\n\nFull negative paradigm for people:\n• si- → I don\'t\n• hau- → you don\'t\n• ha- → he/she doesn\'t\n• hatu- → we don\'t\n• ham- → you all don\'t\n• hawa- → they don\'t\n\nFor non-human nouns, ha- combines with the noun-class concord (e.g. ha-ki- for Ki class).',
+    ex:{swahili:'Ha-kuli chakula', english:"He/she doesn't eat food (ha- + a- → ha-)"} },
+
+  { id:'gr-017', sw:'-ku-', en:'negative past tense marker', pr:'ku', tags:['grammar','negation','morphology'],
+    note:'In negative past, -li- is replaced by -ku-:\n\na-li-kula (he ate) → ha-ku-kula (he didn\'t eat)\nni-li-kwenda (I went) → si-ku-kwenda (I didn\'t go)\n\nAlso appears in timeless/habitual negatives: si-ku-penda = I don\'t/didn\'t like.\n\nWarning: -ku- has THREE meanings (infinitive prefix, negative past, 2sg object infix "you") — position in the verb reveals which.',
+    ex:{swahili:'Ha-ku-maliza kazi', english:"He/she didn't finish work (-li- → -ku- in negative)"} },
+
+  { id:'gr-018', sw:'-i', en:'negative ending (replaces -a)', pr:'i', tags:['grammar','negation','morphology'],
+    note:'In negative present, the verb\'s final -a changes to -i. This is a clear signal that a verb is negative:\n\nku-pend-a (to love) → si-pend-i (I don\'t love)\nku-som-a (to read) → hau-som-i (you don\'t read)\n\nException: one-syllable roots keep -a — si-ji (I don\'t know, from kujua).\n\nPast negatives keep -a: ha-ku-kul-a (he didn\'t eat).',
+    ex:{swahili:'Si-pend-i = si + pend + i', english:"I don't love = [not-I] + love + [negative ending]"} },
+
+  // ── Object infixes (1sg → 2sg → 3sg → 1pl → 3pl) ───────────────────────────
+  { id:'gr-019', sw:'-ni-', en:'me — 1sg object infix', pr:'ni', tags:['grammar','object-infix','morphology'],
+    note:'Inserts "me" directly into the verb. Slot order: SUBJECT + TENSE + OBJECT + ROOT + FINAL.\n\na-na-ni-penda = he loves ME\n\nObject infixes are how Swahili embeds pronouns without needing separate words like "me", "him", "us".',
+    ex:{swahili:'A-na-ni-ona = a + na + ni + on + a', english:'He/she sees ME = he/she + [present] + me + see + [active]'} },
+
+  { id:'gr-020', sw:'-ku-', en:'you — 2sg object infix', pr:'ku', tags:['grammar','object-infix','morphology'],
+    note:'Means "you" inside the verb: ni-na-ku-penda = I love YOU.\n\n-ku- has three identities — same spelling, different positions:\n• Infinitive prefix: ku-la (to eat)\n• Negative past marker: ha-ku-la (he didn\'t eat)\n• Object infix "you": ni-na-ku-ona (I see you)\n\nPosition in the verb reveals which.',
+    ex:{swahili:'Ni-na-ku-penda', english:'I love you — ni(I) na(present) ku(you) pend(love) a(active)'} },
+
+  { id:'gr-021', sw:'-m- / -mw-', en:'him / her — 3sg object infix', pr:'m / mw', tags:['grammar','object-infix','morphology'],
+    note:'Inserts "him/her" into the verb — no gender distinction, just like the subject prefix a-.\n\n-m- before consonants: ni-na-m-penda (I love him/her)\n-mw- before vowels: ni-na-mw-ona (I see him/her)\n\nNote: -m- is very short and easy to miss when speaking quickly.',
+    ex:{swahili:'A-na-m-saidia rafiki', english:'He/she is helping the friend (the friend = him/her)'} },
+
+  { id:'gr-022', sw:'-tu-', en:'us — 1pl object infix', pr:'tu', tags:['grammar','object-infix','morphology'],
+    note:'Inserts "us" into the verb. The same -tu- that is the subject prefix for "we" — just in the object slot.\n\na-na-tu-ambia = he tells US\nwa-li-tu-saidia = they helped US\n\nEasy to remember: tu = us (object) = we (subject).',
+    ex:{swahili:'A-na-tu-ambia ukweli', english:'He/she tells us the truth'} },
+
+  { id:'gr-023', sw:'-wa-', en:'them — 3pl object infix (people)', pr:'wa', tags:['grammar','object-infix','morphology'],
+    note:'Inserts "them" (for people, M-Wa class) into the verb.\n\nni-na-wa-saidia = I am helping THEM\ntu-li-wa-ambia = we told THEM\n\nFor non-human objects, use the noun-class concord instead (-vi- for books, -zi- for N class, etc.).',
+    ex:{swahili:'Ni-na-wa-saidia watoto', english:'I am helping the children (them)'} },
+
+  // ── Infinitive & verb structure ──────────────────────────────────────────────
+  { id:'gr-024', sw:'ku-', en:'infinitive prefix — "to [verb]"', pr:'ku', tags:['grammar','infinitive','morphology'],
+    note:'Marks the infinitive "to [verb]": ku-penda (to love), ku-la (to eat), ku-sema (to speak).\n\nDropped when you conjugate: ku-penda → ni-na-pend-a.\n\nException: one-syllable roots KEEP ku- as a buffer even when conjugated:\nni-na-ku-la (I am eating — NOT *ni-na-la).\n\nku- also appears as the 2sg object infix "you" — position tells you which.',
+    ex:{swahili:'Ninataka ku-lala', english:'I want to sleep (ku- = infinitive marker before lala)'} },
+
+  { id:'gr-025', sw:'SUBJ + TENSE + (OBJ) + ROOT + FINAL', en:'Swahili verb template', pr:'', tags:['grammar','morphology','verb-structure'],
+    note:'Every Swahili verb follows the same slot order. Learn this template once — it unlocks thousands of verb forms.\n\nSlots:\n• SUBJECT: ni/u/a/tu/m/wa\n• TENSE: na/li/ta/me/ki/ka/nge\n• (OBJECT): ni/ku/m/tu/wa (optional)\n• ROOT: the verb meaning\n• FINAL: -a (positive) or -i (negative present)\n\nExample: wa-ta-ni-ambia = they(wa) + will(ta) + me(ni) + tell(ambi) + active(a) = they will tell me.',
+    ex:{swahili:'ni-li-m-pend-a', english:'I loved him/her — ni(I) li(past) m(him/her) pend(love) a(active)'} },
+
+  // ── Final vowels ─────────────────────────────────────────────────────────────
+  { id:'gr-026', sw:'-a', en:'affirmative final vowel', pr:'a', tags:['grammar','final-vowel','morphology'],
+    note:'The default ending for all positive (affirmative) verbs. If unsure, -a is almost always right.\n\nChanges in two situations:\n• Negative present: -a → -i (si-pend-i)\n• Subjunctive/polite command: -a → -e (niamb-ie = tell me)\n\nAll three: anasoma (he reads), anaimba (he sings), anacheza (he plays) — always -a.',
+    ex:{swahili:'Anasoma, anaimba, anacheza', english:'He reads, sings, plays — all affirmative verbs end in -a'} },
+
+  { id:'gr-027', sw:'-e', en:'subjunctive / polite command ending', pr:'e', tags:['grammar','final-vowel','morphology','subjunctive'],
+    note:'In English: "so that...", "let him...", "please..." — the polite and purposive ending.\n\nChanges final -a to -e: ambia → ambie, saidia → saidie.\n\nUsed after:\n• "ili" (so that): ili asome = so that he reads\n• Polite requests: tafadhali niambie = please tell me\n• "acha" (let): acha nipe = let me give\n\nMore polite and formal than the plain imperative (-a).',
+    ex:{swahili:'Tafadhali ni-ambi-e', english:'Please tell me (ambia → ambie — subjunctive -e)'} },
+
+  { id:'gr-028', sw:'-wa', en:'passive ending — "to be [verb-ed]"', pr:'wa', tags:['grammar','final-vowel','morphology','passive'],
+    note:'In English: passive voice — "to be loved", "to be seen", "to be helped".\n\nReplaces the final -a: ku-pend-a (to love) → ku-pend-wa (to be loved).\n\nTo add "by someone", use "na": wa-na-pend-wa na wazazi wao = they are loved BY their parents.\n\nCommon forms: kupendwa (to be loved), kuonwa (to be seen), kusaidiwa (to be helped).',
+    ex:{swahili:'Watoto wa-na-pend-wa', english:'The children are loved (kupenda → kupendwa)'} },
+
+  // ── Noun classes ─────────────────────────────────────────────────────────────
+  { id:'gr-029', sw:'M-Wa class: m- / wa-', en:'People noun class — m- (sg) / wa- (pl)', pr:'m / wa', tags:['grammar','noun-class','morphology'],
+    note:'The most important noun class — all people, human roles, and some animals.\n\nSingular: m- or mw- before vowels → m-tu (person), mw-alimu (teacher)\nPlural: wa- → wa-tu (people), wa-limu (teachers)\n\nVerb agreement: a- (singular), wa- (plural)\na-na-kula (he eats), wa-na-kula (they eat)\n\nAdjective agreement: m-zuri (good person), wa-zuri (good people).',
+    ex:{swahili:'m-tu → wa-tu, mw-alimu → wa-limu', english:'person → people, teacher → teachers'} },
+
+  { id:'gr-030', sw:'M-Mi class: m- / mi-', en:'Plants & rivers noun class — m- (sg) / mi- (pl)', pr:'m / mi', tags:['grammar','noun-class','morphology'],
+    note:'Trees, plants, rivers, and natural things. Singular looks the same as M-Wa class — the plural reveals the difference.\n\nSingular: m- → m-ti (tree), m-to (river)\nPlural: mi- → mi-ti (trees), mi-to (rivers)\n\nVerb agreement: u- (singular), i- (plural)\nm-ti u-na-anguka (the tree falls), mi-ti i-na-anguka (the trees fall)\n\nAdjective: m-zuri (singular), mi-zuri (plural).',
+    ex:{swahili:'m-ti → mi-ti, m-to → mi-to', english:'tree → trees, river → rivers'} },
+
+  { id:'gr-031', sw:'Ki-Vi class: ki- / vi-', en:'Things & languages noun class — ki- (sg) / vi- (pl)', pr:'ki / vi', tags:['grammar','noun-class','morphology'],
+    note:'Things, tools, languages, and abstract concepts.\n\nSingular: ki- or ch- → ki-tabu (book), ki-tu (thing), ch-akula (food)\nPlural: vi- or vy- → vi-tabu (books), vi-tu (things), vy-akula (foods)\n\nNote: ALL Swahili language names are Ki- class — Ki-swahili, Ki-english, Ki-arabic.\n\nVerb agreement: ki- (singular), vi- (plural)\nki-tabu ki-na-anguka (the book falls), vi-tabu vi-na-anguka (the books fall).',
+    ex:{swahili:'ki-tabu → vi-tabu, ki-tu → vi-tu', english:'book → books, thing → things'} },
+
+  { id:'gr-032', sw:'N class: n- / n- (or Ø)', en:'Animals & loanwords noun class — same singular & plural', pr:'n', tags:['grammar','noun-class','morphology'],
+    note:'Animals, insects, loanwords, and borrowed words. The tricky class — singular and plural look IDENTICAL.\n\nn-dizi can mean "a banana" OR "bananas". Context tells you which.\n\nMany English loanwords land here: simu (phone), basi (bus), kompyuta (computer), televisheni (TV).\n\nVerb agreement: i- (singular), zi- (plural)\nn-dizi i-na-anguka (the banana falls), n-dizi zi-na-anguka (the bananas fall).',
+    ex:{swahili:'ndizi → ndizi, njiwa → njiwa', english:'banana = banana(s), dove = dove(s) — same form!'} },
+
+  { id:'gr-033', sw:'Ma class: Ø / ma-', en:'Liquids & collectives noun class — no prefix (sg) / ma- (pl)', pr:'ma', tags:['grammar','noun-class','morphology'],
+    note:'Liquids, fruits, collectives, body parts in pairs, and augmentatives (big versions).\n\nSingular: usually no visible prefix → tunda (fruit), ji-cho (eye)\nPlural: ma- → ma-tunda (fruits), ma-cho (eyes)\n\nVerb agreement: li- (singular), ya- (plural)\nma-cho ya-na-angaza (the eyes shine)\n\nSome singulars have ji-: ji-cho (eye), ji-we (stone) — the ji- drops in the plural.',
+    ex:{swahili:'tunda → ma-tunda, ji-cho → ma-cho', english:'fruit → fruits, eye → eyes (ji- drops in plural)'} },
+
+  { id:'gr-034', sw:'U class: u- / Ø or ny-', en:'Abstract & long things noun class — u- (sg) / various (pl)', pr:'u', tags:['grammar','noun-class','morphology'],
+    note:'Abstract nouns, long thin things, and some body parts.\n\nAbstracts (usually no plural): u-furaha (happiness), u-weza (ability), u-gonjwa (illness)\nConcrete (has plural): u-kuta (wall) → kuta (walls), u-zi (thread) → nyu-zi (threads)\n\nVerb agreement: u- (singular concrete/abstract), zi- (plural concrete)\n\nThis class is less systematic than others — worth learning each noun individually.',
+    ex:{swahili:'u-kuta → kuta, u-furaha (no plural)', english:'wall → walls, happiness (abstract — no plural form)'} },
+
+  // ── Concord ──────────────────────────────────────────────────────────────────
+  { id:'gr-035', sw:'M-Wa adjective concord: mzuri / wazuri', en:'M-Wa class adjective agreement', pr:'m / wa', tags:['grammar','concord','morphology'],
+    note:'In English, adjectives never change: "a good person", "good people" — same word.\n\nIn Swahili, adjectives must match their noun\'s class AND number:\n\nm-tu m-zuri → wa-tu wa-zuri\n(a good person → good people)\n\nThe adjective prefix mirrors the noun prefix. This is called noun-class agreement (concord). Every noun class has its own adjective prefix.',
+    ex:{swahili:'mtu m-zuri → watu wa-zuri', english:'a good person → good people (prefix changes with class)'} },
+
+  { id:'gr-036', sw:'Ki-Vi adjective concord: kizuri / vizuri', en:'Ki-Vi class adjective agreement', pr:'ki / vi', tags:['grammar','concord','morphology'],
+    note:'The same adjective root (-zuri = good) takes a different prefix for each noun class:\n\nM-Wa: mtu mzuri / watu wazuri\nKi-Vi: kitu ki-zuri / vitu vi-zuri\nM-Mi: mti mzuri / miti mizuri\n\nSo kizuri doesn\'t just mean "good" — it means "good" specifically for a Ki-class thing.\n\nThis is one of the biggest challenges of Swahili grammar for English speakers.',
+    ex:{swahili:'kitu ki-zuri → vitu vi-zuri', english:'a good thing → good things (ki- → vi- with the noun)'} },
+
+  { id:'gr-037', sw:'M-Mi subject concord: u-na / i-na', en:'M-Mi class subject-verb agreement', pr:'u / i', tags:['grammar','concord','morphology'],
+    note:'When a plant, tree, or river (M-Mi class) is the subject, the verb uses u- or i- — NOT a- or wa-.\n\nm-ti u-na-anguka (the tree falls) — singular uses u-\nmi-ti i-na-anguka (the trees fall) — plural uses i-\n\nEach noun class has its own subject concord. This is why knowing a noun\'s class matters so much — it affects everything connected to it.',
+    ex:{swahili:'m-ti u-na-anguka → mi-ti i-na-anguka', english:'the tree falls → the trees fall (u- sg, i- pl)'} },
+
+  { id:'gr-038', sw:'Ki-Vi subject concord: ki-na / vi-na', en:'Ki-Vi class subject-verb agreement', pr:'ki / vi', tags:['grammar','concord','morphology'],
+    note:'Things (Ki-Vi class) use ki- or vi- as subject concord — never a- or wa-.\n\nki-tabu ki-na-anguka (the book falls)\nvi-tabu vi-na-anguka (the books fall)\n\nIf you forget the concord and say *kitabu inanguka, a native speaker will understand, but it sounds like a grammar error. Getting concord right is what fluency sounds like.',
+    ex:{swahili:'ki-tabu ki-na-anguka → vi-tabu vi-na-anguka', english:'the book falls → the books fall (ki- sg, vi- pl)'} },
+
+  // ── Useful derivational morphology ───────────────────────────────────────────
+  { id:'gr-039', sw:'-sha / -isha', en:'causative suffix — "to make/cause someone to [verb]"', pr:'sha / isha', tags:['grammar','derivation','morphology'],
+    note:'Makes a verb causative: "to make/cause someone to [verb]".\n\nkula (eat) → ku-l-isha (to feed = to cause to eat)\nlala (sleep) → lal-isha (to put to sleep)\nsoma (study) → somesha (to teach = to cause to learn)\nona (see) → onesha (to show = to cause to see)\n\nExtremely productive — you can causativise almost any verb.',
+    ex:{swahili:'kula → kulisha (to feed), lala → lalisha (to put to sleep)', english:'eat → to feed, sleep → to put to sleep'} },
+
+  { id:'gr-040', sw:'-ni', en:'locative suffix — "at / in a place"', pr:'ni', tags:['grammar','locative','morphology'],
+    note:'In English: "at" or "in" a place. Add to any place noun:\n\nnyumba (house) → nyumba-ni (at home)\nshule (school) → shule-ni (at school)\nsoko (market) → soko-ni (at the market)\nkazi (work) → kazi-ni (at work)\n\nMakes it easy to say location without a separate preposition. Just add -ni at the end.',
+    ex:{swahili:'nyumba → nyumba-ni, shule → shule-ni', english:'house → at home, school → at school'} },
+
+  { id:'gr-041', sw:'-ana', en:'reciprocal suffix — "each other"', pr:'a-na', tags:['grammar','derivation','morphology'],
+    note:'In English: "each other" or "one another". Added to a verb root:\n\npenda (love) → pend-ana (love each other)\nona (see) → on-ana (see each other / meet up)\nsalimia (greet) → salim-ana (greet each other)\nambia (tell) → ambi-ana (tell each other)\n\nTutaonana (we\'ll see each other) is one of the most common farewells in Swahili.',
+    ex:{swahili:'Tutaonana kesho', english:"We'll see each other tomorrow (ona + ana = onana)"} },
+
+  { id:'gr-042', sw:'-eka / -ikana', en:'stative suffix — "able to be / in a state of"', pr:'e-ka / i-ka-na', tags:['grammar','derivation','morphology'],
+    note:'Describes a state or inherent possibility — "able to be [verb-ed]" or "in a state of being [verb-ed]".\n\nfungua (open) → fungu-ka (be openable / can be opened)\nvunja (break) → vunj-ika (be breakable)\nomba (ask) → omb-eka (be askable / possible to ask)\n\nLess common than -sha but useful for describing whether something is possible or what state it\'s in.',
+    ex:{swahili:'fungu-ka (be opened), vunj-ika (be broken)', english:'to be openable, to be breakable'} },
 ];
