@@ -11,6 +11,7 @@ import type { Unit, CardWithState } from '../types';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function primaryEnglish(card: CardWithState): string {
+  if (card.type === 'grammar') return card.english;
   return card.english.split('/')[0].split(',')[0].replace(/\s*\([^)]*\)/g, '').trim();
 }
 
@@ -148,35 +149,37 @@ function WordsPhase({
         <ProgressBar current={wordIndex + 1} total={cards.length} label="Words" />
       </div>
 
-      <div className="flex-1 flex flex-col justify-center gap-4">
-        {/* Word card */}
-        <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-3">
-          {isNew && (
-            <span className="inline-block px-3 py-0.5 bg-cyan-500/15 border border-cyan-500/30 rounded-full text-cyan-400 text-xs font-semibold tracking-wide">
-              NEW
-            </span>
-          )}
-          <div className="text-4xl font-bold text-slate-100">{card.swahili}</div>
-          {card.pronunciation && (
-            <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
-          )}
-          <div className="pt-2 border-t border-slate-700">
-            <div className="text-2xl text-cyan-400 font-semibold">{card.english}</div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full flex flex-col justify-center gap-4 py-2">
+          {/* Word card */}
+          <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-3">
+            {isNew && (
+              <span className="inline-block px-3 py-0.5 bg-cyan-500/15 border border-cyan-500/30 rounded-full text-cyan-400 text-xs font-semibold tracking-wide">
+                NEW
+              </span>
+            )}
+            <div className="text-4xl font-bold text-slate-100">{card.swahili}</div>
+            {card.pronunciation && (
+              <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
+            )}
+            <div className="pt-2 border-t border-slate-700">
+              <div className="text-2xl text-cyan-400 font-semibold">{card.english}</div>
+            </div>
           </div>
+
+          {/* Example sentence */}
+          {ex && (
+            <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700 space-y-1.5">
+              <p className="text-slate-500 text-xs uppercase tracking-wide">Example</p>
+              <p className="text-slate-200 font-medium">{ex.swahili}</p>
+              <p className="text-slate-400 text-sm italic">"{ex.english}"</p>
+            </div>
+          )}
+
+          {card.type === 'grammar' && card.cultural_note && (
+            <InfoNote note={card.cultural_note} />
+          )}
         </div>
-
-        {/* Example sentence */}
-        {ex && (
-          <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700 space-y-1.5">
-            <p className="text-slate-500 text-xs uppercase tracking-wide">Example</p>
-            <p className="text-slate-200 font-medium">{ex.swahili}</p>
-            <p className="text-slate-400 text-sm italic">"{ex.english}"</p>
-          </div>
-        )}
-
-        {card.type === 'grammar' && card.cultural_note && (
-          <InfoNote note={card.cultural_note} />
-        )}
       </div>
 
       <button

@@ -56,34 +56,33 @@ export default function UserPickerScreen() {
     scope: DRIVE_SCOPE,
     onSuccess: async (tokenResponse) => {
       setOpening('google');
+      // Phase 1: fetch profile and save session — clear on failure (nothing was saved yet)
+      let username: string;
       try {
-        // Fetch profile info
         const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
         const profile = await profileRes.json();
-
         saveGoogleSession(tokenResponse.access_token, tokenResponse.expires_in, {
-          name: profile.name,
-          email: profile.email,
-          picture: profile.picture,
+          name: profile.name, email: profile.email, picture: profile.picture,
         });
-
-        const username = googleUsername({ name: profile.name, email: profile.email, picture: profile.picture });
-
-        // Download from Drive if a newer copy exists
+        username = googleUsername({ name: profile.name, email: profile.email, picture: profile.picture });
+      } catch {
+        setError('Google sign-in failed. Please try again.');
+        setOpening(null);
+        return;
+      }
+      // Phase 2: open database — session is already saved, so don't clear it on failure.
+      // The user can retry via "Continue →" with the valid saved token.
+      try {
         const driveData = await downloadIfNewer(tokenResponse.access_token);
-        if (driveData) {
-          await importDatabase(username, driveData);
-        }
-
+        if (driveData) await importDatabase(username, driveData);
         await openDatabase(username);
         sessionStorage.setItem('currentUser', username);
         const appProfile = await getProfile();
         navigate(appProfile ? '/app/home' : '/onboarding');
-      } catch (e) {
-        setError('Google sign-in failed. Please try again.');
-        clearGoogleSession();
+      } catch {
+        setError('Failed to open your profile. Please try again.');
         setOpening(null);
       }
     },
