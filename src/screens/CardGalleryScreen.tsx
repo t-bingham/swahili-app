@@ -158,14 +158,16 @@ function VerbConjugationTable({ verbRoot, onClose }: { verbRoot: string; onClose
 
 // ─── Card detail panel ────────────────────────────────────────────────────────
 
-function CardDetail({ card, onClose }: { card: CardWithState; onClose: () => void }) {
+function CardDetail({ card, onClose, onToggleStar }: {
+  card: CardWithState;
+  onClose: () => void;
+  onToggleStar: (id: string, starred: boolean) => void;
+}) {
   const [showConjugations, setShowConjugations] = useState(false);
-  const [starred, setStarred] = useState(card.state.starred ?? false);
+  const starred = card.state.starred ?? false;
 
-  async function toggleStar() {
-    const next = !starred;
-    setStarred(next);
-    await setCardStarred(card.id, next);
+  function toggleStar() {
+    onToggleStar(card.id, !starred);
   }
 
   const isVerb = card.type === 'vocabulary' && card.verb_root;
@@ -299,27 +301,40 @@ function CardDetail({ card, onClose }: { card: CardWithState; onClose: () => voi
 
 // ─── Card list item ───────────────────────────────────────────────────────────
 
-function CardItem({ card, onClick }: { card: CardWithState; onClick: () => void }) {
+function CardItem({ card, onClick, onToggleStar }: {
+  card: CardWithState;
+  onClick: () => void;
+  onToggleStar: (id: string, starred: boolean) => void;
+}) {
   return (
-    <button
+    <div
       onClick={onClick}
-      className="w-full text-left bg-slate-800/50 hover:bg-slate-800 rounded-xl px-4 py-3 transition-colors"
+      className="w-full text-left bg-slate-800/50 hover:bg-slate-800 rounded-xl px-3 py-3 transition-colors cursor-pointer"
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        {/* Inline star — stops propagation so it doesn't open the detail */}
+        <button
+          onClick={e => { e.stopPropagation(); onToggleStar(card.id, !card.state.starred); }}
+          className={`text-lg leading-none flex-shrink-0 transition-colors ${
+            card.state.starred ? 'text-yellow-400' : 'text-slate-600 hover:text-slate-400'
+          }`}
+          aria-label={card.state.starred ? 'Unstar' : 'Star'}
+        >
+          {card.state.starred ? '★' : '☆'}
+        </button>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-slate-100 font-semibold">{card.swahili}</span>
-            {card.state.starred && <span className="text-yellow-400 text-xs">★</span>}
-          </div>
+          <div className="text-slate-100 font-semibold">{card.swahili}</div>
           <div className="text-slate-400 text-sm truncate">{card.english}</div>
         </div>
+
         <div className="flex items-center gap-2 flex-shrink-0">
           <RegisterBadge register={card.register} />
           <DepthBadge depth={card.state.depth_level} />
           <span className="text-slate-600 text-lg">›</span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -487,6 +502,18 @@ export default function CardGalleryScreen() {
     });
   }, [search, typeFilter, unitFilter, statusFilter]);
 
+  async function handleToggleStar(cardId: string, newStarred: boolean) {
+    await setCardStarred(cardId, newStarred);
+    // Update the card in the list so the star reflects immediately
+    setCards(prev => prev.map(c =>
+      c.id === cardId ? { ...c, state: { ...c.state, starred: newStarred } } : c,
+    ));
+    // Also update the open detail panel if it's showing the same card
+    setSelectedCard(prev =>
+      prev?.id === cardId ? { ...prev, state: { ...prev.state, starred: newStarred } } : prev,
+    );
+  }
+
   useEffect(() => { runSearch(); }, [runSearch]);
 
   const filterPillCls = (active: boolean) =>
@@ -574,7 +601,7 @@ export default function CardGalleryScreen() {
         {/* Card list */}
         <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
           {cards.map(card => (
-            <CardItem key={card.id} card={card} onClick={() => setSelectedCard(card)} />
+            <CardItem key={card.id} card={card} onClick={() => setSelectedCard(card)} onToggleStar={handleToggleStar} />
           ))}
           {!loading && cards.length === 0 && (
             <div className="text-center py-12 text-slate-500">No cards found.</div>
@@ -584,7 +611,7 @@ export default function CardGalleryScreen() {
 
       {/* Detail panel */}
       {selectedCard && (
-        <CardDetail card={selectedCard} onClose={() => setSelectedCard(null)} />
+        <CardDetail card={selectedCard} onClose={() => setSelectedCard(null)} onToggleStar={handleToggleStar} />
       )}
     </>
   );
