@@ -78,7 +78,9 @@ export default function UserPickerScreen() {
       try {
         const driveData = await downloadIfNewer(tokenResponse.access_token);
         if (driveData) await importDatabase(username, driveData);
-        await openDatabase(username);
+        // openDatabase sets _db before running migrations. If a migration throws,
+        // _db is already open and a second call returns immediately. Auto-retry.
+        try { await openDatabase(username); } catch { await openDatabase(username); }
         sessionStorage.setItem('currentUser', username);
         const appProfile = await getProfile();
         navigate(appProfile ? '/app/home' : '/onboarding');
@@ -105,7 +107,9 @@ export default function UserPickerScreen() {
     try {
       const driveData = await downloadIfNewer(token);
       if (driveData) await importDatabase(username, driveData);
-      await openDatabase(username);
+      // openDatabase sets _db before running migrations. If a migration throws,
+      // _db is already open and a second call returns immediately. Auto-retry.
+      try { await openDatabase(username); } catch { await openDatabase(username); }
       sessionStorage.setItem('currentUser', username);
       const profile = await getProfile();
       navigate(profile ? '/app/home' : '/onboarding');
