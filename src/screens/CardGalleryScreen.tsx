@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getUnits, searchGalleryCards, getVerbConjugations, setCardStarred } from '../database/db';
-import type { CardWithState, Unit, CardType } from '../types';
+import type { CardWithState, Unit } from '../types';
 
 // ─── Type filter tabs ─────────────────────────────────────────────────────────
 
