@@ -117,6 +117,12 @@ export function getDb(): Database {
   return _db;
 }
 
+// Call this early (e.g. on the login screen) to pre-load the WASM module so
+// the first openDatabase() call doesn't cold-start under user interaction.
+export async function warmDatabase(): Promise<void> {
+  await getSql();
+}
+
 export function getCurrentUser(): string | null {
   return _currentUser;
 }

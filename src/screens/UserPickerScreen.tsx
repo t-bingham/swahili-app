@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
-import { openDatabase, listUsers, getProfile, importDatabase } from '../database/db';
+import { openDatabase, listUsers, getProfile, importDatabase, warmDatabase } from '../database/db';
 import {
   saveGoogleSession, getGoogleProfile, getGoogleToken, clearGoogleSession,
   googleUsername, isGoogleSignedIn,
@@ -22,6 +22,7 @@ export default function UserPickerScreen() {
 
   useEffect(() => {
     listUsers().then(setUsers).finally(() => setLoading(false));
+    warmDatabase().catch(() => {}); // pre-load WASM so first openDatabase() doesn't cold-start
   }, []);
 
   // ── Open a local profile ────────────────────────────────────────────────────
