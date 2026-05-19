@@ -17,6 +17,36 @@ import type {
 const DEFAULT_NEW_WORDS_PER_DAY = 10;
 const DEFAULT_REVIEWS_PER_DAY = 20;
 
+// ─── Swahili rule-based syllabifier ───────────────────────────────────────────
+// Used to back-fill the pronunciation field for existing users on migration.
+
+const _VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
+const _CLUSTERS = [
+  "ng'", 'ny', 'sh', 'ch', 'dh', 'gh', 'kh', 'th',
+  'mb',  'nd', 'nj', 'nk', 'nt', 'nz', 'mv',
+];
+
+function syllabify(word: string): string {
+  const w = word.toLowerCase();
+  const syllables: string[] = [];
+  let i = 0;
+  while (i < w.length) {
+    let syl = '';
+    while (i < w.length && !_VOWELS.has(w[i])) {
+      let matched = false;
+      for (const cl of _CLUSTERS) {
+        if (w.startsWith(cl, i)) { syl += cl; i += cl.length; matched = true; break; }
+      }
+      if (!matched) syl += w[i++];
+    }
+    if (i < w.length && _VOWELS.has(w[i])) syl += w[i++];
+    if (syl) syllables.push(syl);
+  }
+  if (!syllables.length) return word;
+  const stressAt = syllables.length >= 2 ? syllables.length - 2 : 0;
+  return syllables.map((s, idx) => idx === stressAt ? s.toUpperCase() : s).join('-');
+}
+
 // ─── sql.js init ──────────────────────────────────────────────────────────────
 
 let SQL: SqlJsStatic | null = null;
@@ -551,6 +581,25 @@ export async function openDatabase(userName: string): Promise<void> {
         HAVING COUNT(*) = SUM(CASE WHEN cs.depth_level >= 2 THEN 1 ELSE 0 END)
       )
   `);
+
+  // Back-fill pronunciation for existing users whose DB pre-dates the syllabifier.
+  // Only touches single-word cards that are still empty — safe to run every open.
+  const missingPron = _db.exec(
+    `SELECT DISTINCT swahili FROM cards
+     WHERE  swahili NOT LIKE '% %'
+     AND    type IN ('vocabulary', 'conjugation')
+     AND    (pronunciation IS NULL OR pronunciation = '')`
+  );
+  if (missingPron.length && missingPron[0].values.length > 0) {
+    for (const [word] of missingPron[0].values) {
+      _db.run(
+        `UPDATE cards SET pronunciation = ?
+         WHERE  swahili = ? AND type IN ('vocabulary', 'conjugation')
+         AND    (pronunciation IS NULL OR pronunciation = '')`,
+        [syllabify(word as string), word],
+      );
+    }
+  }
 }
 
 export async function closeDatabase(): Promise<void> {
