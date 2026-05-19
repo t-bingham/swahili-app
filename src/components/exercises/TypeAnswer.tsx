@@ -103,7 +103,14 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
           <div className="bg-slate-800 rounded-xl p-3 text-center">
             <span className="text-slate-400 text-sm">Correct answer: </span>
             <span className="text-green-400 font-semibold">{answer}</span>
+            {direction === 'en_to_sw' && card.pronunciation && (
+              <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
+            )}
           </div>
+        )}
+
+        {submitted && correct && direction === 'en_to_sw' && card.pronunciation && (
+          <div className="text-center text-slate-500 text-sm italic">[{card.pronunciation}]</div>
         )}
 
         {submitted && showMorphemeHints && (

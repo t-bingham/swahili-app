@@ -53,6 +53,10 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
         )}
       </div>
 
+      {selected && direction === 'en_to_sw' && card.pronunciation && (
+        <div className="text-center text-slate-500 text-sm italic">[{card.pronunciation}]</div>
+      )}
+
       {selected && showMorphemeHints && (
         <div className="bg-slate-800/60 rounded-xl p-3">
           <MorphemeBreakdown card={card} />
