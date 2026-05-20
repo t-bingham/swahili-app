@@ -14,6 +14,7 @@ import type {
   Session, ReviewLog, Unit, UnitProgress, ErrorType, MorphemeMastery,
 } from '../types';
 import { PLACEMENT_SEEDS, PHRASE_SEEDS, GRAMMAR_SEEDS } from './seeds';
+import { NOUN_CLASS_MAP } from '../data/nounClasses';
 
 const DEFAULT_NEW_WORDS_PER_DAY = 10;
 const DEFAULT_REVIEWS_PER_DAY = 20;
@@ -198,6 +199,15 @@ export async function openDatabase(userName: string): Promise<void> {
   try { _db.run('ALTER TABLE cards ADD COLUMN cultural_note TEXT'); } catch { /* already exists */ }
   try { _db.run('ALTER TABLE cards ADD COLUMN senses TEXT'); } catch { /* already exists */ }
   try { _db.run('ALTER TABLE cards ADD COLUMN placement_only INTEGER DEFAULT 0'); } catch { /* already exists */ }
+  try { _db.run('ALTER TABLE cards ADD COLUMN noun_class TEXT'); } catch { /* already exists */ }
+
+  // Populate noun_class for known vocabulary words (idempotent — only sets NULL rows)
+  for (const [word, cls] of Object.entries(NOUN_CLASS_MAP)) {
+    _db.run(
+      `UPDATE cards SET noun_class = ? WHERE swahili = ? AND type = 'vocabulary' AND noun_class IS NULL`,
+      [cls, word],
+    );
+  }
 
   // A-02: response time tracking on card states
   try { _db.run('ALTER TABLE card_states ADD COLUMN response_time_avg_ms REAL'); } catch { /* already exists */ }

@@ -10,6 +10,7 @@ import MultipleChoice from '../components/exercises/MultipleChoice';
 import TypeAnswer from '../components/exercises/TypeAnswer';
 import FillInBlank from '../components/exercises/FillInBlank';
 import RecallPrompt from '../components/exercises/RecallPrompt';
+import NounClassExercise from '../components/exercises/NounClassExercise';
 import RatingButtons from '../components/RatingButtons';
 import SessionInsights from '../components/SessionInsights';
 import type { CardWithState, ExerciseType, ProfileSettings } from '../types';
@@ -51,6 +52,18 @@ function pickExercise(
   }
   if (exercise === 'flashcard' && settings.disable_flashcard) {
     exercise = 'multiple_choice';
+  }
+  // For vocabulary nouns with a known class, occasionally swap in a noun class quiz.
+  // Only at scaffold level ≥ 3 (card is reasonably established) and 40% of the time
+  // so vocabulary meaning practice still dominates.
+  if (
+    exercise === 'multiple_choice' &&
+    card.type === 'vocabulary' &&
+    card.noun_class &&
+    level >= 3 &&
+    Math.random() < 0.4
+  ) {
+    exercise = 'noun_class';
   }
   return { exercise, level };
 }
@@ -463,6 +476,9 @@ export default function LearnScreen() {
             )}
             {exercise === 'fill_blank' && (
               <FillInBlank card={card} onAnswer={onExerciseAnswer} />
+            )}
+            {exercise === 'noun_class' && (
+              <NounClassExercise card={card} onAnswer={onExerciseAnswer} />
             )}
           </>
         )}

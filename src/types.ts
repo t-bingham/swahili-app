@@ -1,5 +1,5 @@
 export type CardType = 'vocabulary' | 'phrase' | 'grammar' | 'conjugation';
-export type ExerciseType = 'flashcard' | 'multiple_choice' | 'type_answer' | 'fill_blank';
+export type ExerciseType = 'flashcard' | 'multiple_choice' | 'type_answer' | 'fill_blank' | 'noun_class';
 export type ErrorType = 'phonological' | 'semantic' | 'structural';
 export type SessionType = 1 | 2 | 3 | 4;
 export type DepthLevel = 1 | 2 | 2.5 | 3 | 4 | 4.5 | 5.1 | 5.2 | 5.3;
