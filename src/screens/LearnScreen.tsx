@@ -105,8 +105,12 @@ export default function LearnScreen() {
     const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current);
     setExercise(ex);
     setLevel(lv);
-    // direction applies to all exercise types (not just flashcard)
-    setDirection(resolveDirection(settingsRef.current.exercise_direction));
+    // Grammar cards always show Swahili → English: "What does -na- mean?"
+    // Asking "How do you say [complex English description] in Swahili?" makes no sense.
+    const dir = card.type === 'grammar'
+      ? 'sw_to_en'
+      : resolveDirection(settingsRef.current.exercise_direction);
+    setDirection(dir);
     setRevealed(false);
     setAutoCorrect(null);
     setWrongAnswer(null);
