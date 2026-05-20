@@ -1,5 +1,5 @@
 import { getDb } from '../database/db';
-import { getGoogleToken, getGoogleProfile } from '../auth/googleAuth';
+import { getOrRefreshToken, getGoogleProfile } from '../auth/googleAuth';
 
 const FILE_NAME = 'swahili.db';
 
@@ -47,8 +47,9 @@ export async function downloadIfNewer(token: string): Promise<Uint8Array | null>
 
 // Uploads the current in-memory DB to Drive. Called after each session ends.
 export async function uploadToDrive(): Promise<boolean> {
-  const token = getGoogleToken();
-  if (!token || !navigator.onLine) return false;
+  if (!navigator.onLine) return false;
+  const token = await getOrRefreshToken();
+  if (!token) return false;
   try {
     const data = getDb().export();
     const file = await findFile(token);

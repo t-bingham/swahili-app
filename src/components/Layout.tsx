@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { getCurrentUser, openDatabase, getProfile } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
+import { uploadToDrive } from '../sync/driveSync';
 
 const tabs = [
   { to: '/app/home',    label: 'Home',    icon: '🏠' },
@@ -30,6 +31,20 @@ export default function Layout() {
         getProfile().then(p => { if (p) applyDisplaySettings(p.settings); });
       })
       .catch(() => { sessionStorage.removeItem('currentUser'); navigate('/', { replace: true }); });
+  }, []);
+
+  // Background sync: upload to Drive when coming back online or returning to the tab.
+  useEffect(() => {
+    function trySyncIfOnline() {
+      if (navigator.onLine && getCurrentUser() !== null) uploadToDrive();
+    }
+    const handleVisibility = () => { if (!document.hidden) trySyncIfOnline(); };
+    window.addEventListener('online', trySyncIfOnline);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('online', trySyncIfOnline);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   if (!ready) return null;
