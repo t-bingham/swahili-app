@@ -53,11 +53,61 @@ export default function UserPickerScreen() {
 
   // ── Google sign-in ─────────────────────────────────────────────────────────
 
+  // Shared helper: open DB (with auto-retry) then navigate into the app.
+  // Kept as a plain async function so both the interactive and silent-refresh
+  // paths can call it without duplicating the retry logic.
+  async function openDbAndNavigate(username: string) {
+    // openDatabase sets _db before running migrations; if a migration throws,
+    // _db is already set and a second call returns immediately. Auto-retry.
+    try { await openDatabase(username); } catch { await openDatabase(username); }
+    sessionStorage.setItem('currentUser', username);
+    const appProfile = await getProfile();
+    navigate(appProfile ? '/app/home' : '/onboarding');
+  }
+
+  // Silent token refresh — uses the existing Google browser session to obtain
+  // a new access token with no visible UI (prompt: 'none').  Works as long as
+  // the user is still signed into Google in their browser (~months).
+  // Falls back to opening the local DB without sync if it fails.
+  const silentRefresh = useGoogleLogin({
+    scope: DRIVE_SCOPE,
+    prompt: 'none',
+    hint: googleProfile?.email ?? undefined,
+    onSuccess: async (tokenResponse) => {
+      const saved = getGoogleProfile();
+      if (!saved) { setOpening(null); return; }
+      saveGoogleSession(tokenResponse.access_token, tokenResponse.expires_in, saved);
+      const username = googleUsername(saved);
+      try {
+        const driveData = await downloadIfNewer(tokenResponse.access_token);
+        if (driveData) await importDatabase(username, driveData);
+        await openDbAndNavigate(username);
+      } catch {
+        setError('Failed to open your profile. Please try again.');
+        setOpening(null);
+      }
+    },
+    onError: async () => {
+      // Silent refresh failed (Google session expired or offline).
+      // Open the local database without Drive sync — works fully offline.
+      const saved = getGoogleProfile();
+      if (!saved) { setOpening(null); return; }
+      try {
+        await openDbAndNavigate(googleUsername(saved));
+      } catch {
+        setError('Failed to open your profile. Please try again.');
+        setOpening(null);
+      }
+    },
+  });
+
+  // Interactive sign-in — shown when there is no saved profile, or when
+  // the user has no local DB and the silent refresh also failed.
   const googleLogin = useGoogleLogin({
     scope: DRIVE_SCOPE,
     onSuccess: async (tokenResponse) => {
       setOpening('google');
-      // Phase 1: fetch profile and save session — clear on failure (nothing was saved yet)
+      // Phase 1: fetch Google profile and persist the session.
       let username: string;
       try {
         const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -73,17 +123,12 @@ export default function UserPickerScreen() {
         setOpening(null);
         return;
       }
-      // Phase 2: open database — session is already saved, so don't clear it on failure.
-      // The user can retry via "Continue →" with the valid saved token.
+      // Phase 2: open the database. Session is already saved, so don't
+      // clear it on a DB failure — the user can retry via "Continue →".
       try {
         const driveData = await downloadIfNewer(tokenResponse.access_token);
         if (driveData) await importDatabase(username, driveData);
-        // openDatabase sets _db before running migrations. If a migration throws,
-        // _db is already open and a second call returns immediately. Auto-retry.
-        try { await openDatabase(username); } catch { await openDatabase(username); }
-        sessionStorage.setItem('currentUser', username);
-        const appProfile = await getProfile();
-        navigate(appProfile ? '/app/home' : '/onboarding');
+        await openDbAndNavigate(username);
       } catch {
         setError('Failed to open your profile. Please try again.');
         setOpening(null);
@@ -100,19 +145,38 @@ export default function UserPickerScreen() {
   async function continueAsGoogle() {
     if (!googleProfile) return;
     const token = getGoogleToken();
-    // Token expired — re-authenticate rather than failing with a confusing error
-    if (!token) { googleLogin(); return; }
     const username = googleUsername(googleProfile);
+    const hasLocalDb = users.includes(username);
+
+    if (!token) {
+      // Token expired. If there is no local database at all, we must re-auth
+      // to download from Drive (or create a fresh profile). Otherwise the local
+      // DB is the source of truth and we don't need Drive to open the app.
+      if (!hasLocalDb) { googleLogin(); return; }
+
+      setOpening('google');
+      if (navigator.onLine) {
+        // Attempt a silent token refresh using the existing Google browser session.
+        // onSuccess → sync + open, onError → open local DB without sync.
+        silentRefresh();
+      } else {
+        // Offline — open the local database directly, skip Drive sync.
+        try {
+          await openDbAndNavigate(username);
+        } catch {
+          setError('Failed to open your profile. Please try again.');
+          setOpening(null);
+        }
+      }
+      return;
+    }
+
+    // Token still valid — sync with Drive then open.
     setOpening('google');
     try {
       const driveData = await downloadIfNewer(token);
       if (driveData) await importDatabase(username, driveData);
-      // openDatabase sets _db before running migrations. If a migration throws,
-      // _db is already open and a second call returns immediately. Auto-retry.
-      try { await openDatabase(username); } catch { await openDatabase(username); }
-      sessionStorage.setItem('currentUser', username);
-      const profile = await getProfile();
-      navigate(profile ? '/app/home' : '/onboarding');
+      await openDbAndNavigate(username);
     } catch {
       setError('Failed to open your profile. Please try again.');
       setOpening(null);
