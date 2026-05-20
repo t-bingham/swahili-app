@@ -484,17 +484,29 @@ export default function LearnScreen() {
               <NounClassExercise card={card} onAnswer={onExerciseAnswer} />
             )}
 
-            {/* Example sentence — shown after answering any non-flashcard exercise.
-                FlashCard handles its own example display internally. */}
-            {phase === 'rating' &&
-              exercise !== 'flashcard' &&
-              settingsRef.current.show_example_sentences !== false &&
-              card.example_sentences[0] && (
-              <div className="bg-slate-800/40 rounded-xl px-4 py-3 space-y-1">
-                <p className="text-slate-300 text-sm">{card.example_sentences[0].swahili}</p>
-                <p className="text-slate-500 text-sm italic">"{card.example_sentences[0].english}"</p>
-              </div>
-            )}
+            {/* Pronunciation + example sentence — shown after answering any non-flashcard
+                exercise. FlashCard handles both internally. */}
+            {phase === 'rating' && exercise !== 'flashcard' && (() => {
+              const showPron = settingsRef.current.show_pronunciation_on_reveal &&
+                settingsRef.current.pronunciation_style !== 'none' &&
+                card.pronunciation;
+              const showEx = settingsRef.current.show_example_sentences !== false &&
+                card.example_sentences[0];
+              if (!showPron && !showEx) return null;
+              return (
+                <div className="bg-slate-800/40 rounded-xl px-4 py-3 space-y-1.5">
+                  {showPron && (
+                    <p className="text-slate-500 text-sm italic text-center">[{card.pronunciation}]</p>
+                  )}
+                  {showEx && (
+                    <>
+                      <p className="text-slate-300 text-sm">{card.example_sentences[0].swahili}</p>
+                      <p className="text-slate-500 text-sm italic">"{card.example_sentences[0].english}"</p>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </>
         )}
       </div>

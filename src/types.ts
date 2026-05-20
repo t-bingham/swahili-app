@@ -107,8 +107,9 @@ export interface ProfileSettings {
   // Exercise preferences
   disable_type_answer?:    boolean;
   disable_flashcard?:      boolean;
-  show_morpheme_hints?:    boolean;
-  show_example_sentences?: boolean;
+  show_morpheme_hints?:         boolean;
+  show_example_sentences?:      boolean;
+  show_pronunciation_on_reveal?: boolean;
   pronunciation_style?:    PronunciationStyle;
   // Display / accessibility
   large_text?:             boolean;

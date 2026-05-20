@@ -311,6 +311,12 @@ export default function SettingsScreen() {
           onChange={v => update('show_example_sentences', v)}
         />
         <ToggleRow
+          label="Show pronunciation on reveal"
+          hint="Shows the syllable guide (e.g. ki-TA-bu) after you answer — uses the pronunciation style set below."
+          value={settings.show_pronunciation_on_reveal ?? false}
+          onChange={v => update('show_pronunciation_on_reveal', v)}
+        />
+        <ToggleRow
           label="Disable type-answer"
           hint="Skip typed input exercises — useful if you prefer tapping over typing."
           value={settings.disable_type_answer ?? false}
