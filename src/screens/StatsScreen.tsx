@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { countCardsByDepth, getRetentionByCategory, getDailyActivity, getTotalReviews } from '../database/db';
 
 const DEPTH_LABELS: Record<number, string> = {
-  1: 'New', 2: 'Learning', 2.5: 'Fast-track',
+  1: 'Not yet seen', 2: 'Learning', 2.5: 'Fast-track',
   3: 'Young', 4: 'Mature', 4.5: 'Fast-mature',
   5.1: 'Expert', 5.2: 'Master', 5.3: 'Legend',
 };
@@ -76,13 +76,18 @@ export default function StatsScreen() {
               const d = Number(depth);
               const pct = totalCards > 0 ? (count / totalCards) * 100 : 0;
               return (
-                <div key={depth} className="flex items-center gap-3">
-                  <div className="w-20 text-xs text-slate-400 shrink-0">{DEPTH_LABELS[d] ?? depth}</div>
-                  <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${DEPTH_COLORS[d] ?? 'bg-slate-500'}`} style={{ width: `${pct}%` }} />
+                <React.Fragment key={depth}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-20 text-xs text-slate-400 shrink-0">{DEPTH_LABELS[d] ?? depth}</div>
+                    <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${DEPTH_COLORS[d] ?? 'bg-slate-500'}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="w-10 text-right text-xs text-slate-400">{count}</div>
                   </div>
-                  <div className="w-10 text-right text-xs text-slate-400">{count}</div>
-                </div>
+                  {d === 1 && (
+                    <p className="text-slate-600 text-xs pl-20 -mt-1">all curriculum cards not yet started</p>
+                  )}
+                </React.Fragment>
               );
             })}
         </div>
@@ -111,23 +116,32 @@ export default function StatsScreen() {
 
       {/* Activity heatmap */}
       <div className="bg-slate-800 rounded-xl p-4">
-        <h2 className="text-slate-400 text-sm font-medium mb-4">Activity (12 weeks)</h2>
+        <h2 className="text-slate-400 text-sm font-medium mb-3">Activity (12 weeks)</h2>
         <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
-          {Array.from({ length: 12 }, (_, week) => (
-            <div key={week} className="flex flex-col gap-1">
-              {grid.slice(week * 7, week * 7 + 7).map(day => {
-                const intensity = day.count / maxActivity;
-                const opacity = day.count === 0 ? 'opacity-10' : intensity < 0.33 ? 'opacity-40' : intensity < 0.66 ? 'opacity-70' : 'opacity-100';
-                return (
-                  <div
-                    key={day.dateStr}
-                    title={`${day.dateStr}: ${day.count} reviews`}
-                    className={`aspect-square rounded-sm bg-cyan-400 ${opacity}`}
-                  />
-                );
-              })}
-            </div>
-          ))}
+          {Array.from({ length: 12 }, (_, week) => {
+            const firstDay = grid[week * 7];
+            const prevFirstDay = week > 0 ? grid[(week - 1) * 7] : null;
+            const showLabel = !prevFirstDay || firstDay.dateStr.slice(5, 7) !== prevFirstDay.dateStr.slice(5, 7);
+            const monthAbbr = showLabel
+              ? new Date(firstDay.dateStr).toLocaleDateString('en', { month: 'short' })
+              : '';
+            return (
+              <div key={week} className="flex flex-col gap-1">
+                <div className="text-slate-600 text-[9px] h-3 leading-3 truncate">{monthAbbr}</div>
+                {grid.slice(week * 7, week * 7 + 7).map(day => {
+                  const intensity = day.count / maxActivity;
+                  const opacity = day.count === 0 ? 'opacity-10' : intensity < 0.33 ? 'opacity-40' : intensity < 0.66 ? 'opacity-70' : 'opacity-100';
+                  return (
+                    <div
+                      key={day.dateStr}
+                      title={`${day.dateStr}: ${day.count} reviews`}
+                      className={`aspect-square rounded-sm bg-cyan-400 ${opacity}`}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

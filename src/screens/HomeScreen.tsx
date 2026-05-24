@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile, countOverdueCards, getLastSession, countCardsByDepth } from '../database/db';
+import { getProfile, countOverdueCards, getLastSession, countCardsByDepth, getDailyStats } from '../database/db';
 import type { Profile, Session } from '../types';
 
 export default function HomeScreen() {
@@ -10,14 +10,16 @@ export default function HomeScreen() {
   const [lastSession, setLastSession] = useState<Session | null>(null);
   const [totalLearned, setTotalLearned] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [dailyStats, setDailyStats] = useState<{ reviewsToday: number; newWordsToday: number } | null>(null);
 
   useEffect(() => {
     async function load() {
-      const [p, due, sess, depths] = await Promise.all([
+      const [p, due, sess, depths, ds] = await Promise.all([
         getProfile(),
         countOverdueCards(new Date().toISOString()),
         getLastSession(),
         countCardsByDepth(),
+        getDailyStats(),
       ]);
       setProfile(p);
       setDueCount(due);
@@ -26,6 +28,7 @@ export default function HomeScreen() {
         .filter(([d]) => Number(d) >= 2)
         .reduce((s, [, c]) => s + c, 0);
       setTotalLearned(learned);
+      setDailyStats(ds);
       setLoading(false);
     }
     load();
@@ -62,6 +65,22 @@ export default function HomeScreen() {
       >
         {dueCount > 0 ? `Study Now · ${dueCount} due` : 'Start Session'}
       </button>
+
+      {/* Daily progress */}
+      {profile && dailyStats !== null && (
+        <div className="bg-slate-800 rounded-xl p-4">
+          <div className="flex justify-between text-xs text-slate-400 mb-2">
+            <span>Today's reviews</span>
+            <span>{dailyStats.reviewsToday} / {profile.settings.reviews_per_day ?? 20}</span>
+          </div>
+          <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-cyan-500 rounded-full transition-all"
+              style={{ width: `${Math.min(100, (dailyStats.reviewsToday / (profile.settings.reviews_per_day ?? 20)) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Last session */}
       {lastSession && (

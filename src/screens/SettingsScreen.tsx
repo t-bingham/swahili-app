@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile, updateProfileSettings, closeDatabase } from '../database/db';
+import { getProfile, updateProfileSettings, closeDatabase, resetCurrentUserData } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
 import { getGoogleProfile, clearGoogleSession } from '../auth/googleAuth';
 import { uploadToDrive, getLastSyncTime, clearSyncState } from '../sync/driveSync';
@@ -163,6 +163,7 @@ const DEFAULT_SETTINGS: ProfileSettings = {
   show_example_sentences: true,
   gamification_enabled: true,
   pronunciation_style: 'syllable',
+
 };
 
 export default function SettingsScreen() {
@@ -193,8 +194,10 @@ export default function SettingsScreen() {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  async function switchUser() {
+  async function switchGoogleAccount() {
     await closeDatabase();
+    clearGoogleSession();
+    clearSyncState();
     navigate('/');
   }
 
@@ -207,10 +210,8 @@ export default function SettingsScreen() {
     if (ok) setTimeout(() => setSyncMsg(''), 3000);
   }
 
-  function disconnectGoogle() {
-    clearGoogleSession();
-    clearSyncState();
-    navigate('/');
+  async function disconnectGoogle() {
+    await switchGoogleAccount();
   }
 
   if (loading) return <div className="flex h-full items-center justify-center text-slate-400">Loading…</div>;
@@ -333,6 +334,7 @@ export default function SettingsScreen() {
       {/* ── Display ── */}
       <SectionHeader>Display</SectionHeader>
       <SettingsCard>
+
         <SegmentedRow
           label="Pronunciation style"
           value={settings.pronunciation_style ?? 'syllable'}
@@ -418,23 +420,43 @@ export default function SettingsScreen() {
       )}
 
       {/* ── Developer tools ── */}
-      <SectionHeader>Developer Tools</SectionHeader>
-      <SettingsCard>
-        <button onClick={() => navigate('/app/review')} className="w-full p-4 text-left text-slate-300 hover:text-slate-100 flex items-center gap-3">
-          <span className="text-xl">✏️</span>
-          <div>
-            <div className="text-sm font-medium">Card Review Pipeline</div>
-            <div className="text-xs text-slate-500 mt-0.5">Correct generated card content &amp; mark as reviewed</div>
-          </div>
-        </button>
-      </SettingsCard>
+      {import.meta.env.DEV && (
+        <>
+          <SectionHeader>Developer Tools</SectionHeader>
+          <SettingsCard>
+            <button onClick={() => navigate('/app/review')} className="w-full p-4 text-left text-slate-300 hover:text-slate-100 flex items-center gap-3">
+              <span className="text-xl">✏️</span>
+              <div>
+                <div className="text-sm font-medium">Card Review Pipeline</div>
+                <div className="text-xs text-slate-500 mt-0.5">Correct generated card content &amp; mark as reviewed</div>
+              </div>
+            </button>
+            <button
+              onClick={async () => {
+                if (!confirm('Delete all progress and sign out? This cannot be undone.')) return;
+                await resetCurrentUserData();
+                clearGoogleSession();
+                clearSyncState();
+                navigate('/');
+              }}
+              className="w-full p-4 text-left text-red-400 hover:text-red-300 flex items-center gap-3"
+            >
+              <span className="text-xl">🗑️</span>
+              <div>
+                <div className="text-sm font-medium">Reset account data</div>
+                <div className="text-xs text-red-400/60 mt-0.5">Wipes local database and signs out</div>
+              </div>
+            </button>
+          </SettingsCard>
+        </>
+      )}
 
       {/* ── Account ── */}
       <SectionHeader>Account</SectionHeader>
       <SettingsCard>
-        <button onClick={switchUser} className="w-full p-4 text-left text-slate-300 hover:text-slate-100 flex items-center gap-3">
+        <button onClick={switchGoogleAccount} className="w-full p-4 text-left text-slate-300 hover:text-slate-100 flex items-center gap-3">
           <span className="text-xl">👤</span>
-          <span>Switch User</span>
+          <span>Switch Google account</span>
         </button>
       </SettingsCard>
     </div>

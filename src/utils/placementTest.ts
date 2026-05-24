@@ -1,6 +1,6 @@
 import type { CardWithState } from '../types';
 
-export const PLACEMENT_MAX_MISSES = 5;
+export const PLACEMENT_MAX_QUESTIONS = 15;
 
 // ─── Answer validation ────────────────────────────────────────────────────────
 
@@ -8,8 +8,6 @@ function normalize(s: string): string {
   return s.trim().toLowerCase().replace(/['']/g, "'");
 }
 
-// Returns true if userAnswer matches any accepted translation for the card.
-// Checks the primary `english` field and every entry in `senses[]`.
 export function validatePlacementAnswer(userAnswer: string, card: CardWithState): boolean {
   const ans = normalize(userAnswer);
   if (ans === normalize(card.english)) return true;
@@ -24,34 +22,51 @@ export function validatePlacementAnswer(userAnswer: string, card: CardWithState)
 // ─── Scoring ──────────────────────────────────────────────────────────────────
 
 export interface PlacementResult {
-  correct:    number;
-  total:      number;
-  orderIndex: number; // target unit.order_index — cards in units < this will be marked mastered
-  label:      string; // short descriptor for the result screen
+  orderIndex: number; // target unit.order_index — cards in units before this are marked mastered
+  label:      string; // short descriptor shown on the result screen
 }
 
-export function scorePlacement(correct: number): PlacementResult {
-  if (correct < 5)  return { correct, total: correct, orderIndex: 0,  label: 'Beginner' };
-  if (correct < 10) return { correct, total: correct, orderIndex: 4,  label: 'Early Beginner' };
-  if (correct < 15) return { correct, total: correct, orderIndex: 8,  label: 'Beginner+' };
-  if (correct < 25) return { correct, total: correct, orderIndex: 14, label: 'Lower Intermediate' };
-  if (correct < 35) return { correct, total: correct, orderIndex: 20, label: 'Intermediate' };
-  if (correct < 45) return { correct, total: correct, orderIndex: 27, label: 'Upper Intermediate' };
-  return { correct, total: correct, orderIndex: 33, label: 'Advanced' };
+// Binary-search placement: `lo` is the index into the placement card pool (sorted
+// by frequency_rank) where the learner's knowledge ran out. `total` is pool size.
+// Maps a position percentile to a curriculum order_index.
+export function scorePlacementByPosition(lo: number, total: number): PlacementResult {
+  const pct = total > 0 ? lo / total : 0;
+  if (pct < 0.10) return { orderIndex: 0,  label: 'Beginner' };
+  if (pct < 0.22) return { orderIndex: 4,  label: 'Early Beginner' };
+  if (pct < 0.38) return { orderIndex: 8,  label: 'Beginner+' };
+  if (pct < 0.52) return { orderIndex: 14, label: 'Lower Intermediate' };
+  if (pct < 0.66) return { orderIndex: 20, label: 'Intermediate' };
+  if (pct < 0.82) return { orderIndex: 27, label: 'Upper Intermediate' };
+  return { orderIndex: 33, label: 'Advanced' };
 }
 
 // ─── Distractor generation ────────────────────────────────────────────────────
 
-// Picks 3 distractors for a multiple-choice question from the placement pool.
-// Prefers cards of the same part-of-speech so options feel plausible.
+// Picks 3 distractors for a multiple-choice question.
+//
+// Key rule: distractors must share the same grammatical *form* as the correct answer,
+// not just the same part of speech. For conjugation cards the english is a full clause
+// ("he is eating") while vocabulary cards are infinitives ("to eat") — mixing them lets
+// learners identify the answer by grammatical structure alone, without knowing Swahili.
 export function pickDistractors(card: CardWithState, pool: CardWithState[]): string[] {
   const others = pool.filter(c => c.id !== card.id);
   const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
 
-  // Prefer same part_of_speech
-  const samePOS = shuffle(others.filter(c => c.part_of_speech === card.part_of_speech));
-  const rest    = shuffle(others.filter(c => c.part_of_speech !== card.part_of_speech));
-  const ordered = [...samePOS, ...rest];
+  let preferred: CardWithState[];
+  let fallback: CardWithState[];
 
-  return ordered.slice(0, 3).map(c => c.english);
+  if (card.type === 'conjugation') {
+    // Must use other conjugations — bare infinitives immediately reveal the answer
+    preferred = shuffle(others.filter(c => c.type === 'conjugation'));
+    fallback  = shuffle(others.filter(c => c.type !== 'conjugation'));
+  } else if (card.type === 'grammar') {
+    preferred = shuffle(others.filter(c => c.type === 'grammar'));
+    fallback  = shuffle(others.filter(c => c.type !== 'grammar'));
+  } else {
+    // Vocabulary / phrase: prefer same part of speech as before
+    preferred = shuffle(others.filter(c => c.part_of_speech === card.part_of_speech));
+    fallback  = shuffle(others.filter(c => c.part_of_speech !== card.part_of_speech));
+  }
+
+  return [...preferred, ...fallback].slice(0, 3).map(c => c.english);
 }

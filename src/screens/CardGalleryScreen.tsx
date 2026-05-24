@@ -177,7 +177,7 @@ function CardDetail({ card, onClose, onToggleStar }: {
     <div className="fixed inset-0 bg-slate-950/90 z-50 flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-slate-800">
         <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-sm">← Back</button>
-        <button onClick={toggleStar} className={`text-xl ${starred ? 'text-yellow-400' : 'text-slate-700'}`}>
+        <button onClick={toggleStar} aria-label={starred ? 'Remove from starred words' : 'Add to starred words'} className={`text-xl ${starred ? 'text-yellow-400' : 'text-slate-700'}`}>
           {starred ? '★' : '☆'}
         </button>
       </div>

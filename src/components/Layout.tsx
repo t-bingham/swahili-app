@@ -26,6 +26,7 @@ export default function Layout() {
     const stored = sessionStorage.getItem('currentUser');
     if (!stored) { navigate('/', { replace: true }); return; }
     openDatabase(stored)
+      .catch(() => openDatabase(stored))  // retry once for WASM cold-start
       .then(() => {
         setReady(true);
         getProfile().then(p => { if (p) applyDisplaySettings(p.settings); });

@@ -7,11 +7,24 @@ export function scaffoldLevel(
   const known = card.tags.filter(t => skillMastery.has(t));
   if (!known.length) return 5; // no data → maximum support
   const mastery = known.reduce((s, t) => s + skillMastery.get(t)!, 0) / known.length;
-  if (mastery < 0.20) return 5;
-  if (mastery < 0.40) return 4;
-  if (mastery < 0.60) return 3;
-  if (mastery < 0.80) return 2;
-  return 1;
+  let level: 1 | 2 | 3 | 4 | 5;
+  if (mastery < 0.20) level = 5;
+  else if (mastery < 0.40) level = 4;
+  else if (mastery < 0.60) level = 3;
+  else if (mastery < 0.80) level = 2;
+  else level = 1;
+
+  // Topic tags (e.g. 'nouns', 'food') are shared across many cards and can
+  // inflate mastery for recently introduced cards. Clamp the level so that a
+  // card's per-card depth never allows a harder exercise than the card has
+  // earned individually:
+  //   depth 2 (learning)    → at most multiple_choice (level ≥ 3)
+  //   depth 3 (young/known) → at most multiple_choice (level ≥ 3)
+  //   depth 4+ (established) → no clamp (type_answer allowed)
+  const depth = card.state.depth_level;
+  if (depth <= 3 && level < 3) level = 3;
+
+  return level;
 }
 
 export function scaffoldHint(card: CardWithState): string | undefined {

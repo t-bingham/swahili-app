@@ -52,6 +52,12 @@ export default function FillInBlank({ card, onAnswer }: Props) {
         <div className="mt-4 text-slate-500 text-sm italic">"{card.english}"</div>
       </div>
 
+      {submitted && (
+        <p aria-live="polite" className={`text-sm font-semibold text-center ${correct ? 'text-green-400' : 'text-red-400'}`}>
+          {correct ? '✓ Correct' : '✗ Incorrect'}
+        </p>
+      )}
+
       <input
         ref={inputRef}
         type="text"
@@ -68,11 +74,21 @@ export default function FillInBlank({ card, onAnswer }: Props) {
       />
 
       {submitted && !correct && (
-        <div className="bg-slate-800 rounded-xl p-3 text-center">
-          <span className="text-slate-400 text-sm">Answer: </span>
-          <span className="text-green-400 font-semibold">{correctAnswer}</span>
+        <div className="bg-slate-800 rounded-xl p-3 space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-slate-400 text-sm">Answer: </span>
+            <span className="text-green-400 font-semibold">{correctAnswer}</span>
+          </div>
+          {card.example_sentences[0] && (
+            <div className="border-t border-slate-700 pt-2">
+              <p className="text-slate-500 text-xs mb-1">Remember it with:</p>
+              <p className="text-slate-300 text-sm italic">"{card.example_sentences[0].swahili}"</p>
+              <p className="text-slate-500 text-xs">"{card.example_sentences[0].english}"</p>
+            </div>
+          )}
         </div>
       )}
+
 
       {!submitted && (
         <button

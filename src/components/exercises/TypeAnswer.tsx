@@ -71,6 +71,11 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
         {hasAlts && !submitted && (
           <p className="text-slate-500 text-xs text-center">Any one translation accepted</p>
         )}
+        {submitted && (
+          <p aria-live="polite" className={`text-sm font-semibold text-center ${correct ? 'text-green-400' : 'text-red-400'}`}>
+            {correct ? '✓ Correct' : '✗ Incorrect'}
+          </p>
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -97,18 +102,24 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
         />
 
         {submitted && !correct && (
-          <div className="bg-slate-800 rounded-xl p-3 text-center">
-            <span className="text-slate-400 text-sm">Correct answer: </span>
-            <span className="text-green-400 font-semibold">{answer}</span>
+          <div className="bg-slate-800 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-slate-400 text-sm">Correct answer: </span>
+              <span className="text-green-400 font-semibold">{answer}</span>
+            </div>
             {direction === 'en_to_sw' && card.pronunciation && (
-              <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
+              <div className="text-slate-500 text-sm italic text-center">[{card.pronunciation}]</div>
+            )}
+            {card.example_sentences[0] && (
+              <div className="border-t border-slate-700 pt-2">
+                <p className="text-slate-500 text-xs mb-1">Remember it with:</p>
+                <p className="text-slate-300 text-sm italic">"{card.example_sentences[0].swahili}"</p>
+                <p className="text-slate-500 text-xs">"{card.example_sentences[0].english}"</p>
+              </div>
             )}
           </div>
         )}
 
-        {submitted && correct && direction === 'en_to_sw' && card.pronunciation && (
-          <div className="text-center text-slate-500 text-sm italic">[{card.pronunciation}]</div>
-        )}
 
         {submitted && showMorphemeHints && (
           <div className="bg-slate-800/60 rounded-xl p-3">

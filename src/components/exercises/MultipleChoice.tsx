@@ -92,6 +92,21 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
           );
         })}
       </div>
+
+      {selected !== null && (
+        <p aria-live="polite" className={`text-sm font-semibold text-center ${selected === correctAnswer ? 'text-green-400' : 'text-red-400'}`}>
+          {selected === correctAnswer ? '✓ Correct' : '✗ Incorrect'}
+        </p>
+      )}
+
+
+      {selected !== null && selected !== correctAnswer && card.example_sentences[0] && (
+        <div className="bg-slate-800/60 rounded-xl p-3 space-y-1">
+          <p className="text-slate-500 text-xs">Remember it with:</p>
+          <p className="text-slate-300 text-sm italic">"{card.example_sentences[0].swahili}"</p>
+          <p className="text-slate-500 text-xs">"{card.example_sentences[0].english}"</p>
+        </div>
+      )}
     </div>
   );
 }

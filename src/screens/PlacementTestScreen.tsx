@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlacementCards, applyPlacementResult, getUnitAtOrAfter } from '../database/db';
-import { validatePlacementAnswer, pickDistractors, scorePlacement, PLACEMENT_MAX_MISSES } from '../utils/placementTest';
+import { validatePlacementAnswer, pickDistractors, scorePlacementByPosition, PLACEMENT_MAX_QUESTIONS } from '../utils/placementTest';
 import type { CardWithState, Unit } from '../types';
 
 // ─── Loading state ────────────────────────────────────────────────────────────
@@ -17,35 +17,33 @@ function LoadingView() {
 // ─── Result screen ────────────────────────────────────────────────────────────
 
 interface ResultProps {
-  correct: number;
-  total: number;
-  label: string;
-  orderIndex: number;
-  targetUnit: Unit | null;
-  onStartHere: () => void;
+  questions:   number;
+  label:       string;
+  orderIndex:  number;
+  targetUnit:  Unit | null;
+  onStartHere:      () => void;
   onStartBeginning: () => void;
 }
 
-function ResultScreen({ correct, total, label, orderIndex, targetUnit, onStartHere, onStartBeginning }: ResultProps) {
-  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-
+function ResultScreen({ questions, label, orderIndex, targetUnit, onStartHere, onStartBeginning }: ResultProps) {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 gap-8 max-w-sm mx-auto">
-      <div className="text-center space-y-2">
-        <div className="text-6xl font-bold text-cyan-400">{correct}/{total}</div>
-        <p className="text-slate-400 text-sm">{pct}% correct before 5 misses</p>
-      </div>
-
       <div className="w-full bg-slate-800 rounded-2xl p-6 text-center space-y-2">
         <p className="text-slate-500 text-xs uppercase tracking-widest">Estimated Level</p>
-        <p className="text-2xl font-bold text-slate-100">{label}</p>
+        <p className="text-3xl font-bold text-slate-100">{label}</p>
         {orderIndex > 0 && targetUnit ? (
           <p className="text-slate-400 text-sm mt-1">
-            We suggest starting at <span className="text-cyan-400 font-semibold">{targetUnit.name}</span>
+            We suggest starting at{' '}
+            <span className="text-cyan-400 font-semibold">{targetUnit.name}</span>
           </p>
         ) : (
-          <p className="text-slate-400 text-sm mt-1">Start from the very beginning for the best foundation.</p>
+          <p className="text-slate-400 text-sm mt-1">
+            Start from the very beginning for the best foundation.
+          </p>
         )}
+        <p className="text-slate-600 text-xs pt-1">
+          Calibrated in {questions} question{questions !== 1 ? 's' : ''}
+        </p>
       </div>
 
       <div className="w-full space-y-3">
@@ -83,29 +81,41 @@ type Phase = 'loading' | 'testing' | 'result';
 export default function PlacementTestScreen() {
   const navigate = useNavigate();
 
-  const [phase, setPhase]       = useState<Phase>('loading');
-  const [cards, setCards]       = useState<CardWithState[]>([]);
-  const [cardIndex, setCardIndex] = useState(0);
-  const [misses, setMisses]     = useState(0);
-  const [correct, setCorrect]   = useState(0);
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [cards, setCards] = useState<CardWithState[]>([]);
 
-  // Per-question state
+  // Binary-search state.
+  // Invariant: lo <= cardIndex < hi.
+  // On correct answer: lo = cardIndex + 1 (learner cleared this card → search upper half).
+  // On wrong answer:   hi = cardIndex     (learner failed here  → search lower half).
+  // Converges when lo >= hi or after PLACEMENT_MAX_QUESTIONS questions.
+  // Final placement is derived from `lo` (highest difficulty the learner cleared).
+  const [lo, setLo]             = useState(0);
+  const [hi, setHi]             = useState(0); // initialised to cards.length in useEffect
+  const [cardIndex, setCardIndex] = useState(0);
+  const [questionCount, setQuestionCount] = useState(0);
+
+  // Per-question UI state
   const [options, setOptions]   = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   // Result state
   const [targetUnit, setTargetUnit] = useState<Unit | null>(null);
-  const [result, setResult]         = useState<{ correct: number; total: number; label: string; orderIndex: number } | null>(null);
+  const [result, setResult]         = useState<{ label: string; orderIndex: number; questions: number } | null>(null);
 
   useEffect(() => {
     getPlacementCards().then(loaded => {
       setCards(loaded);
+      // Start in the middle of the pool so the first question is already informative.
+      const mid = Math.floor(loaded.length / 2);
+      setHi(loaded.length);
+      setCardIndex(mid);
       setPhase('testing');
     });
   }, []);
 
-  // Regenerate options whenever cardIndex changes
+  // Regenerate options whenever the card changes.
   useEffect(() => {
     if (phase !== 'testing' || !cards.length) return;
     const card = cards[cardIndex];
@@ -117,31 +127,31 @@ export default function PlacementTestScreen() {
   }, [cardIndex, phase, cards]);
 
   function handleSelect(opt: string) {
-    if (selected !== null) return; // already answered
+    if (selected !== null) return;
 
     const card = cards[cardIndex];
-    const correct_ = validatePlacementAnswer(opt, card);
-
+    const wasCorrect = validatePlacementAnswer(opt, card);
     setSelected(opt);
-    setIsCorrect(correct_);
+    setIsCorrect(wasCorrect);
 
-    const newMisses  = misses  + (correct_ ? 0 : 1);
-    const newCorrect = correct + (correct_ ? 1 : 0);
-    const nextIndex  = cardIndex + 1;
+    const newCount = questionCount + 1;
+    const newLo = wasCorrect ? cardIndex + 1 : lo;
+    const newHi = wasCorrect ? hi : cardIndex;
 
     setTimeout(() => {
-      if (newMisses >= PLACEMENT_MAX_MISSES || nextIndex >= cards.length) {
-        // Test finished — compute result
-        const scored = scorePlacement(newCorrect);
-        setResult({ ...scored, correct: newCorrect, total: nextIndex });
+      if (newLo >= newHi || newCount >= PLACEMENT_MAX_QUESTIONS) {
+        // Search converged — score from the highest difficulty cleared (newLo).
+        const scored = scorePlacementByPosition(newLo, cards.length);
+        setResult({ ...scored, questions: newCount });
         getUnitAtOrAfter(scored.orderIndex).then(unit => {
           setTargetUnit(unit);
           setPhase('result');
         });
       } else {
-        setMisses(newMisses);
-        setCorrect(newCorrect);
-        setCardIndex(nextIndex);
+        setLo(newLo);
+        setHi(newHi);
+        setCardIndex(Math.floor((newLo + newHi) / 2));
+        setQuestionCount(newCount);
       }
     }, 900);
   }
@@ -164,8 +174,7 @@ export default function PlacementTestScreen() {
   if (phase === 'result' && result) {
     return (
       <ResultScreen
-        correct={result.correct}
-        total={result.total}
+        questions={result.questions}
         label={result.label}
         orderIndex={result.orderIndex}
         targetUnit={targetUnit}
@@ -180,8 +189,6 @@ export default function PlacementTestScreen() {
   const card = cards[cardIndex];
   if (!card) return <LoadingView />;
 
-  const missesLeft = PLACEMENT_MAX_MISSES - misses;
-
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col p-6 max-w-sm mx-auto">
       {/* Header */}
@@ -192,24 +199,16 @@ export default function PlacementTestScreen() {
         >
           ✕ Quit
         </button>
-        <div className="flex items-center gap-2">
-          {Array.from({ length: PLACEMENT_MAX_MISSES }).map((_, i) => (
-            <div
-              key={i}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                i < misses ? 'bg-red-500' : 'bg-slate-700'
-              }`}
-            />
-          ))}
-          <span className="text-slate-500 text-xs ml-1">{missesLeft} left</span>
-        </div>
+        <span className="text-slate-500 text-xs">
+          Question {questionCount + 1} / ~{PLACEMENT_MAX_QUESTIONS}
+        </span>
       </div>
 
       {/* Progress bar */}
       <div className="h-1 bg-slate-800 rounded-full mb-8 overflow-hidden">
         <div
           className="h-full bg-cyan-500 rounded-full transition-all"
-          style={{ width: `${(cardIndex / cards.length) * 100}%` }}
+          style={{ width: `${(questionCount / PLACEMENT_MAX_QUESTIONS) * 100}%` }}
         />
       </div>
 
@@ -248,9 +247,7 @@ export default function PlacementTestScreen() {
         </div>
       </div>
 
-      <p className="text-center text-slate-700 text-xs mt-6 pb-4">
-        {cardIndex + 1} / {cards.length}
-      </p>
+      <p className="text-center text-slate-700 text-xs mt-6 pb-4">Calibrating your level…</p>
     </div>
   );
 }

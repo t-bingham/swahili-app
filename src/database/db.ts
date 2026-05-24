@@ -96,6 +96,16 @@ async function idbSave(key: string, data: Uint8Array): Promise<void> {
   });
 }
 
+async function idbDelete(key: string): Promise<void> {
+  const idb = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // ─── Singleton connection ──────────────────────────────────────────────────────
 
 let _db: Database | null = null;
@@ -390,6 +400,17 @@ export async function closeDatabase(): Promise<void> {
   _db?.close();
   _db = null;
   _currentUser = null;
+}
+
+// Permanently deletes the current user's database from IndexedDB.
+// Call clearGoogleSession() + clearSyncState() + navigate('/') after this.
+export async function resetCurrentUserData(): Promise<void> {
+  const user = _currentUser;
+  if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null; }
+  _db?.close();
+  _db = null;
+  _currentUser = null;
+  if (user) await idbDelete(`db_${user}`);
 }
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────
