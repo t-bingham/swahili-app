@@ -22,13 +22,19 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
     const cardTagSet = new Set(card.tags);
     const extract = (c: CardWithState) => direction === 'sw_to_en' ? c.english : c.swahili;
 
-    const distractors = easy
+    // Build a shuffled candidate pool, then pick unique distractors — text must
+    // differ from the correct answer and from each other to avoid duplicate options.
+    const pool = easy
       ? shuffle(allCards.filter(c => c.id !== card.id && !c.tags.some(t => cardTagSet.has(t))))
-          .slice(0, 1)
-          .map(extract)
-      : shuffle(allCards.filter(c => c.id !== card.id && c.type === card.type))
-          .slice(0, 3)
-          .map(extract);
+      : shuffle(allCards.filter(c => c.id !== card.id && c.type === card.type));
+
+    const seen = new Set([correctAnswer]);
+    const distractors: string[] = [];
+    for (const c of pool) {
+      if (distractors.length >= (easy ? 1 : 3)) break;
+      const text = extract(c);
+      if (!seen.has(text)) { seen.add(text); distractors.push(text); }
+    }
 
     setOptions(shuffle([correctAnswer, ...distractors]));
     setSelected(null);
@@ -70,7 +76,7 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
       )}
 
       <div className="grid grid-cols-1 gap-3">
-        {options.map(opt => {
+        {options.map((opt, idx) => {
           const isCorrect = opt === correctAnswer;
           const isSelected = selected === opt;
           let cls = 'w-full py-4 px-5 rounded-xl text-left font-medium transition-all border-2 ';
@@ -86,7 +92,7 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
             cls += 'border-slate-700 bg-slate-800 text-slate-400 opacity-50';
           }
           return (
-            <button key={opt} className={cls} onClick={() => choose(opt)}>
+            <button key={`${idx}-${opt}`} className={cls} onClick={() => choose(opt)}>
               {opt}
             </button>
           );
