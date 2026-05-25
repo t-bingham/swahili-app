@@ -41,11 +41,53 @@ export function getGoogleProfile(): GoogleProfile | null {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-// Returns the current access token if still valid, or null if expired.
-// Implicit OAuth flow does not provide refresh tokens, so there is nothing to
-// refresh — the user must sign in again once the token expires (~1 hour).
+// Attempt a silent token refresh using the GIS token client (already loaded by
+// @react-oauth/google). Uses prompt:'' so no UI appears — if the user's Google
+// session is still alive the new token arrives in a few hundred ms. Resolves
+// null on any error or if the 5-second window expires.
+function trySilentRefresh(): Promise<string | null> {
+  const clientId = (import.meta as unknown as { env: Record<string, string> }).env.VITE_GOOGLE_CLIENT_ID;
+  const gis = (window as unknown as {
+    google?: { accounts?: { oauth2?: { initTokenClient: (cfg: Record<string, unknown>) => { requestAccessToken: (o?: Record<string, unknown>) => void } } } }
+  }).google?.accounts?.oauth2;
+
+  if (!clientId || !gis) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), 5_000);
+
+    try {
+      const client = gis.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.appdata',
+        callback: (resp: Record<string, string>) => {
+          clearTimeout(timer);
+          if (resp.access_token && !resp.error) {
+            const profile = getGoogleProfile();
+            if (profile) saveGoogleSession(resp.access_token, Number(resp.expires_in) || 3600, profile);
+            resolve(resp.access_token);
+          } else {
+            resolve(null);
+          }
+        },
+        error_callback: () => { clearTimeout(timer); resolve(null); },
+      });
+      client.requestAccessToken({ prompt: '' });
+    } catch {
+      clearTimeout(timer);
+      resolve(null);
+    }
+  });
+}
+
+// Returns a valid access token. If the stored token is expired, attempts a
+// silent GIS refresh. Returns null if offline or the silent refresh fails
+// (caller should degrade gracefully).
 export async function getOrRefreshToken(): Promise<string | null> {
-  return getGoogleToken();
+  const token = getGoogleToken();
+  if (token) return token;
+  if (!navigator.onLine) return null;
+  return trySilentRefresh();
 }
 
 export function clearGoogleSession(): void {

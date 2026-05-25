@@ -82,18 +82,16 @@ export default function UserPickerScreen() {
         setError('Failed to open your profile. Please try again.');
         setOpening(false);
       }
-    } else if (navigator.onLine) {
-      // Token expired and we're online — get a fresh token via re-auth.
-      // For most users already signed into Google this popup resolves instantly.
-      setOpening(false);
-      googleLogin();
     } else {
-      // Offline — open local copy without syncing.
+      // Token expired — getOrRefreshToken already attempted a silent GIS refresh
+      // and failed (or we're offline). Open the local copy; sync will be retried
+      // automatically next session once a valid token is available.
       try {
         await openDbAndNavigate(username);
       } catch {
+        // No local copy at all — need a full sign-in.
         setOpening(false);
-        setError('Cannot reach Google while offline. Connect to the internet to sign in.');
+        googleLogin();
       }
     }
   }
