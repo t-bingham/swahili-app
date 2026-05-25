@@ -82,14 +82,18 @@ export default function UserPickerScreen() {
         setError('Failed to open your profile. Please try again.');
         setOpening(false);
       }
+    } else if (navigator.onLine) {
+      // Token expired and we're online — get a fresh token via re-auth.
+      // For most users already signed into Google this popup resolves instantly.
+      setOpening(false);
+      googleLogin();
     } else {
-      // Token refresh failed — try local copy (offline mode).
+      // Offline — open local copy without syncing.
       try {
         await openDbAndNavigate(username);
       } catch {
-        // No local copy; need full re-auth.
         setOpening(false);
-        googleLogin();
+        setError('Cannot reach Google while offline. Connect to the internet to sign in.');
       }
     }
   }
