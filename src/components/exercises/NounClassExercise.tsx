@@ -29,7 +29,7 @@ export default function NounClassExercise({ card, onAnswer }: Props) {
   const [options] = useState(() => buildOptions(correct));
   const [selected, setSelected] = useState<NounClass | null>(null);
 
-  const info = NOUN_CLASS_INFO[correct];
+  const info = NOUN_CLASS_INFO[correct] ?? null;
 
   function choose(cls: NounClass) {
     if (selected) return;
@@ -61,6 +61,7 @@ export default function NounClassExercise({ card, onAnswer }: Props) {
       <div className="flex flex-wrap gap-3">
         {options.map(cls => {
           const ci = NOUN_CLASS_INFO[cls];
+          if (!ci) return null;
           return (
             <button key={cls} onClick={() => choose(cls)} className={optionStyle(cls)}>
               <div className="font-bold text-slate-100 text-base">{ci.label}</div>
@@ -71,7 +72,7 @@ export default function NounClassExercise({ card, onAnswer }: Props) {
       </div>
 
       {/* Post-answer class detail */}
-      {selected && (
+      {selected && info && (
         <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 space-y-2 text-sm">
           <p className="text-slate-300 font-semibold">{info.label} — {info.desc}</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-400">

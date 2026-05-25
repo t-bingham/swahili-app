@@ -11,6 +11,7 @@ import TypeAnswer from '../components/exercises/TypeAnswer';
 import FillInBlank from '../components/exercises/FillInBlank';
 import RecallPrompt from '../components/exercises/RecallPrompt';
 import NounClassExercise from '../components/exercises/NounClassExercise';
+import { ALL_NOUN_CLASSES } from '../data/nounClasses';
 import RatingButtons from '../components/RatingButtons';
 import SessionInsights from '../components/SessionInsights';
 import type { CardWithState, ExerciseType, ProfileSettings } from '../types';
@@ -60,6 +61,7 @@ function pickExercise(
     exercise === 'multiple_choice' &&
     card.type === 'vocabulary' &&
     card.noun_class &&
+    (ALL_NOUN_CLASSES as readonly string[]).includes(card.noun_class) &&
     level >= 3 &&
     Math.random() < 0.4
   ) {
