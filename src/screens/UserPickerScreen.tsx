@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
-import { openDatabase, getProfile, importDatabase, warmDatabase } from '../database/db';
+import { openDatabase, getProfile, warmDatabase } from '../database/db';
 import {
   saveGoogleSession, getGoogleProfile, getOrRefreshToken, clearGoogleSession,
   googleUsername,
 } from '../auth/googleAuth';
-import { downloadIfNewer, clearSyncState } from '../sync/driveSync';
+import { syncWithDrive, clearSyncState } from '../sync/driveSync';
 
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
 export default function UserPickerScreen() {
   const navigate = useNavigate();
   const [opening, setOpening] = useState(false);
+  const [openStatus, setOpenStatus] = useState('');
   const [error, setError] = useState('');
 
   const googleProfile = getGoogleProfile();
@@ -21,10 +22,18 @@ export default function UserPickerScreen() {
     warmDatabase().catch(() => {}); // pre-load WASM so first openDatabase() doesn't cold-start
   }, []);
 
-  async function openDbAndNavigate(username: string) {
+  async function openDbAndNavigate(username: string, token?: string) {
     // Retry once — first-load WASM init can fail transiently.
     try { await openDatabase(username); } catch { await openDatabase(username); }
     sessionStorage.setItem('currentUser', username);
+
+    // Merge Drive data into the open DB (replaces the old replace-on-download strategy)
+    if (token || navigator.onLine) {
+      setOpenStatus('Syncing…');
+      await syncWithDrive(token).catch(() => {});
+      setOpenStatus('');
+    }
+
     const appProfile = await getProfile();
     navigate(appProfile ? '/app/home' : '/onboarding');
   }
@@ -53,9 +62,7 @@ export default function UserPickerScreen() {
         return;
       }
       try {
-        const driveData = await downloadIfNewer(accessToken);
-        if (driveData) await importDatabase(username, driveData);
-        await openDbAndNavigate(username);
+        await openDbAndNavigate(username, accessToken);
       } catch {
         setError('Failed to open your profile. Please try again.');
         setOpening(false);
@@ -73,11 +80,9 @@ export default function UserPickerScreen() {
     const username = googleUsername(googleProfile);
     const token = await getOrRefreshToken();
     if (token) {
-      // Online — sync then open.
+      // Online — open then merge.
       try {
-        const driveData = await downloadIfNewer(token);
-        if (driveData) await importDatabase(username, driveData);
-        await openDbAndNavigate(username);
+        await openDbAndNavigate(username, token);
       } catch {
         setError('Failed to open your profile. Please try again.');
         setOpening(false);
@@ -129,7 +134,7 @@ export default function UserPickerScreen() {
               disabled={opening}
               className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-colors"
             >
-              {opening ? 'Opening…' : 'Continue →'}
+              {opening ? (openStatus || 'Opening…') : 'Continue →'}
             </button>
             <button
               onClick={switchAccounts}

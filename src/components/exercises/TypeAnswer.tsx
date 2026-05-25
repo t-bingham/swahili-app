@@ -121,6 +121,12 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
         )}
 
 
+        {submitted && card.cultural_note && (
+          <div className="px-3 py-2 bg-amber-900/20 border border-amber-700/30 rounded-xl text-amber-300/80 text-xs">
+            {card.cultural_note}
+          </div>
+        )}
+
         {submitted && showMorphemeHints && (
           <div className="bg-slate-800/60 rounded-xl p-3">
             <MorphemeBreakdown card={card} />

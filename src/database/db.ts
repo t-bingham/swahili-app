@@ -72,6 +72,143 @@ function _fixPluralEnglish(en: string): string | null {
     .replace(/child-in-laws/g,   'children-in-law');
 }
 
+// ── Pluralise a "plural of X" base phrase (used by E-02 migration) ────────────
+function _pluralizeBase(base: string): string {
+  return base.split(' / ').map(seg => _pluralPart(seg.trim())).join(' / ');
+}
+
+// ── Conjugation English reform helpers (used by E-01 migration) ──────────────
+
+const _CI_PAST: Record<string, string> = {
+  be:'was/were', become:'became', begin:'began', break:'broke', bring:'brought',
+  build:'built', buy:'bought', choose:'chose', come:'came', cut:'cut', do:'did',
+  draw:'drew', drink:'drank', drive:'drove', eat:'ate', fall:'fell', feel:'felt',
+  fight:'fought', find:'found', flee:'fled', fly:'flew', forget:'forgot',
+  forgive:'forgave', get:'got', give:'gave', go:'went', grow:'grew', have:'had',
+  hear:'heard', hit:'hit', hold:'held', keep:'kept', know:'knew', lay:'laid',
+  lead:'led', leap:'leapt', leave:'left', let:'let', lie:'lay', lose:'lost',
+  make:'made', mean:'meant', overcome:'overcame', pay:'paid', put:'put',
+  quit:'quit', read:'read', run:'ran', say:'said', see:'saw', sell:'sold',
+  send:'sent', shine:'shone', show:'showed', sing:'sang', sit:'sat',
+  sleep:'slept', speak:'spoke', spend:'spent', spread:'spread', stand:'stood',
+  stink:'stank', swim:'swam', take:'took', teach:'taught', tell:'told',
+  think:'thought', throw:'threw', understand:'understood', wake:'woke',
+  wear:'wore', weep:'wept', win:'won', write:'wrote',
+};
+const _CI_PP: Record<string, string> = {
+  be:'been', become:'become', begin:'begun', break:'broken', bring:'brought',
+  build:'built', buy:'bought', choose:'chosen', come:'come', cut:'cut', do:'done',
+  draw:'drawn', drink:'drunk', drive:'driven', eat:'eaten', fall:'fallen',
+  feel:'felt', fight:'fought', find:'found', flee:'fled', fly:'flown',
+  forget:'forgotten', forgive:'forgiven', get:'gotten', give:'given', go:'gone',
+  grow:'grown', have:'had', hear:'heard', hit:'hit', hold:'held', keep:'kept',
+  know:'known', lay:'laid', lead:'led', leap:'leapt', leave:'left', let:'let',
+  lie:'lain', lose:'lost', make:'made', mean:'meant', overcome:'overcome',
+  pay:'paid', put:'put', quit:'quit', read:'read', run:'run', say:'said',
+  see:'seen', sell:'sold', send:'sent', shine:'shone', show:'shown', sing:'sung',
+  sit:'sat', sleep:'slept', speak:'spoken', spend:'spent', spread:'spread',
+  stand:'stood', stink:'stunk', swim:'swum', take:'taken', teach:'taught',
+  tell:'told', think:'thought', throw:'thrown', understand:'understood',
+  wake:'woken', wear:'worn', weep:'wept', win:'won', write:'written',
+};
+const _CI_DOUBLES = new Set([
+  'begin','chat','cut','drop','fit','forget','get','grab','hit','hop','hug',
+  'jog','let','mop','nod','pat','plan','plug','pop','put','run','set','sit',
+  'skip','slam','slap','slip','snap','sob','spin','stop','stun','swim','tap',
+  'tip','tug','win','wrap',
+]);
+const _CI_SKIP_MODAL = new Set(['can','may','might','shall','will','would','could','should']);
+
+function _ciGerundize(word: string): string {
+  const sp = word.indexOf(' ');
+  if (sp !== -1) return _ciGerundize(word.slice(0, sp)) + word.slice(sp);
+  const OV: Record<string,string> = { be:'being', lie:'lying', die:'dying', tie:'tying' };
+  if (OV[word]) return OV[word];
+  if (word.endsWith('ie')) return word.slice(0, -2) + 'ying';
+  if (_CI_DOUBLES.has(word)) return word + word[word.length - 1] + 'ing';
+  if (word.endsWith('e') && !/[eoy]e$/.test(word)) return word.slice(0, -1) + 'ing';
+  return word + 'ing';
+}
+function _ciPast(word: string): string {
+  if (_CI_PAST[word]) return _CI_PAST[word];
+  if (word.endsWith('y') && !/[aeiou]y$/.test(word)) return word.slice(0, -1) + 'ied';
+  if (word.endsWith('e')) return word + 'd';
+  if (_CI_DOUBLES.has(word)) return word + word[word.length - 1] + 'ed';
+  return word + 'ed';
+}
+function _ciPP(word: string): string {
+  if (_CI_PP[word]) return _CI_PP[word];
+  if (word.endsWith('y') && !/[aeiou]y$/.test(word)) return word.slice(0, -1) + 'ied';
+  if (word.endsWith('e')) return word + 'd';
+  if (_CI_DOUBLES.has(word)) return word + word[word.length - 1] + 'ed';
+  return word + 'ed';
+}
+
+const _CI_BE_PRES: Record<string,string> = { 'I':'am','you':'are','he/she':'is','we':'are','you all':'are','they':'are' };
+const _CI_BE_PAST: Record<string,string> = { 'I':'was','you':'were','he/she':'was','we':'were','you all':'were','they':'were' };
+const _CI_HAVE:    Record<string,string> = { 'I':'have','you':'have','he/she':'has','we':'have','you all':'have','they':'have' };
+const _CI_HAVENT:  Record<string,string> = { 'I':"haven't",'you':"haven't",'he/she':"hasn't",'we':"haven't",'you all':"haven't",'they':"haven't" };
+
+function _ciBuildSingle(subject: string, tense: string, alt: string): string | null {
+  const stripped = alt.replace(/^to\s+/, '').trim();
+  const mv = stripped.split(' ')[0];
+  const rest = stripped.slice(mv.length);
+  const isBe = mv === 'be';
+  const ger  = isBe ? 'being' : (_ciGerundize(mv) + rest);
+  const past = isBe ? (_CI_BE_PAST[subject] + rest) : (_ciPast(mv) + rest);
+  const pp   = isBe ? ('been' + rest) : (_ciPP(mv) + rest);
+  const base = stripped;
+  const t    = tense.toLowerCase().replace(/\s+/g, '_');
+  switch (t) {
+    case 'present':          return isBe ? `${subject} ${_CI_BE_PRES[subject]}${rest}` : `${subject} ${_CI_BE_PRES[subject]} ${ger}`;
+    case 'past':             return `${subject} ${past}`;
+    case 'future':           return `${subject} will ${base}`;
+    case 'perfect':          return isBe ? `${subject} ${_CI_HAVE[subject]} been${rest}` : `${subject} ${_CI_HAVE[subject]} ${pp}`;
+    case 'habitual':         return isBe ? `${subject} ${_CI_BE_PRES[subject]} usually${rest}` : `${subject} usually ${base}`;
+    case 'subjunctive':      return `${subject} should ${base}`;
+    case 'neg_present':      return isBe ? `${subject} ${_CI_BE_PRES[subject]} not${rest}` : `${subject} ${_CI_BE_PRES[subject]} not ${ger}`;
+    case 'neg_past':         return `${subject} didn't ${base}`;
+    case 'neg_perfect':      return `${subject} ${_CI_HAVENT[subject]} ${pp}`;
+    case 'conditional':      return `${subject} would ${base}`;
+    case 'conditional_past': return isBe ? `${subject} would have been${rest}` : `${subject} would have ${pp}`;
+    default:                 return null;
+  }
+}
+
+function _ciTransform(english: string): string | null {
+  const objM = english.match(/^(\[object infix -[^-]+-\])\s+(I|you|he\/she|we|you pl|they)\s+\[([^\]]+)\]\s+(.+)$/);
+  const regM = !objM && english.match(/^(I|you|he\/she|we|you pl|they)\s+\[([^\]]+)\]\s+(.+)$/);
+  const [objPrefix, rawSubj, tense, verbPhrase] = objM
+    ? [objM[1], objM[2], objM[3], objM[4]]
+    : regM ? ['', regM[1], regM[2], regM[3]] : ['', '', '', ''];
+  if (!tense) return null;
+  const subject = rawSubj === 'you pl' ? 'you all' : rawSubj;
+  // Parse slash-separated alternatives; skip pure modals (can, may, etc.)
+  const alts = verbPhrase.split(/\s*\/\s*/).map(a => a.trim()).filter(a => a);
+  const filtered = alts.filter(a => !_CI_SKIP_MODAL.has(a.replace(/^to\s+/, '').trim()));
+  const active = filtered.length ? filtered : alts;
+  const results = active.map(a => _ciBuildSingle(subject, tense, a));
+  if (results.some(r => !r)) return null;
+  // Compress shared prefix: "I am reading / I am studying" → "I am reading / studying"
+  let out = results as string[];
+  if (out.length >= 2) {
+    const ws0 = out[0].split(' ');
+    const allWs = out.map(r => r.split(' '));
+    let cn = 0;
+    outer: for (let i = 0; i < ws0.length; i++) {
+      for (const ws of allWs) { if (i >= ws.length || ws[i] !== ws0[i]) break outer; }
+      cn++;
+    }
+    if (cn >= 2) {
+      const prefix = ws0.slice(0, cn).join(' ');
+      const suffixes = out.map(r => r.slice(prefix.length).trim()).filter(s => s);
+      if (suffixes.length === out.length) out = [`${prefix} ${suffixes.join(' / ')}`];
+    }
+  }
+  const natural = out.join(' / ');
+  return objPrefix ? `${objPrefix} ${natural}` : natural;
+}
+
 const DEFAULT_NEW_WORDS_PER_DAY = 10;
 const DEFAULT_REVIEWS_PER_DAY = 20;
 
@@ -464,6 +601,162 @@ export async function openDatabase(userName: string): Promise<void> {
         [syllabify(word as string), word],
       );
     }
+  }
+
+  // E-01: Reform conjugation English from [tense] bracket notation to natural tense forms
+  // Idempotent: only touches cards still carrying the old bracket pattern
+  {
+    const conjRows = _db.exec(
+      "SELECT id, english FROM cards WHERE type='conjugation' AND english LIKE '%[%]%'"
+    );
+    if (conjRows.length && conjRows[0].values.length) {
+      _db.run('BEGIN');
+      for (const [id, en] of conjRows[0].values as [string, string][]) {
+        const newEn = _ciTransform(en as string);
+        if (newEn && newEn !== en) _db.run('UPDATE cards SET english = ? WHERE id = ?', [newEn, id]);
+      }
+      _db.run('COMMIT');
+    }
+  }
+
+  // E-02: Reform "plural of X" English labels
+  // 2C: hardcoded homonym pairs where the plural Swahili form is also a different word
+  // 2A/2B: auto-pluralize base noun; append "(pl)" for English-invariant nouns (fish→fish)
+  {
+    const _E02_HOMONYMS: Record<string, { english: string; plNote: string; singNote: string }> = {
+      nyuma: {
+        english: 'forks (pl. of uma)',
+        plNote: 'The plural of "uma" (fork) is "nyuma" — the same word as "behind / back". Context makes the meaning clear.',
+        singNote: '"Nyuma" is also the plural of "uma" (fork). Context makes the meaning clear.',
+      },
+      maziwa: {
+        english: 'lakes (pl. of ziwa)',
+        plNote: '"Maziwa" means both "milk" and "lakes" (the plural of "ziwa"). Context makes the meaning clear.',
+        singNote: '"Maziwa" also means "lakes", the plural of "ziwa" (lake). Context makes the meaning clear.',
+      },
+      mambo: {
+        english: 'things / affairs (pl. of jambo)',
+        plNote: '"Mambo" is the plural of "jambo" (thing/affair). It is also a casual youth greeting: "Mambo?" = "What\'s up?" — reply "poa" (cool).',
+        singNote: '',
+      },
+      machungwa: {
+        english: 'oranges (pl. of chungwa)',
+        plNote: '"Machungwa" are oranges. The colour orange in Swahili is "rangi ya machungwa" — literally "the colour of oranges".',
+        singNote: '',
+      },
+    };
+    const pluralRows = _db.exec(
+      "SELECT id, english, swahili FROM cards WHERE english LIKE 'plural of%'"
+    );
+    if (pluralRows.length && pluralRows[0].values.length) {
+      _db.run('BEGIN');
+      for (const [id, en, sw] of pluralRows[0].values as [string, string, string][]) {
+        const swLow = (sw as string).toLowerCase();
+        if (_E02_HOMONYMS[swLow]) {
+          const h = _E02_HOMONYMS[swLow];
+          _db.run('UPDATE cards SET english = ?, cultural_note = ? WHERE id = ?', [h.english, h.plNote, id]);
+          if (h.singNote) {
+            _db.run(
+              `UPDATE cards SET cultural_note = ? WHERE swahili = ? AND english NOT LIKE 'plural of%' AND (cultural_note IS NULL OR cultural_note = '')`,
+              [h.singNote, sw],
+            );
+          }
+          continue;
+        }
+        const base = (en as string).replace(/^plural of\s+/i, '').trim();
+        const pluralized = _pluralizeBase(base);
+        const newEn = pluralized.toLowerCase() === base.toLowerCase() ? `${base} (pl)` : pluralized;
+        if (newEn !== en) _db.run('UPDATE cards SET english = ? WHERE id = ?', [newEn, id]);
+      }
+      _db.run('COMMIT');
+    }
+  }
+
+  // E-03: Simplify "-zuri" adjective English — "good/beautiful X" → "good X" + cultural note
+  // Idempotent: REPLACE on english is always safe; cultural_note only set where absent
+  {
+    const zuriNote = '-zuri is one of Swahili\'s most versatile adjectives — it covers beautiful, good, nice, fine, and well depending on context.';
+    _db.run(
+      `UPDATE cards
+         SET english       = REPLACE(english, 'good/beautiful', 'good'),
+             cultural_note = ?
+       WHERE english LIKE '%good/beautiful%'
+         AND (cultural_note IS NULL OR cultural_note = '')`,
+      [zuriNote],
+    );
+  }
+
+  // E-04: Populate cultural notes for culturally rich vocabulary words
+  // Idempotent: only sets NULL/empty rows; conjugation cards excluded
+  // F-01: Separate grammar units into their own independent track
+  // Idempotent: track updates are fixed-value; prereq updates are fixed-value
+  try { _db.run("ALTER TABLE units ADD COLUMN track TEXT NOT NULL DEFAULT 'vocabulary'"); } catch { /* already exists */ }
+
+  // Mark the 10 grammar-concept units plus the morphology rules unit
+  for (const id of ['unit-00-grammar','unit-07','unit-08','unit-09','unit-10','unit-11','unit-14','unit-15','unit-16','unit-17','unit-19']) {
+    _db.run("UPDATE units SET track = 'grammar' WHERE id = ?", [id]);
+  }
+
+  // Grammar chain — internal prerequisites only (no cross-track deps)
+  for (const [id, prereqs] of [
+    ['unit-00-grammar', []],
+    ['unit-07',  []],
+    ['unit-08',  ['unit-07']],
+    ['unit-09',  ['unit-08']],
+    ['unit-10',  ['unit-07']],
+    ['unit-11',  ['unit-08']],
+    ['unit-14',  ['unit-09']],
+    ['unit-15',  ['unit-10', 'unit-08']],
+    ['unit-16',  ['unit-14']],
+    ['unit-17',  ['unit-15']],
+    ['unit-19',  ['unit-16', 'unit-17']],
+  ] as [string, string[]][]) {
+    _db.run('UPDATE units SET prerequisite_ids = ? WHERE id = ?', [JSON.stringify(prereqs), id]);
+  }
+
+  // Vocabulary track — remove any cross-track dependencies
+  // Each entry: [unit_id, new_prerequisite_ids]
+  for (const [id, prereqs] of [
+    ['unit-12', ['unit-02']],               // was: unit-02, unit-11 (grammar)
+    ['unit-13', ['unit-05']],               // was: unit-05, unit-08 (grammar)
+    ['unit-18', ['unit-06', 'unit-12']],    // was: unit-09 (grammar), unit-12
+    ['unit-20', ['unit-01']],               // was: unit-19 (grammar)
+    ['unit-21', ['unit-20']],               // was: unit-19 (grammar), unit-20
+    ['unit-23', ['unit-01']],               // was: unit-07 (grammar)
+    ['unit-24', ['unit-01']],               // was: unit-08 (grammar)
+    ['unit-25', ['unit-01']],               // was: unit-08 (grammar)
+    ['unit-26', ['unit-01']],               // was: unit-07, unit-08 (both grammar)
+    ['unit-27', ['unit-01']],               // was: unit-01, unit-07 (grammar)
+    ['unit-29', ['unit-01']],               // was: unit-08, unit-09 (both grammar)
+    ['unit-30', ['unit-01']],               // was: unit-01, unit-07 (grammar)
+    ['unit-32', ['unit-03', 'unit-04']],    // was: unit-10, unit-15 (both grammar)
+    ['unit-33', ['unit-20', 'unit-32']],    // was: unit-19 (grammar), unit-32
+  ] as [string, string[]][]) {
+    _db.run('UPDATE units SET prerequisite_ids = ? WHERE id = ?', [JSON.stringify(prereqs), id]);
+  }
+
+  // E-04: Populate cultural notes for culturally rich vocabulary words
+  // Idempotent: only sets NULL/empty rows; conjugation cards excluded
+  for (const [sw, note] of [
+    ['shikamoo',   'A respectful greeting offered to elders or those of higher status. Literally related to "grasping the feet"; it is a mark of deep respect with no direct English equivalent.'],
+    ['marahaba',   'The reply to "shikamoo". It acknowledges the greeting and signals acceptance of the respect offered.'],
+    ['ugali',      'East Africa\'s staple food — a stiff porridge made from maize flour, eaten by hand and used to scoop stews and vegetables. Found on almost every table in Kenya and Tanzania.'],
+    ['pilau',      'A fragrant spiced rice dish made with cumin, cardamom, cloves, and cinnamon. A celebration food in coastal Swahili culture, often served at weddings and feasts.'],
+    ['chapati',    'An unleavened flatbread of Indian origin, now a beloved staple across East Africa. Made fresh and typically served alongside stews.'],
+    ['mandazi',    'East African doughnuts — triangle or oval fried dough, mildly sweet, often flavoured with coconut milk and cardamom. A common breakfast or street snack.'],
+    ['chai',       'Tea brewed strong with milk, often spiced with ginger and cardamom. Tea time is a social institution across East Africa — a moment to slow down and connect.'],
+    ['habari',     'Literally "news", used as the everyday greeting "How are you?". Common responses: "nzuri" (good), "sawa" (fine), "salama" (peaceful), "njema" (well).'],
+    ['mambo',      'Casual greeting popular with youth: "Mambo?" = "What\'s up?" Common responses: "poa" (cool), "safi" (great), "freshi" (fresh). Also the plural of "jambo" (thing/affair).'],
+    ['pole',       '"Pole" (POH-leh) expresses sympathy or condolence. "Pole pole" (slowly, slowly) is a beloved phrase reflecting East African patience and philosophy.'],
+    ['poa',        'Slang for "cool" or "great". Originally from Nairobi\'s Sheng street language, now widely used across East Africa. Common reply to "mambo?".'],
+    ['sawa',       'Means "OK", "fine", "equal", or "agreed". One of the most versatile words in everyday Swahili — a single "sawa" can end negotiations.'],
+    ['ndege',      '"Ndege" means both bird and airplane. Context usually makes it clear — though locals sometimes joke that both fly.'],
+    ['saa',        'Swahili time uses a 6-hour offset from Western time: the day starts at sunrise (6am = saa moja, "hour one"). "Saa tatu" (3 o\'clock) = 9am or 9pm in Western time.'],
+  ] as [string, string][]) {
+    _db.run(
+      `UPDATE cards SET cultural_note = ? WHERE swahili = ? AND type != 'conjugation' AND (cultural_note IS NULL OR cultural_note = '')`,
+      [note, sw],
+    );
   }
 }
 
@@ -872,7 +1165,7 @@ export async function applyPlacementResult(startOrderIndex: number): Promise<voi
 // Returns the unit whose order_index is closest to (and >= ) the given index.
 export async function getUnitAtOrAfter(orderIndex: number): Promise<Unit | null> {
   const rows = query<Record<string, unknown>>(
-    `SELECT * FROM units WHERE order_index >= ? AND id != 'unit-00-placement' ORDER BY order_index ASC LIMIT 1`,
+    `SELECT * FROM units WHERE order_index >= ? AND id != 'unit-00-placement' AND (track IS NULL OR track = 'vocabulary') ORDER BY order_index ASC LIMIT 1`,
     [orderIndex],
   );
   if (!rows.length) return null;
@@ -1099,4 +1392,318 @@ export async function getReviewStats(): Promise<{ reviewed: number; generated: n
   const map: Record<string, number> = {};
   for (const r of rows) map[r.source] = r.cnt;
   return { reviewed: map['reviewed'] ?? 0, generated: map['generated'] ?? 0 };
+}
+
+// ─── Remote DB merge ──────────────────────────────────────────────────────────
+//
+// Merges a remote SQLite binary (from Drive) into the currently open local DB.
+// Row-level rules per table — no progress is ever discarded.
+
+type MergeRow = (string | number | null | Uint8Array)[];
+
+/** Build a column-name → index map for a sql.js exec result. */
+function _mci(columns: string[]): (n: string) => number {
+  const m: Record<string, number> = {};
+  columns.forEach((c, i) => { m[c] = i; });
+  return n => m[n] ?? -1;
+}
+
+/** Returns the lexicographically earlier ISO date string, ignoring nulls. */
+function _minIso(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return a < b ? a : b;
+}
+
+/**
+ * card_states — winner is whichever side has higher review_count.
+ * starred is OR'd: once starred on either device it stays starred.
+ */
+function _mergeCardStates(local: Database, remote: Database): void {
+  // Load all local state that has been interacted with
+  const localMap = new Map<string, { count: number; starred: number }>();
+  for (const sql of [
+    'SELECT card_id, review_count, COALESCE(starred,0) FROM card_states WHERE review_count > 0 OR COALESCE(starred,0)=1',
+    'SELECT card_id, review_count, 0 FROM card_states WHERE review_count > 0',
+  ]) {
+    try {
+      const lr = local.exec(sql);
+      if (lr.length && lr[0].values.length) {
+        for (const [id, cnt, star] of lr[0].values)
+          localMap.set(id as string, { count: cnt as number, starred: star as number });
+        break;
+      }
+    } catch { continue; }
+  }
+
+  // Load remote rows that carry any progress
+  let remoteRes: ReturnType<Database['exec']> = [];
+  for (const sql of [
+    'SELECT * FROM card_states WHERE review_count > 0 OR COALESCE(starred,0)=1',
+    'SELECT * FROM card_states WHERE review_count > 0',
+  ]) {
+    try { remoteRes = remote.exec(sql); if (remoteRes.length) break; }
+    catch { continue; }
+  }
+  if (!remoteRes.length || !remoteRes[0].values.length) return;
+
+  const { columns, values } = remoteRes[0];
+  const c = _mci(columns);
+
+  for (const row of values as MergeRow[]) {
+    const cardId       = row[c('card_id')] as string;
+    const remoteCount  = (row[c('review_count')] as number) ?? 0;
+    const remoteStarred = c('starred') >= 0 ? ((row[c('starred')] as number) ?? 0) : 0;
+
+    const loc = localMap.get(cardId);
+    const localCount   = loc?.count   ?? 0;
+    const localStarred = loc?.starred ?? 0;
+    const mergedStarred = Math.max(localStarred, remoteStarred);
+
+    if (remoteCount > localCount) {
+      local.run(
+        `UPDATE card_states SET
+           depth_level=?,stability=?,difficulty=?,retrievability=?,
+           last_review=?,next_review=?,review_count=?,lapse_count=?,
+           consecutive_correct=?,fast_learn_level=?,fast_learn_fail_count=?,
+           response_time_avg_ms=?,starred=?
+         WHERE card_id=?`,
+        [
+          row[c('depth_level')], row[c('stability')], row[c('difficulty')], row[c('retrievability')],
+          row[c('last_review')], row[c('next_review')], remoteCount, row[c('lapse_count')],
+          row[c('consecutive_correct')], row[c('fast_learn_level')], row[c('fast_learn_fail_count')],
+          c('response_time_avg_ms') >= 0 ? row[c('response_time_avg_ms')] : null,
+          mergedStarred, cardId,
+        ],
+      );
+    } else if (mergedStarred !== localStarred) {
+      local.run('UPDATE card_states SET starred=? WHERE card_id=?', [mergedStarred, cardId]);
+    }
+  }
+}
+
+/**
+ * sessions & review_logs — append-only event logs.
+ * INSERT OR IGNORE ensures no duplicates; nothing is ever removed.
+ */
+function _mergeAppendOnly(local: Database, remote: Database, table: string): void {
+  let res: ReturnType<Database['exec']>;
+  try { res = remote.exec(`SELECT * FROM ${table}`); }
+  catch { return; }
+  if (!res.length || !res[0].values.length) return;
+
+  const { columns, values } = res[0];
+  const cols = columns.join(',');
+  const placeholders = columns.map(() => '?').join(',');
+
+  for (const row of values as MergeRow[]) {
+    try {
+      local.run(`INSERT OR IGNORE INTO ${table} (${cols}) VALUES (${placeholders})`, row);
+    } catch { /* incompatible schema — skip row */ }
+  }
+}
+
+/**
+ * skill_mastery & morpheme_mastery — take the row with higher opportunities.
+ */
+function _mergeByOpportunities(
+  local: Database,
+  remote: Database,
+  table: string,
+  pkCols: string[],
+): void {
+  let res: ReturnType<Database['exec']>;
+  try { res = remote.exec(`SELECT * FROM ${table}`); }
+  catch { return; }
+  if (!res.length || !res[0].values.length) return;
+
+  const { columns, values } = res[0];
+  const c = _mci(columns);
+  const cols = columns.join(',');
+  const placeholders = columns.map(() => '?').join(',');
+  const where = pkCols.map(pk => `${pk}=?`).join(' AND ');
+  const nonPk = columns.filter(col => !pkCols.includes(col));
+  const setClause = nonPk.map(col => `${col}=?`).join(',');
+
+  for (const row of values as MergeRow[]) {
+    const pkVals = pkCols.map(pk => row[c(pk)]);
+    const remoteOpp = (row[c('opportunities')] as number) ?? 0;
+    try {
+      const lr = local.exec(`SELECT opportunities FROM ${table} WHERE ${where}`, pkVals);
+      if (!lr.length || !lr[0].values.length) {
+        local.run(`INSERT OR IGNORE INTO ${table} (${cols}) VALUES (${placeholders})`, row);
+      } else if (remoteOpp > ((lr[0].values[0][0] as number) ?? 0)) {
+        local.run(
+          `UPDATE ${table} SET ${setClause} WHERE ${where}`,
+          [...nonPk.map(col => row[c(col)]), ...pkVals],
+        );
+      }
+    } catch { /* skip */ }
+  }
+}
+
+/**
+ * error_patterns — take the row with the higher count.
+ */
+function _mergeErrorPatterns(local: Database, remote: Database): void {
+  let res: ReturnType<Database['exec']>;
+  try { res = remote.exec('SELECT * FROM error_patterns'); }
+  catch { return; }
+  if (!res.length || !res[0].values.length) return;
+
+  const { columns, values } = res[0];
+  const c = _mci(columns);
+  const cols = columns.join(',');
+  const p = columns.map(() => '?').join(',');
+
+  for (const row of values as MergeRow[]) {
+    const skillTag  = row[c('skill_tag')] as string;
+    const errorType = row[c('error_type')] as string;
+    const remoteCount = (row[c('count')] as number) ?? 0;
+    try {
+      const lr = local.exec(
+        'SELECT count FROM error_patterns WHERE skill_tag=? AND error_type=?',
+        [skillTag, errorType],
+      );
+      if (!lr.length || !lr[0].values.length) {
+        local.run(`INSERT OR IGNORE INTO error_patterns (${cols}) VALUES (${p})`, row);
+      } else if (remoteCount > ((lr[0].values[0][0] as number) ?? 0)) {
+        local.run(
+          'UPDATE error_patterns SET count=?,updated_at=? WHERE skill_tag=? AND error_type=?',
+          [remoteCount, row[c('updated_at')], skillTag, errorType],
+        );
+      }
+    } catch { /* skip */ }
+  }
+}
+
+/**
+ * unit_progress — completed > in_progress > available > locked.
+ * Earliest started_at and completed_at timestamps are kept.
+ */
+function _mergeUnitProgress(local: Database, remote: Database): void {
+  const STATUS_RANK: Record<string, number> = { locked: 0, available: 1, in_progress: 2, completed: 3 };
+
+  let res: ReturnType<Database['exec']>;
+  try { res = remote.exec('SELECT * FROM unit_progress'); }
+  catch { return; }
+  if (!res.length || !res[0].values.length) return;
+
+  const { columns, values } = res[0];
+  const c = _mci(columns);
+  const cols = columns.join(',');
+  const p = columns.map(() => '?').join(',');
+
+  for (const row of values as MergeRow[]) {
+    const unitId        = row[c('unit_id')] as string;
+    const remoteStatus  = row[c('status')] as string;
+    const remoteRank    = STATUS_RANK[remoteStatus] ?? 0;
+    const remoteMastery = (row[c('mastery_score')] as number) ?? 0;
+
+    try {
+      const lr = local.exec(
+        'SELECT status, started_at, completed_at, mastery_score FROM unit_progress WHERE unit_id=?',
+        [unitId],
+      );
+      if (!lr.length || !lr[0].values.length) {
+        local.run(`INSERT OR IGNORE INTO unit_progress (${cols}) VALUES (${p})`, row);
+        continue;
+      }
+      const [localStatus, localStarted, localCompleted, localMastery] = lr[0].values[0];
+      const localRank    = STATUS_RANK[localStatus as string] ?? 0;
+      const bestMastery  = Math.max((localMastery as number) ?? 0, remoteMastery);
+      const mergedStart  = _minIso(localStarted as string | null, row[c('started_at')] as string | null);
+      const mergedDone   = _minIso(localCompleted as string | null, row[c('completed_at')] as string | null);
+
+      if (remoteRank > localRank) {
+        local.run(
+          'UPDATE unit_progress SET status=?,started_at=?,completed_at=?,mastery_score=? WHERE unit_id=?',
+          [remoteStatus, mergedStart, mergedDone, bestMastery, unitId],
+        );
+      } else {
+        local.run(
+          'UPDATE unit_progress SET started_at=?,completed_at=?,mastery_score=? WHERE unit_id=?',
+          [mergedStart, mergedDone, bestMastery, unitId],
+        );
+      }
+    } catch { /* skip */ }
+  }
+}
+
+/**
+ * profile — max streak_longest and total_xp across both; settings from the
+ * device that was more recently active.
+ */
+function _mergeProfile(local: Database, remote: Database): void {
+  let res: ReturnType<Database['exec']>;
+  try { res = remote.exec('SELECT * FROM profile'); }
+  catch { return; }
+  if (!res.length || !res[0].values.length) return;
+
+  const { columns, values } = res[0];
+  const c = _mci(columns);
+  const remoteRow = values[0] as MergeRow;
+
+  const remoteSettings  = remoteRow[c('settings')] as string;
+  const remoteActivity  = remoteRow[c('last_activity')] as string | null;
+  const remoteLongest   = (remoteRow[c('streak_longest')] as number) ?? 0;
+  const remoteTotalXp   = c('total_xp') >= 0 ? ((remoteRow[c('total_xp')] as number) ?? 0) : 0;
+
+  try {
+    const lr = local.exec('SELECT last_activity, streak_longest, COALESCE(total_xp,0) FROM profile');
+    if (!lr.length || !lr[0].values.length) {
+      const cols = columns.join(',');
+      const p = columns.map(() => '?').join(',');
+      local.run(`INSERT OR REPLACE INTO profile (${cols}) VALUES (${p})`, remoteRow);
+      return;
+    }
+    const [localActivity, , ] = lr[0].values[0];
+
+    // Always take the best cumulative stats
+    local.run(
+      `UPDATE profile
+         SET streak_longest = MAX(streak_longest, ?),
+             total_xp       = MAX(COALESCE(total_xp,0), ?)`,
+      [remoteLongest, remoteTotalXp],
+    );
+
+    // If remote was more recently active, adopt its settings
+    if (remoteActivity && (!localActivity || (remoteActivity > (localActivity as string)))) {
+      local.run('UPDATE profile SET settings=?', [remoteSettings]);
+    }
+  } catch { /* skip */ }
+}
+
+/**
+ * Merges a remote DB binary into the currently open local DB.
+ * Called after openDatabase(); safe to call even if Drive has no newer data.
+ */
+export async function mergeRemoteDb(remoteBytes: Uint8Array): Promise<{ merged: boolean }> {
+  if (!_db) return { merged: false };
+  const sql = await getSql();
+  let remoteDb: Database | null = null;
+  try {
+    remoteDb = new sql.Database(remoteBytes);
+    _db.run('BEGIN');
+    try {
+      _mergeCardStates(_db, remoteDb);
+      _mergeAppendOnly(_db, remoteDb, 'sessions');
+      _mergeAppendOnly(_db, remoteDb, 'review_logs');
+      _mergeByOpportunities(_db, remoteDb, 'skill_mastery', ['skill_tag']);
+      _mergeByOpportunities(_db, remoteDb, 'morpheme_mastery', ['morpheme', 'slot']);
+      _mergeErrorPatterns(_db, remoteDb);
+      _mergeUnitProgress(_db, remoteDb);
+      _mergeProfile(_db, remoteDb);
+      _db.run('COMMIT');
+    } catch (e) {
+      try { _db.run('ROLLBACK'); } catch { /* ignore */ }
+      throw e;
+    }
+    scheduleFlush();
+    return { merged: true };
+  } catch {
+    return { merged: false };
+  } finally {
+    remoteDb?.close();
+  }
 }

@@ -1,4 +1,4 @@
-import { getDb } from '../database/db';
+import { getDb, mergeRemoteDb } from '../database/db';
 import { getOrRefreshToken, getGoogleProfile } from '../auth/googleAuth';
 
 const FILE_NAME = 'swahili.db';
@@ -22,38 +22,9 @@ async function findFile(token: string): Promise<{ id: string; modifiedTime: stri
   }
 }
 
-// Downloads the DB from Drive if the Drive copy is newer than the last sync.
-// Returns null if offline, token expired, no Drive file, or already up to date.
-export async function downloadIfNewer(token: string): Promise<Uint8Array | null> {
-  if (!navigator.onLine) return null;
-  try {
-    const file = await findFile(token);
-    if (!file) return null;
-
-    const driveMs  = new Date(file.modifiedTime).getTime();
-    const lastSync = Number(localStorage.getItem(syncKey()) ?? 0);
-    if (driveMs <= lastSync) return null;
-
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
-
-// Uploads the current in-memory DB to Drive. Called after each session ends.
-export async function uploadToDrive(): Promise<boolean> {
-  if (!navigator.onLine) return false;
-  const token = await getOrRefreshToken();
-  if (!token) return false;
+async function _upload(token: string, file: { id: string } | null): Promise<boolean> {
   try {
     const data = getDb().export();
-    const file = await findFile(token);
-
     const metadata = JSON.stringify({
       name: FILE_NAME,
       ...(!file && { parents: ['appDataFolder'] }),
@@ -81,6 +52,52 @@ export async function uploadToDrive(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Full sync: if Drive has data we haven't seen yet, merge it into the local DB
+ * first, then upload the (possibly merged) result back to Drive.
+ *
+ * This is the only sync entry point needed. It replaces the old
+ * downloadIfNewer + uploadToDrive pair and is safe to call at any point after
+ * openDatabase() has returned.
+ *
+ * tokenOverride: pass the freshly-minted access token on first login so we
+ * don't need a second getOrRefreshToken() call.
+ */
+export async function syncWithDrive(tokenOverride?: string): Promise<boolean> {
+  if (!navigator.onLine) return false;
+  const token = tokenOverride ?? await getOrRefreshToken();
+  if (!token) return false;
+
+  try {
+    const file = await findFile(token);
+    const lastSync = Number(localStorage.getItem(syncKey()) ?? 0);
+
+    // If Drive has data we haven't merged yet, download and merge it
+    if (file && new Date(file.modifiedTime).getTime() > lastSync) {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.ok) {
+        const remoteBytes = new Uint8Array(await res.arrayBuffer());
+        await mergeRemoteDb(remoteBytes);
+        // file.id is still valid for the upload below — same file, just patching it
+      }
+    }
+
+    // Upload current local state (whether we merged or not)
+    return _upload(token, file);
+  } catch {
+    return false;
+  }
+}
+
+// Kept for the Settings "Sync now" button — delegates to syncWithDrive so
+// it also merges any remote changes the user might have made on another device.
+export async function uploadToDrive(): Promise<boolean> {
+  return syncWithDrive();
 }
 
 export function getLastSyncTime(): Date | null {

@@ -83,7 +83,7 @@ export default function UnitDetailScreen() {
   const [cards, setCards] = useState<CardWithState[]>([]);
   const [unitStatus, setUnitStatus] = useState<UnitProgress['status']>('locked');
   const [prereqName, setPrereqName] = useState<string | null>(null);
-  const [displayNum, setDisplayNum] = useState<number | null>(null);
+  const [displayLabel, setDisplayLabel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -93,11 +93,24 @@ export default function UnitDetailScreen() {
       const found = allUnits.find(u => u.id === id);
       if (!found) { navigate('/app/units'); return; }
 
-      const visibleUnits = [...allUnits]
-        .filter(u => u.id !== 'unit-00-placement')
-        .sort((a, b) => a.level !== b.level ? a.level - b.level : a.order_index - b.order_index);
-      const numMap = new Map(visibleUnits.map((u, i) => [u.id, i + 1]));
-      setDisplayNum(numMap.get(found.id) ?? null);
+      if (found.track === 'grammar') {
+        // Compute grammar label: "Foundation" for unit-00-grammar, "G1"–"GN" for others
+        const grammarUnits = [...allUnits]
+          .filter(u => u.track === 'grammar')
+          .sort((a, b) => a.order_index - b.order_index);
+        if (found.id === 'unit-00-grammar') {
+          setDisplayLabel('Foundation');
+        } else {
+          const idx = grammarUnits.filter(u => u.id !== 'unit-00-grammar').findIndex(u => u.id === found.id);
+          setDisplayLabel(`G${idx + 1}`);
+        }
+      } else {
+        const vocabUnits = [...allUnits]
+          .filter(u => u.id !== 'unit-00-placement' && u.track !== 'grammar')
+          .sort((a, b) => a.level !== b.level ? a.level - b.level : a.order_index - b.order_index);
+        const numMap = new Map(vocabUnits.map((u, i) => [u.id, i + 1]));
+        setDisplayLabel(`Unit ${numMap.get(found.id) ?? '?'}`);
+      }
 
       setUnit(found);
       setUnitStatus(computeStatus(found, progressMap));
@@ -134,7 +147,16 @@ export default function UnitDetailScreen() {
           ←
         </button>
         <div className="flex-1 min-w-0">
-          {displayNum !== null && <p className="text-xs text-slate-500">Unit {displayNum}</p>}
+          <div className="flex items-center gap-2">
+            {displayLabel !== null && (
+              <p className="text-xs text-slate-500">{displayLabel}</p>
+            )}
+            {unit.track === 'grammar' && (
+              <span className="text-xs text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded font-medium">
+                Grammar
+              </span>
+            )}
+          </div>
           <h1 className="font-bold text-slate-100 truncate">{unit.name}</h1>
         </div>
       </div>

@@ -136,6 +136,7 @@ export interface Unit {
   prerequisite_ids: string[];
   grammar_notes: string;
   estimated_hours: number;
+  track?: 'vocabulary' | 'grammar';
 }
 
 export interface UnitProgress {

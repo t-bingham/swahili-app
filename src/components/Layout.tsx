@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { getCurrentUser, openDatabase, getProfile } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
-import { uploadToDrive } from '../sync/driveSync';
+import { syncWithDrive } from '../sync/driveSync';
 
 const tabs = [
   { to: '/app/home',    label: 'Home',    icon: '🏠' },
@@ -37,7 +37,7 @@ export default function Layout() {
   // Background sync: upload to Drive when coming back online or returning to the tab.
   useEffect(() => {
     function trySyncIfOnline() {
-      if (navigator.onLine && getCurrentUser() !== null) uploadToDrive();
+      if (navigator.onLine && getCurrentUser() !== null) syncWithDrive();
     }
     const handleVisibility = () => { if (!document.hidden) trySyncIfOnline(); };
     window.addEventListener('online', trySyncIfOnline);

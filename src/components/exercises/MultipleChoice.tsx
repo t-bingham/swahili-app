@@ -113,6 +113,11 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
           <p className="text-slate-500 text-xs">"{card.example_sentences[0].english}"</p>
         </div>
       )}
+      {selected !== null && card.cultural_note && (
+        <div className="px-3 py-2 bg-amber-900/20 border border-amber-700/30 rounded-xl text-amber-300/80 text-xs">
+          {card.cultural_note}
+        </div>
+      )}
     </div>
   );
 }

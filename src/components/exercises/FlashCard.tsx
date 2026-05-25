@@ -47,6 +47,11 @@ export default function FlashCard({ card, onReveal, revealed, hint, direction = 
           {backEx && showExamples && (
             <div className="text-slate-400 text-sm mt-3 italic">"{backEx}"</div>
           )}
+          {card.cultural_note && (
+            <div className="mt-3 px-3 py-2 bg-amber-900/20 border border-amber-700/30 rounded-lg text-amber-300/80 text-xs text-left">
+              {card.cultural_note}
+            </div>
+          )}
           {showMorphemeHints && <MorphemeBreakdown card={card} />}
           <div className="mt-3 flex gap-2 justify-center flex-wrap">
             {card.tags.slice(0, 3).map(tag => (
