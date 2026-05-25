@@ -8,6 +8,7 @@
  *   - After every write: flush to IndexedDB (debounced)
  */
 
+import pluralize from 'pluralize';
 import type { Database, SqlJsStatic } from 'sql.js';
 import type {
   Card, CardState, CardWithState, Profile, ProfileSettings,
@@ -15,6 +16,61 @@ import type {
 } from '../types';
 import { PLACEMENT_SEEDS, PHRASE_SEEDS, GRAMMAR_SEEDS } from './seeds';
 import { NOUN_CLASS_MAP } from '../data/nounClasses';
+
+// ─── Plural-English migration helpers (used once per existing user DB) ────────
+
+const _PLURAL_OVERRIDES: Record<string, string> = {
+  loaf: 'loaves', leaf: 'leaves', beef: 'beef', luggage: 'luggage',
+  merchandise: 'merchandise', police: 'police', blood: 'blood',
+  sunshine: 'sunshine', poetry: 'poetry', pay: 'pay',
+  brightness: 'brightness', amnesty: 'amnesty', aid: 'aid',
+  mourning: 'mourning', bereavement: 'bereavement',
+};
+const _PLURAL_STOP = new Set([
+  'of','the','a','an','for','in','at','on','to','with','from','by','and','or',
+  'etc.','one','large','medical','romantic','physical','small','own','old',
+  'thick','printed','east','african','currency','water','flatbread','bank',
+  'id','long','short','singular',
+]);
+
+function _pluralWord(w: string): string {
+  const lo = w.toLowerCase();
+  if (_PLURAL_STOP.has(lo)) return w;
+  if (_PLURAL_OVERRIDES[lo]) return _PLURAL_OVERRIDES[lo];
+  return pluralize(w);
+}
+function _pluralQualifier(q: string): string {
+  if (q.includes('etc.') || (q.includes(',') && !q.includes("'"))) return q;
+  if (/^(of|from|for|in|at|on|with|by)\b/i.test(q)) return q;
+  if (!q.includes(' ') && _PLURAL_STOP.has(q.toLowerCase())) return q;
+  const pm = q.match(/^(.+'s)\s+(.+)$/);
+  if (pm) return `${pm[1]} ${_pluralWord(pm[2])}`;
+  const ws = q.split(' ');
+  ws[ws.length - 1] = _pluralWord(ws[ws.length - 1]);
+  return ws.join(' ');
+}
+function _pluralPart(part: string): string {
+  const m = part.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (m) return `${_pluralWord(m[1].trim())} (${_pluralQualifier(m[2].trim())})`;
+  return _pluralWord(part);
+}
+function _fixPluralEnglish(en: string): string | null {
+  if (!en.endsWith(' (plural)')) return null;
+  const core = en.slice(0, -9);
+  const si = core.indexOf(' ');
+  if (si === -1) return null;
+  const adj = core.slice(0, si);
+  const noun = core.slice(si + 1).trim();
+  const fixed = noun.split(' / ').map(s => _pluralPart(s.trim())).join(' / ');
+  const result = `${adj} ${fixed}`;
+  // Post-fix known compound-hyphenated irregulars that pluralize mishandles
+  return result
+    .replace(/sibling-in-laws/g, 'siblings-in-law')
+    .replace(/brother-in-laws/g, 'brothers-in-law')
+    .replace(/sister-in-laws/g,  'sisters-in-law')
+    .replace(/parent-in-laws/g,  'parents-in-law')
+    .replace(/child-in-laws/g,   'children-in-law');
+}
 
 const DEFAULT_NEW_WORDS_PER_DAY = 10;
 const DEFAULT_REVIEWS_PER_DAY = 20;
@@ -236,6 +292,22 @@ export async function openDatabase(userName: string): Promise<void> {
 
   // A-06: starred cards
   try { _db.run('ALTER TABLE card_states ADD COLUMN starred INTEGER DEFAULT 0'); } catch { /* already exists */ }
+
+  // D-01: Fix "(plural)" English labels — convert "bad child (plural)" → "bad children" etc.
+  // Idempotent: only touches rows that still carry the old marker.
+  {
+    const rows = _db.exec(
+      "SELECT id, english FROM cards WHERE english LIKE '%(plural)%' AND english NOT LIKE 'you%'"
+    );
+    if (rows.length && rows[0].values.length) {
+      _db.run('BEGIN');
+      for (const [id, en] of rows[0].values as [string, string][]) {
+        const fixed = _fixPluralEnglish(en);
+        if (fixed) _db.run('UPDATE cards SET english = ? WHERE id = ?', [fixed, id]);
+      }
+      _db.run('COMMIT');
+    }
+  }
 
   // B-04: placement test seed data (idempotent — INSERT OR IGNORE)
   _db.run(`INSERT OR IGNORE INTO units
