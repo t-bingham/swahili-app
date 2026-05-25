@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swahili Learning App Engineering Summary</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #111c2f;
+      --panel-2: #17243a;
+      --text: #e5eefb;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --border: #26364f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+    header {
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+    h1, h2, h3 { line-height: 1.15; margin: 0; }
+    h1 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: 0; }
+    h2 { font-size: 1.2rem; margin-bottom: 12px; }
+    h3 { font-size: 1rem; margin-bottom: 6px; color: var(--accent); }
+    p { margin: 0 0 12px; color: var(--muted); }
+    code {
+      background: #0b1220;
+      color: #dbeafe;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 0.92em;
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+    }
+    .summary {
+      font-size: 1.08rem;
+      max-width: 760px;
+      color: #cbd5e1;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .card, section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    section { margin-top: 18px; }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    li { margin: 8px 0; }
+    .metric {
+      display: block;
+      color: var(--text);
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      margin-right: 6px;
+    }
+    .status.good { color: #06281d; background: var(--good); }
+    .status.warn { color: #2a1a03; background: var(--warn); }
+    .file-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .file {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .file strong { color: var(--text); }
+    footer {
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 28px;
+      padding-top: 18px;
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Senior Engineering Pass</div>
+      <h1>Swahili Learning App Improvements</h1>
+      <p class="summary">
+        I reviewed the app's startup, database migration, session scheduling, review flow,
+        persistence, gallery filtering, and build/runtime behavior. The first pass fixed
+        high-impact correctness issues; the second pass added migration tracking and a
+        lightweight regression harness so those fixes are easier to protect.
+      </p>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <span class="metric">6</span>
+        <p>Primary correctness, durability, and architecture improvements made.</p>
+      </div>
+      <div class="card">
+        <span class="metric">18</span>
+        <p>Automated tests now running through Vitest.</p>
+      </div>
+      <div class="card">
+        <span class="metric">25,353</span>
+        <p>Seed cards confirmed in the bundled SQLite database.</p>
+      </div>
+    </div>
+
+    <section>
+      <h2>What Changed</h2>
+      <ul>
+        <li>
+          Fixed a startup migration bug in <code>src/database/db.ts</code> where grammar
+          seed syncing wrote to a non-existent <code>cards.en</code> column. It now writes
+          to the real <code>cards.english</code> column.
+        </li>
+        <li>
+          Added explicit database flushing after startup migrations and at session finish,
+          reducing the chance that recent review/session data remains only in memory.
+        </li>
+        <li>
+          Fixed quick-learn consecutive-correct accounting in <code>src/store/sessionStore.ts</code>
+          so one correct review increments the counter once, not twice.
+        </li>
+        <li>
+          Fixed gallery status filtering so "new" cards can be queried correctly, then
+          added a visible "New" filter tab in <code>src/screens/CardGalleryScreen.tsx</code>.
+        </li>
+        <li>
+          Added <code>schema_migrations</code> tracking so the legacy migration/content repair bundle runs once
+          per user database instead of being repeated on every open.
+        </li>
+        <li>
+          Replaced the first standalone regression script with a Vitest suite covering utilities,
+          FSRS, scheduling, migration tracking, gallery "New" filter support, and bundled SQLite schema expectations.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Why It Matters</h2>
+      <ul>
+        <li>
+          The migration typo could prevent existing or first-run databases from opening
+          once that migration executed, making it the highest-risk issue found.
+        </li>
+        <li>
+          The flush improvements make the local-first persistence model more reliable,
+          especially after completing a session or after migrations update a user DB.
+        </li>
+        <li>
+          The quick-learn counter fix keeps promotion behavior aligned with actual learner
+          performance rather than accidentally accelerating cards.
+        </li>
+        <li>
+          The gallery fix makes the data API and UI consistent, so learners can inspect
+          unseen cards instead of only introduced cards.
+        </li>
+        <li>
+          Version tracking gives future schema work a clear place to evolve, which is the first step
+          toward separating migrations from ordinary database access.
+        </li>
+        <li>
+          Vitest gives the project a normal test workflow that can grow into integration and component coverage.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Automated Test Suite</h2>
+      <p>The app now has a fast Node-based Vitest suite. It deliberately starts with the areas that can break learner data or scheduling behavior without needing a browser.</p>
+      <ul>
+        <li><code>tests/utils.test.ts</code>: text normalization, unit unlock status, and lesson chunk/status behavior.</li>
+        <li><code>tests/fsrs.test.ts</code>: FSRS stability, difficulty, retrievability, and learning interval behavior.</li>
+        <li><code>tests/sessionAssembly.test.ts</code>: card weighting, overdue priority, new-card draw behavior, and immediate-repeat exclusion.</li>
+        <li><code>tests/database-regression.test.ts</code>: migration typo regression, migration version tracking, gallery "New" filter support, and seed DB schema/content checks using <code>sql.js</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>How To Run Tests</h2>
+      <ul>
+        <li><code>npm test</code>: runs the full automated test suite once. Use this before committing or after changing scheduling, database, lesson, or algorithm code.</li>
+        <li><code>npm run test:watch</code>: starts Vitest in watch mode while you are actively developing. It reruns affected tests as files change.</li>
+        <li><code>npm run build</code>: still run this before release; it type-checks the app and creates the production Vite/PWA bundle.</li>
+      </ul>
+      <p>A good local verification loop is: make a change, run <code>npm test</code>, then run <code>npm run build</code> before sharing or deploying.</p>
+    </section>
+
+    <section>
+      <h2>Verification</h2>
+      <p><span class="status good">Passed</span><code>npm.cmd test</code> — 4 test files, 18 tests.</p>
+      <p><span class="status good">Passed</span><code>npm.cmd run build</code></p>
+      <p><span class="status good">Passed</span>Vite served the app at <code>http://127.0.0.1:5173</code> and the sign-in screen rendered.</p>
+      <p><span class="status good">Passed</span>Direct SQLite schema check confirmed <code>cards.english</code> exists and <code>cards.en</code> does not.</p>
+      <p><span class="status warn">Note</span>NPM reported 3 moderate dependency audit findings after installing Vitest; I did not apply a force audit fix because that can introduce breaking changes.</p>
+    </section>
+
+    <section>
+      <h2>Files Changed</h2>
+      <div class="file-list">
+        <div class="file">
+          <strong>src/database/db.ts</strong>
+          <p>Migration column fix, explicit flush export, startup migration persistence, versioned migration tracking, and corrected gallery query logic.</p>
+        </div>
+        <div class="file">
+          <strong>src/store/sessionStore.ts</strong>
+          <p>Corrected consecutive-correct updates and flushes completed sessions to IndexedDB immediately.</p>
+        </div>
+        <div class="file">
+          <strong>src/screens/CardGalleryScreen.tsx</strong>
+          <p>Added the visible New status filter to match the database query support.</p>
+        </div>
+        <div class="file">
+          <strong>package.json</strong>
+          <p>Added <code>npm test</code>, <code>npm run test:watch</code>, and Vitest as the test runner.</p>
+        </div>
+        <div class="file">
+          <strong>vitest.config.ts</strong>
+          <p>Configured Node-based Vitest execution and the <code>@/</code> source alias for tests.</p>
+        </div>
+        <div class="file">
+          <strong>tests/*.test.ts</strong>
+          <p>Added automated coverage for utilities, FSRS, scheduling, and database regressions.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Generated on 2026-05-26 as part of a senior-engineering code review and repair pass.
+    </footer>
+  </main>
+</body>
+</html>

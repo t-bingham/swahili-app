@@ -304,6 +304,7 @@ async function idbDelete(key: string): Promise<void> {
 let _db: Database | null = null;
 let _currentUser: string | null = null;
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
+const LEGACY_MIGRATION_VERSION = 1;
 
 function scheduleFlush() {
   if (_flushTimer) clearTimeout(_flushTimer);
@@ -372,7 +373,11 @@ export async function openDatabase(userName: string): Promise<void> {
   _db = new sql.Database(existing);
   _currentUser = userName;
 
-  // Idempotent migrations — create/alter tables added after the template DB was generated
+  ensureMigrationTable(_db);
+  if (getMigrationVersion(_db) < LEGACY_MIGRATION_VERSION) {
+  // Legacy migration bundle — create/alter tables and content fixes added after
+  // the template DB was generated. Tracked so future opens do not rerun the full
+  // content repair pass on every launch.
   _db.run(`
     CREATE TABLE IF NOT EXISTS skill_mastery (
       skill_tag     TEXT PRIMARY KEY,
@@ -541,9 +546,9 @@ export async function openDatabase(userName: string): Promise<void> {
   // Fix frequency_rank for existing users (INSERT OR IGNORE won't update already-inserted rows)
   _db.run(`UPDATE cards SET frequency_rank = CAST(SUBSTR(id, 4) AS INTEGER) WHERE id LIKE 'gr-%' AND unit_id = 'unit-00-grammar'`);
 
-  // Sync improved grammar card content for existing users (idempotent — always runs, 42 rows, negligible cost)
+  // Sync improved grammar card content for existing users (idempotent; small fixed seed set).
   for (const g of GRAMMAR_SEEDS) {
-    _db.run(`UPDATE cards SET en = ?, cultural_note = ? WHERE id = ? AND type = 'grammar'`, [g.en, g.note, g.id]);
+    _db.run(`UPDATE cards SET english = ?, cultural_note = ? WHERE id = ? AND type = 'grammar'`, [g.en, g.note, g.id]);
   }
 
   // B-05: Back-fill register column on generated cards using tag patterns (idempotent)
@@ -758,13 +763,25 @@ export async function openDatabase(userName: string): Promise<void> {
       [note, sw],
     );
   }
+  setMigrationVersion(_db, LEGACY_MIGRATION_VERSION);
+  }
+
+  scheduleFlush();
 }
 
 export async function closeDatabase(): Promise<void> {
-  await flushToDisk();
+  await flushDatabase();
   _db?.close();
   _db = null;
   _currentUser = null;
+}
+
+export async function flushDatabase(): Promise<void> {
+  if (_flushTimer) {
+    clearTimeout(_flushTimer);
+    _flushTimer = null;
+  }
+  await flushToDisk();
 }
 
 // Permanently deletes the current user's database from IndexedDB.
@@ -781,6 +798,32 @@ export async function resetCurrentUserData(): Promise<void> {
 // ─── Generic helpers ──────────────────────────────────────────────────────────
 
 type Param = string | number | null | undefined;
+
+function ensureMigrationTable(db: Database): void {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      version INTEGER NOT NULL,
+      applied_at TEXT NOT NULL
+    )
+  `);
+}
+
+function getMigrationVersion(db: Database): number {
+  const result = db.exec('SELECT version FROM schema_migrations WHERE id = 1');
+  return result[0]?.values[0]?.[0] as number ?? 0;
+}
+
+function setMigrationVersion(db: Database, version: number): void {
+  db.run(
+    `INSERT INTO schema_migrations (id, version, applied_at)
+     VALUES (1, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       version = excluded.version,
+       applied_at = excluded.applied_at`,
+    [version, new Date().toISOString()],
+  );
+}
 
 function run(sql: string, params: Param[] = []): void {
   const db = getDb();
@@ -1286,14 +1329,18 @@ export async function searchGalleryCards(
 ): Promise<CardWithState[]> {
   const like = `%${searchQuery}%`;
   const params: Param[] = [like, like];
-  let where = `(c.swahili LIKE ? OR c.english LIKE ?) AND (c.placement_only = 0 OR c.placement_only IS NULL) AND cs.depth_level > 1`;
+  let where = `(c.swahili LIKE ? OR c.english LIKE ?) AND (c.placement_only = 0 OR c.placement_only IS NULL)`;
   if (typeFilter) { where += ` AND c.type = ?`; params.push(typeFilter); }
   if (unitId)     { where += ` AND c.unit_id = ?`; params.push(unitId); }
-  if (statusFilter === 'new')       { where += ` AND cs.depth_level = 1`; }
-  if (statusFilter === 'learning')  { where += ` AND cs.depth_level IN (2, 2.5)`; }
-  if (statusFilter === 'known')     { where += ` AND cs.depth_level IN (3, 4, 4.5)`; }
-  if (statusFilter === 'mastered')  { where += ` AND cs.depth_level IN (5.1, 5.2, 5.3)`; }
-  if (statusFilter === 'starred')   { where += ` AND cs.starred = 1`; }
+  if (statusFilter === 'new') {
+    where += ` AND cs.depth_level = 1`;
+  } else {
+    where += ` AND cs.depth_level > 1`;
+    if (statusFilter === 'learning') { where += ` AND cs.depth_level IN (2, 2.5)`; }
+    if (statusFilter === 'known')    { where += ` AND cs.depth_level IN (3, 4, 4.5)`; }
+    if (statusFilter === 'mastered') { where += ` AND cs.depth_level IN (5.1, 5.2, 5.3)`; }
+    if (statusFilter === 'starred')  { where += ` AND cs.starred = 1`; }
+  }
   params.push(limit);
   return query<Record<string, unknown>>(
     `SELECT c.*, ${CARD_COLS}

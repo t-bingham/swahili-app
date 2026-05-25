@@ -4,7 +4,7 @@ import { processReview, learningIntervalMinutes } from '../algorithms/fsrs';
 import {
   upsertCardState, insertReviewLog, insertSession,
   recordActivity, updateSkillMastery, updateErrorPattern,
-  setCardStarred,
+  setCardStarred, flushDatabase,
 } from '../database/db';
 import { drawWeightedCard, type SessionModifiers } from '../scheduling/sessionAssembly';
 import { classifyError } from '../algorithms/errorClassifier';
@@ -179,16 +179,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       nextReviewIso = new Date(Date.now() + fsrsResult.next_interval_days * 86400000).toISOString();
     }
 
-    let newConsecutiveCorrect = card.state.consecutive_correct;
+    const newConsecutiveCorrect = rating >= 3 ? card.state.consecutive_correct + 1 : 0;
     let newFastLearnLevel = card.state.fast_learn_level;
     let newFastLearnFailCount = card.state.fast_learn_fail_count;
 
     if (card.quick_learn && card.state.depth_level === 2) {
       if (rating >= 3) {
-        newConsecutiveCorrect++;
         if (newConsecutiveCorrect >= 4) newFastLearnLevel = 2;
-      } else {
-        newConsecutiveCorrect = 0;
       }
     }
     if (card.state.depth_level === 2.5 && rating <= 2) {
@@ -250,7 +247,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       next_review: nextReviewIso,
       review_count: card.state.review_count + 1,
       lapse_count: rating <= 2 ? card.state.lapse_count + 1 : card.state.lapse_count,
-      consecutive_correct: rating >= 3 ? newConsecutiveCorrect + 1 : 0,
+      consecutive_correct: newConsecutiveCorrect,
       fast_learn_level: newFastLearnLevel as 0 | 2 | 4,
       fast_learn_fail_count: newFastLearnFailCount,
       response_time_avg_ms: newResponseTimeAvg,
@@ -367,6 +364,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       new_words_tomorrow: 0,
     });
     await recordActivity();
+    await flushDatabase();
     set({ isActive: false });
   },
 

@@ -343,6 +343,7 @@ function CardItem({ card, onClick, onToggleStar }: {
 
 const STATUS_TABS = [
   { value: '',         label: 'All' },
+  { value: 'new',      label: 'New' },
   { value: 'learning', label: 'Learning' },
   { value: 'known',    label: 'Known' },
   { value: 'mastered', label: 'Mastered' },
