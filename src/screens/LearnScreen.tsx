@@ -483,7 +483,7 @@ export default function LearnScreen() {
               <FillInBlank card={card} onAnswer={onExerciseAnswer} />
             )}
             {exercise === 'noun_class' && (
-              <NounClassExercise card={card} onAnswer={onExerciseAnswer} />
+              <NounClassExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
             )}
 
             {/* Pronunciation + example sentence — shown after answering any non-flashcard

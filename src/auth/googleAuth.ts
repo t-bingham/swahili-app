@@ -19,7 +19,13 @@ export function saveGoogleSession(
   // Subtract 60 s so we treat it as expired slightly before it actually is
   localStorage.setItem(EXPIRY_KEY, String(Date.now() + (expiresIn - 60) * 1000));
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-  if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken);
+  // Always write/clear the refresh token slot so stale tokens from a previous
+  // auth-code flow session don't cause failed refresh attempts later.
+  if (refreshToken) {
+    localStorage.setItem(REFRESH_KEY, refreshToken);
+  } else {
+    localStorage.removeItem(REFRESH_KEY);
+  }
 }
 
 export function getGoogleToken(): string | null {
@@ -35,34 +41,11 @@ export function getGoogleProfile(): GoogleProfile | null {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-export function getRefreshToken(): string | null {
-  return localStorage.getItem(REFRESH_KEY);
-}
-
-// Returns a valid access token, refreshing silently via the backend if needed.
-// Returns null if offline, no refresh token saved, or the refresh fails.
+// Returns the current access token if still valid, or null if expired.
+// Implicit OAuth flow does not provide refresh tokens, so there is nothing to
+// refresh — the user must sign in again once the token expires (~1 hour).
 export async function getOrRefreshToken(): Promise<string | null> {
-  const token = getGoogleToken();
-  if (token) return token;
-
-  const refreshToken = getRefreshToken();
-  if (!refreshToken || !navigator.onLine) return null;
-
-  try {
-    const res = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.access_token) return null;
-    const profile = getGoogleProfile();
-    if (profile) saveGoogleSession(data.access_token, data.expires_in ?? 3600, profile);
-    return data.access_token;
-  } catch {
-    return null;
-  }
+  return getGoogleToken();
 }
 
 export function clearGoogleSession(): void {
