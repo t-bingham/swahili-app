@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { normalize } from '../src/utils/normalize';
 import { computeLessons } from '../src/utils/lessons';
 import { computeStatus } from '../src/utils/unitStatus';
+import { unitBasePath, unitDisplayLabel, unitsForTrack } from '../src/utils/unitTracks';
 import type { Unit, UnitProgress } from '../src/types';
 import { makeCard } from './factories';
 
@@ -85,5 +86,78 @@ describe('computeLessons', () => {
 
     expect(computeLessons(introduced)[0].status).toBe('complete');
     expect(computeLessons(mastered)[0].status).toBe('mastered');
+  });
+});
+
+describe('unitTracks', () => {
+  const units: Unit[] = [
+    {
+      id: 'unit-00-placement',
+      name: 'Placement',
+      description: '',
+      level: 1,
+      order_index: 0,
+      prerequisite_ids: [],
+      grammar_notes: '',
+      estimated_hours: 0,
+    },
+    {
+      id: 'unit-01',
+      name: 'Greetings',
+      description: '',
+      level: 1,
+      order_index: 1,
+      prerequisite_ids: [],
+      grammar_notes: '',
+      estimated_hours: 1,
+      track: 'vocabulary',
+    },
+    {
+      id: 'unit-07',
+      name: 'Noun Classes',
+      description: '',
+      level: 1,
+      order_index: 7,
+      prerequisite_ids: [],
+      grammar_notes: '',
+      estimated_hours: 1,
+      track: 'grammar',
+    },
+    {
+      id: 'unit-08',
+      name: 'Present Tense',
+      description: '',
+      level: 2,
+      order_index: 8,
+      prerequisite_ids: ['unit-07'],
+      grammar_notes: '',
+      estimated_hours: 1,
+      track: 'grammar',
+    },
+    {
+      id: 'unit-12',
+      name: 'Travel',
+      description: '',
+      level: 2,
+      order_index: 12,
+      prerequisite_ids: ['unit-01'],
+      grammar_notes: '',
+      estimated_hours: 1,
+      track: 'vocabulary',
+    },
+  ];
+
+  it('rebases unit numbering within each tab', () => {
+    expect(unitsForTrack(units, 'vocabulary').map(u => u.id)).toEqual(['unit-01', 'unit-12']);
+    expect(unitsForTrack(units, 'grammar').map(u => u.id)).toEqual(['unit-07', 'unit-08']);
+    expect(unitDisplayLabel(units, units[1])).toBe('Unit 1');
+    expect(unitDisplayLabel(units, units[2])).toBe('Grammar 1');
+    expect(unitDisplayLabel(units, units[3])).toBe('Grammar 2');
+    expect(unitDisplayLabel(units, units[4])).toBe('Unit 2');
+  });
+
+  it('routes grammar units to the grammar tab', () => {
+    expect(unitBasePath(units[1])).toBe('/app/units');
+    expect(unitBasePath(units[2])).toBe('/app/grammar');
   });
 });

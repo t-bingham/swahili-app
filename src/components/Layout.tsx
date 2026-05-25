@@ -8,6 +8,7 @@ const tabs = [
   { to: '/app/home',    label: 'Home',    icon: '🏠' },
   { to: '/app/learn',   label: 'Learn',   icon: '📚' },
   { to: '/app/units',   label: 'Units',   icon: '🗺️' },
+  { to: '/app/grammar', label: 'Grammar', icon: '🧩' },
   { to: '/app/gallery', label: 'Gallery', icon: '🔤' },
   { to: '/app/stats',   label: 'Stats',   icon: '📊' },
   { to: '/app/settings',label: 'Settings',icon: '⚙️' },

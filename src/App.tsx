@@ -24,9 +24,12 @@ export default function App() {
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<HomeScreen />} />
           <Route path="learn" element={<LearnScreen />} />
-          <Route path="units" element={<UnitMapScreen />} />
+          <Route path="units" element={<UnitMapScreen track="vocabulary" />} />
           <Route path="units/:id" element={<UnitDetailScreen />} />
           <Route path="units/:id/lesson/:lessonIndex" element={<UnitLessonScreen />} />
+          <Route path="grammar" element={<UnitMapScreen track="grammar" />} />
+          <Route path="grammar/:id" element={<UnitDetailScreen />} />
+          <Route path="grammar/:id/lesson/:lessonIndex" element={<UnitLessonScreen />} />
           <Route path="gallery" element={<CardGalleryScreen />} />
           <Route path="stats" element={<StatsScreen />} />
           <Route path="settings" element={<SettingsScreen />} />

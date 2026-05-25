@@ -4,12 +4,23 @@ import { getUnits, getAllUnitProgress, getUnitCardsWithState } from '../database
 import GrammarNotes from '../components/GrammarNotes';
 import { computeLessons } from '../utils/lessons';
 import { computeStatus } from '../utils/unitStatus';
+import { unitBasePath, unitDisplayLabel, type UnitBasePath } from '../utils/unitTracks';
 import type { Unit, UnitProgress, CardWithState } from '../types';
 import type { LessonInfo } from '../utils/lessons';
 
 // ─── Lesson row ───────────────────────────────────────────────────────────────
 
-function LessonRow({ lesson, unitId, isFirst }: { lesson: LessonInfo; unitId: string; isFirst: boolean }) {
+function LessonRow({
+  lesson,
+  unitId,
+  isFirst,
+  basePath,
+}: {
+  lesson: LessonInfo;
+  unitId: string;
+  isFirst: boolean;
+  basePath: UnitBasePath;
+}) {
   const navigate = useNavigate();
   const { index, cards, status } = lesson;
   const isLocked = status === 'locked';
@@ -63,7 +74,7 @@ function LessonRow({ lesson, unitId, isFirst }: { lesson: LessonInfo; unitId: st
 
         {!isLocked && (
           <button
-            onClick={() => navigate(`/app/units/${unitId}/lesson/${index}`)}
+            onClick={() => navigate(`${basePath}/${unitId}/lesson/${index}`)}
             className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${buttonStyle}`}
           >
             {buttonLabel}
@@ -93,24 +104,7 @@ export default function UnitDetailScreen() {
       const found = allUnits.find(u => u.id === id);
       if (!found) { navigate('/app/units'); return; }
 
-      if (found.track === 'grammar') {
-        // Compute grammar label: "Foundation" for unit-00-grammar, "G1"–"GN" for others
-        const grammarUnits = [...allUnits]
-          .filter(u => u.track === 'grammar')
-          .sort((a, b) => a.order_index - b.order_index);
-        if (found.id === 'unit-00-grammar') {
-          setDisplayLabel('Foundation');
-        } else {
-          const idx = grammarUnits.filter(u => u.id !== 'unit-00-grammar').findIndex(u => u.id === found.id);
-          setDisplayLabel(`G${idx + 1}`);
-        }
-      } else {
-        const vocabUnits = [...allUnits]
-          .filter(u => u.id !== 'unit-00-placement' && u.track !== 'grammar')
-          .sort((a, b) => a.level !== b.level ? a.level - b.level : a.order_index - b.order_index);
-        const numMap = new Map(vocabUnits.map((u, i) => [u.id, i + 1]));
-        setDisplayLabel(`Unit ${numMap.get(found.id) ?? '?'}`);
-      }
+      setDisplayLabel(unitDisplayLabel(allUnits, found));
 
       setUnit(found);
       setUnitStatus(computeStatus(found, progressMap));
@@ -135,13 +129,14 @@ export default function UnitDetailScreen() {
   const knownCount = cards.filter(c => c.state.depth_level >= 3).length;
   const mastery = cards.length > 0 ? Math.round((knownCount / cards.length) * 100) : 0;
   const isLocked = unitStatus === 'locked';
+  const basePath = unitBasePath(unit);
 
   return (
     <div className="flex flex-col h-full max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-slate-800">
         <button
-          onClick={() => navigate('/app/units')}
+          onClick={() => navigate(basePath)}
           className="text-slate-400 hover:text-slate-100 transition-colors text-lg"
         >
           ←
@@ -225,6 +220,7 @@ export default function UnitDetailScreen() {
                   lesson={lesson}
                   unitId={unit.id}
                   isFirst={lessons.length > 1}
+                  basePath={basePath}
                 />
               ))}
             </div>

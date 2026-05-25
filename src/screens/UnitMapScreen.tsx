@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUnits, getAllUnitProgress, getUnitMasteryStats } from '../database/db';
 import { computeStatus } from '../utils/unitStatus';
+import { unitsForTrack, type UnitTrack } from '../utils/unitTracks';
 import type { Unit, UnitProgress } from '../types';
 
 const LEVEL_LABELS: Record<number, string> = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
@@ -76,13 +77,13 @@ function VocabUnitCard({ unit, displayNum, status, stats, onClick }: VocabCardPr
 
 interface GrammarCardProps {
   unit: Unit;
-  label: string;
+  displayNum: number;
   status: UnitProgress['status'];
   stats?: { total: number; introduced: number; retained: number };
   onClick: () => void;
 }
 
-function GrammarUnitCard({ unit, label, status, stats, onClick }: GrammarCardProps) {
+function GrammarUnitCard({ unit, displayNum, status, stats, onClick }: GrammarCardProps) {
   const isLocked = status === 'locked';
 
   const borderColor =
@@ -111,7 +112,7 @@ function GrammarUnitCard({ unit, label, status, stats, onClick }: GrammarCardPro
               ? 'bg-green-500/15 text-green-400'
               : 'bg-amber-500/15 text-amber-400'
         }`}>
-          {isLocked ? '🔒' : label}
+          {isLocked ? '🔒' : displayNum}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
@@ -146,7 +147,7 @@ function GrammarUnitCard({ unit, label, status, stats, onClick }: GrammarCardPro
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-export default function UnitMapScreen() {
+export default function UnitMapScreen({ track }: { track: UnitTrack }) {
   const navigate = useNavigate();
   const [units, setUnits] = useState<Unit[]>([]);
   const [progress, setProgress] = useState<Map<string, UnitProgress>>(new Map());
@@ -164,25 +165,10 @@ export default function UnitMapScreen() {
 
   if (loading) return <div className="flex h-full items-center justify-center text-slate-400">Loading…</div>;
 
-  const allVisible = [...units]
-    .filter(u => u.id !== 'unit-00-placement')
-    .sort((a, b) => a.level !== b.level ? a.level - b.level : a.order_index - b.order_index);
-
-  // Split into vocabulary and grammar tracks
-  const vocabUnits = allVisible.filter(u => u.track !== 'grammar');
-  const grammarUnits = allVisible
-    .filter(u => u.track === 'grammar')
-    .sort((a, b) => a.order_index - b.order_index);
-
-  // Sequential display numbers for vocab units only
-  const displayNumber = new Map(vocabUnits.map((u, i) => [u.id, i + 1]));
-
-  // Grammar labels: "Foundation" for unit-00-grammar, "G1"–"G10" for the rest
-  let gCount = 0;
-  const grammarLabel = new Map(grammarUnits.map(u => [
-    u.id,
-    u.id === 'unit-00-grammar' ? 'Foundation' : `G${++gCount}`,
-  ]));
+  const vocabUnits = unitsForTrack(units, 'vocabulary');
+  const grammarUnits = unitsForTrack(units, 'grammar');
+  const activeUnits = unitsForTrack(units, track);
+  const displayNumber = new Map(activeUnits.map((u, i) => [u.id, i + 1]));
 
   // Group vocab units by level
   const grouped = ([1, 2, 3] as const).map(level => ({
@@ -192,10 +178,12 @@ export default function UnitMapScreen() {
 
   return (
     <div className="p-4 space-y-6 max-w-lg mx-auto pb-6">
-      <h1 className="text-2xl font-bold text-slate-100 pt-2">Units</h1>
+      <h1 className="text-2xl font-bold text-slate-100 pt-2">
+        {track === 'grammar' ? 'Grammar' : 'Units'}
+      </h1>
 
       {/* ── Vocabulary track ─────────────────────────────────────────────── */}
-      {grouped.map(({ level, units: lvlUnits }) => (
+      {track === 'vocabulary' && grouped.map(({ level, units: lvlUnits }) => (
         <div key={level}>
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">
             {LEVEL_LABELS[level]}
@@ -216,28 +204,20 @@ export default function UnitMapScreen() {
       ))}
 
       {/* ── Grammar track ────────────────────────────────────────────────── */}
-      {grammarUnits.length > 0 && (
+      {track === 'grammar' && grammarUnits.length > 0 && (
         <div>
-          <div className="flex items-center gap-3 mb-1 pt-2 border-t border-slate-700/60">
-            <div>
-              <h2 className="text-xs font-semibold text-amber-500/80 uppercase tracking-widest">
-                Grammar Track
-              </h2>
-            </div>
-          </div>
           <p className="text-slate-500 text-xs mb-4 leading-relaxed">
-            How Swahili works — noun classes, verb tenses, agreement, and sentence structure.
-            Explore this track any time, at your own pace.
+            How Swahili works: noun classes, verb tenses, agreement, and sentence structure.
           </p>
           <div className="space-y-2">
             {grammarUnits.map(unit => (
               <GrammarUnitCard
                 key={unit.id}
                 unit={unit}
-                label={grammarLabel.get(unit.id)!}
+                displayNum={displayNumber.get(unit.id)!}
                 status={computeStatus(unit, progress)}
                 stats={masteryStats.get(unit.id)}
-                onClick={() => navigate(`/app/units/${unit.id}`)}
+                onClick={() => navigate(`/app/grammar/${unit.id}`)}
               />
             ))}
           </div>

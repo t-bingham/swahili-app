@@ -6,6 +6,7 @@ import {
 } from '../database/db';
 import GrammarNotes from '../components/GrammarNotes';
 import { computeLessons } from '../utils/lessons';
+import { unitBasePath } from '../utils/unitTracks';
 import type { Unit, CardWithState } from '../types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -413,6 +414,7 @@ export default function UnitLessonScreen() {
       const allUnits = await getUnits();
       const found = allUnits.find(u => u.id === id);
       if (!found) { navigate('/app/units'); return; }
+      const foundBasePath = unitBasePath(found);
       setUnit(found);
 
       const allCards = await getUnitCardsWithState(found.id);
@@ -422,7 +424,7 @@ export default function UnitLessonScreen() {
       setTotalLessons(lessons.length);
 
       const lesson = lessons[lessonIndex];
-      if (!lesson) { navigate(`/app/units/${id}`); return; }
+      if (!lesson) { navigate(`${foundBasePath}/${id}`); return; }
 
       setLessonCards(lesson.cards);
 
@@ -485,13 +487,14 @@ export default function UnitLessonScreen() {
   }
 
   const showBackButton = phase === 'grammar' || phase === 'words';
+  const basePath = unitBasePath(unit);
 
   return (
     <div className="flex flex-col h-full">
       {showBackButton && (
         <div className="flex items-center gap-3 px-4 pt-4 pb-1 max-w-lg mx-auto w-full">
           <button
-            onClick={() => navigate(`/app/units/${unit.id}`)}
+            onClick={() => navigate(`${basePath}/${unit.id}`)}
             className="text-slate-400 hover:text-slate-100 transition-colors"
           >
             ←
@@ -549,7 +552,7 @@ export default function UnitLessonScreen() {
             unit={unit}
             lessonIndex={lessonIndex}
             totalLessons={totalLessons}
-            onDone={() => navigate(`/app/units/${unit.id}`)}
+            onDone={() => navigate(`${basePath}/${unit.id}`)}
             onRetry={() => {
               setPracticeCards(prev => [...prev].sort(() => Math.random() - 0.5));
               setPracticeIndex(0);

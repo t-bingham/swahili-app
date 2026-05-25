@@ -125,19 +125,19 @@
       <h1>Swahili Learning App Improvements</h1>
       <p class="summary">
         I reviewed the app's startup, database migration, session scheduling, review flow,
-        persistence, gallery filtering, and build/runtime behavior. The first pass fixed
-        high-impact correctness issues; the second pass added migration tracking and a
-        lightweight regression harness so those fixes are easier to protect.
+        persistence, gallery filtering, curriculum navigation, and build/runtime behavior.
+        The first pass fixed high-impact correctness issues; the second pass added migration
+        tracking and a lightweight regression harness so those fixes are easier to protect.
       </p>
     </header>
 
     <div class="grid">
       <div class="card">
-        <span class="metric">6</span>
+        <span class="metric">7</span>
         <p>Primary correctness, durability, and architecture improvements made.</p>
       </div>
       <div class="card">
-        <span class="metric">18</span>
+        <span class="metric">20</span>
         <p>Automated tests now running through Vitest.</p>
       </div>
       <div class="card">
@@ -174,6 +174,10 @@
           Replaced the first standalone regression script with a Vitest suite covering utilities,
           FSRS, scheduling, migration tracking, gallery "New" filter support, and bundled SQLite schema expectations.
         </li>
+        <li>
+          Split grammar out of the Units screen into its own <code>/app/grammar</code> tab, with
+          vocabulary units and grammar units now numbered independently from 1 in their own tracks.
+        </li>
       </ul>
     </section>
 
@@ -203,6 +207,10 @@
         <li>
           Vitest gives the project a normal test workflow that can grow into integration and component coverage.
         </li>
+        <li>
+          A separate Grammar tab makes the curriculum model clearer: vocabulary progression stays in Units,
+          while grammar progression has its own route, labels, and back-navigation.
+        </li>
       </ul>
     </section>
 
@@ -210,7 +218,7 @@
       <h2>Automated Test Suite</h2>
       <p>The app now has a fast Node-based Vitest suite. It deliberately starts with the areas that can break learner data or scheduling behavior without needing a browser.</p>
       <ul>
-        <li><code>tests/utils.test.ts</code>: text normalization, unit unlock status, and lesson chunk/status behavior.</li>
+        <li><code>tests/utils.test.ts</code>: text normalization, unit unlock status, lesson chunk/status behavior, and rebased vocabulary/grammar track numbering.</li>
         <li><code>tests/fsrs.test.ts</code>: FSRS stability, difficulty, retrievability, and learning interval behavior.</li>
         <li><code>tests/sessionAssembly.test.ts</code>: card weighting, overdue priority, new-card draw behavior, and immediate-repeat exclusion.</li>
         <li><code>tests/database-regression.test.ts</code>: migration typo regression, migration version tracking, gallery "New" filter support, and seed DB schema/content checks using <code>sql.js</code>.</li>
@@ -229,9 +237,10 @@
 
     <section>
       <h2>Verification</h2>
-      <p><span class="status good">Passed</span><code>npm.cmd test</code> — 4 test files, 18 tests.</p>
+      <p><span class="status good">Passed</span><code>npm.cmd test</code> - 4 test files, 20 tests.</p>
       <p><span class="status good">Passed</span><code>npm.cmd run build</code></p>
       <p><span class="status good">Passed</span>Vite served the app at <code>http://127.0.0.1:5173</code> and the sign-in screen rendered.</p>
+      <p><span class="status warn">Note</span>The in-app browser redirected protected routes to sign-in, so authenticated tab navigation was verified through routing code, utility tests, and the production build rather than a signed-in browser session.</p>
       <p><span class="status good">Passed</span>Direct SQLite schema check confirmed <code>cards.english</code> exists and <code>cards.en</code> does not.</p>
       <p><span class="status warn">Note</span>NPM reported 3 moderate dependency audit findings after installing Vitest; I did not apply a force audit fix because that can introduce breaking changes.</p>
     </section>
@@ -250,6 +259,18 @@
         <div class="file">
           <strong>src/screens/CardGalleryScreen.tsx</strong>
           <p>Added the visible New status filter to match the database query support.</p>
+        </div>
+        <div class="file">
+          <strong>src/App.tsx, src/components/Layout.tsx</strong>
+          <p>Added the new Grammar tab and grammar-specific routes.</p>
+        </div>
+        <div class="file">
+          <strong>src/screens/UnitMapScreen.tsx, src/screens/UnitDetailScreen.tsx, src/screens/UnitLessonScreen.tsx</strong>
+          <p>Separated vocabulary and grammar navigation, rebased numbering per track, and made detail/lesson back-navigation track-aware.</p>
+        </div>
+        <div class="file">
+          <strong>src/utils/unitTracks.ts</strong>
+          <p>Centralized unit track detection, base paths, filtering, and display labels so numbering stays consistent.</p>
         </div>
         <div class="file">
           <strong>package.json</strong>
