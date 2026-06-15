@@ -102,7 +102,7 @@ export default function SessionInsights({ reviews, queue, recall, onStudyAgain, 
                     <div className="h-full bg-red-500/60 rounded-full" style={{ width: `${s.accuracy * 100}%` }} />
                   </div>
                 </div>
-                <span className="text-slate-600 text-xs shrink-0">{s.total} cards</span>
+                <span className="text-slate-400 text-xs shrink-0">{s.total} cards</span>
               </div>
             ))}
 

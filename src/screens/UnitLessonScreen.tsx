@@ -283,7 +283,7 @@ function PracticePhase({
       </div>
 
       {results.length > 0 && (
-        <p className="text-center text-xs text-slate-600 mt-2">
+        <p className="text-center text-xs text-slate-400 mt-2">
           {results.filter(r => r.correct).length}/{results.length} correct
         </p>
       )}

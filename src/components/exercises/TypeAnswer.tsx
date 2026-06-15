@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
 import { normalize } from '../../utils/normalize';
+import { grammarRule } from '../../utils/grammarRule';
 
 interface Props {
   card: CardWithState;
@@ -49,7 +50,8 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
     const isCorrect = isAnswerCorrect(value, card, direction);
     setCorrect(isCorrect);
     setSubmitted(true);
-    setTimeout(() => onAnswer(isCorrect, value, keystrokeCount.current), 1000);
+    // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
+    onAnswer(isCorrect, value, keystrokeCount.current);
   }
 
   const prompt    = direction === 'sw_to_en' ? card.swahili : card.english;
@@ -109,6 +111,9 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
             </div>
             {direction === 'en_to_sw' && card.pronunciation && (
               <div className="text-slate-500 text-sm italic text-center">[{card.pronunciation}]</div>
+            )}
+            {grammarRule(card) && (
+              <p className="text-cyan-300/80 text-xs text-center">💡 {grammarRule(card)}</p>
             )}
             {card.example_sentences[0] && (
               <div className="border-t border-slate-700 pt-2">

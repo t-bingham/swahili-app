@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
 
@@ -14,6 +14,13 @@ interface Props {
 }
 
 export default function FlashCard({ card, onReveal, revealed, hint, direction = 'sw_to_en', showPronunciation = true, showExamples = true, showMorphemeHints = false }: Props) {
+  const revealBtnRef = useRef<HTMLButtonElement>(null);
+  // Move focus to the Reveal button when a new card appears (keyboard users
+  // shouldn't have to tab from the top on every card).
+  useEffect(() => {
+    if (!revealed) revealBtnRef.current?.focus();
+  }, [card.id, revealed]);
+
   const swFirst = direction === 'sw_to_en';
   const front = swFirst ? card.swahili : card.english;
   const back  = swFirst ? card.english  : card.swahili;
@@ -34,12 +41,12 @@ export default function FlashCard({ card, onReveal, revealed, hint, direction = 
           <div className="mt-3 px-3 py-1 bg-slate-700/60 rounded-lg text-slate-400 text-xs">{hint}</div>
         )}
         {frontEx && !revealed && showExamples && (
-          <div className="mt-4 text-slate-600 text-sm">"{frontEx}"</div>
+          <div className="mt-4 text-slate-400 text-sm">"{frontEx}"</div>
         )}
       </div>
 
       {revealed ? (
-        <div className="bg-slate-800/50 rounded-2xl p-6 text-center">
+        <div className="bg-slate-800/50 rounded-2xl p-6 text-center" aria-live="polite">
           <div className="text-2xl text-cyan-400 font-semibold mb-2">{back}</div>
           {!swFirst && card.pronunciation && showPronunciation && (
             <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
@@ -62,6 +69,7 @@ export default function FlashCard({ card, onReveal, revealed, hint, direction = 
         </div>
       ) : (
         <button
+          ref={revealBtnRef}
           onClick={onReveal}
           className="w-full py-4 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-2xl text-lg transition-colors"
         >

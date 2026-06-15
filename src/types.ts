@@ -1,5 +1,5 @@
 export type CardType = 'vocabulary' | 'phrase' | 'grammar' | 'conjugation';
-export type ExerciseType = 'flashcard' | 'multiple_choice' | 'type_answer' | 'fill_blank' | 'noun_class';
+export type ExerciseType = 'flashcard' | 'multiple_choice' | 'type_answer' | 'fill_blank' | 'noun_class' | 'sentence_cloze' | 'concord';
 export type ErrorType = 'phonological' | 'semantic' | 'structural';
 export type SessionType = 1 | 2 | 3 | 4;
 export type DepthLevel = 1 | 2 | 2.5 | 3 | 4 | 4.5 | 5.1 | 5.2 | 5.3;
@@ -110,6 +110,7 @@ export interface ProfileSettings {
   show_morpheme_hints?:         boolean;
   show_example_sentences?:      boolean;
   show_pronunciation_on_reveal?: boolean;
+  enable_audio?:           boolean; // browser TTS 🔊 button on reveal (only if a Swahili voice exists)
   pronunciation_style?:    PronunciationStyle;
   // Display / accessibility
   large_text?:             boolean;

@@ -47,6 +47,9 @@ function ToggleRow({
         {hint && <p className="text-slate-500 text-xs mt-0.5">{hint}</p>}
       </div>
       <button
+        role="switch"
+        aria-checked={value}
+        aria-label={label}
         onClick={() => onChange(!value)}
         className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 mt-0.5 ${value ? 'bg-cyan-500' : 'bg-slate-600'}`}
       >
@@ -121,14 +124,15 @@ function NumberInput({
       <p className="text-slate-200 text-sm font-medium mb-1">{label}</p>
       <p className="text-slate-500 text-xs mb-3">{hint}</p>
       <div className="flex items-center gap-3">
-        <button onClick={() => onChange(Math.max(min, value - 1))} className="w-9 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-lg flex items-center justify-center transition-colors">−</button>
+        <button aria-label={`Decrease ${label.toLowerCase()}`} onClick={() => onChange(Math.max(min, value - 1))} className="w-9 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-lg flex items-center justify-center transition-colors">−</button>
         <input
           type="number" min={min} max={max} value={raw}
+          aria-label={label}
           onChange={e => setRaw(e.target.value)}
           onBlur={commit} onKeyDown={e => e.key === 'Enter' && commit()}
           className="w-20 text-center bg-slate-700 text-slate-100 font-bold text-lg rounded-lg py-2 border border-slate-600 focus:outline-none focus:border-cyan-400 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <button onClick={() => onChange(Math.min(max, value + 1))} className="w-9 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-lg flex items-center justify-center transition-colors">+</button>
+        <button aria-label={`Increase ${label.toLowerCase()}`} onClick={() => onChange(Math.min(max, value + 1))} className="w-9 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-lg flex items-center justify-center transition-colors">+</button>
         <span className="text-slate-500 text-sm">/ day</span>
       </div>
     </div>
@@ -291,17 +295,19 @@ export default function SettingsScreen() {
           <p className="text-slate-500 text-xs mb-3">
             In Learn mode — how often a new (unseen) word is drawn instead of a review.
             <br />
-            <span className="text-slate-600">Slow and steady: 0–20% · Adventure mode: 50%+</span>
+            <span className="text-slate-400">Slow and steady: 0–20% · Adventure mode: 50%+</span>
           </p>
           <div className="flex items-center gap-3">
-            <span className="text-slate-600 text-xs shrink-0 whitespace-nowrap">Reviews</span>
+            <span className="text-slate-400 text-xs shrink-0 whitespace-nowrap">Reviews</span>
             <input
               type="range" min={0} max={100} step={5}
               value={settings.new_word_rate}
+              aria-label="New word rate"
+              aria-valuetext={`${settings.new_word_rate}% new words`}
               onChange={e => update('new_word_rate', Number(e.target.value))}
               className="flex-1 accent-cyan-500"
             />
-            <span className="text-slate-600 text-xs shrink-0 whitespace-nowrap">New words</span>
+            <span className="text-slate-400 text-xs shrink-0 whitespace-nowrap">New words</span>
           </div>
           <p className="text-center text-cyan-400 font-bold text-base mt-2">{settings.new_word_rate}%</p>
         </div>
@@ -316,6 +322,12 @@ export default function SettingsScreen() {
           hint="Shows the syllable guide (e.g. ki-TA-bu) after you answer — uses the pronunciation style set below."
           value={settings.show_pronunciation_on_reveal ?? false}
           onChange={v => update('show_pronunciation_on_reveal', v)}
+        />
+        <ToggleRow
+          label="Pronunciation audio"
+          hint="Adds a 🔊 button on reveal to hear the word aloud. Only works if your device has a Swahili voice installed — otherwise the button stays hidden."
+          value={settings.enable_audio ?? false}
+          onChange={v => update('enable_audio', v)}
         />
         <ToggleRow
           label="Disable type-answer"

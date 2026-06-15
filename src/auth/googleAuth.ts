@@ -80,14 +80,28 @@ function trySilentRefresh(): Promise<string | null> {
   });
 }
 
+// De-duplicate concurrent refreshes and back off after a failure, so we never
+// fire the GIS token client (which can open a popup) repeatedly — that caused a
+// "Failed to open popup" storm whenever no live Google session was available.
+let _refreshInFlight: Promise<string | null> | null = null;
+let _lastRefreshFailAt = 0;
+const REFRESH_COOLDOWN_MS = 5 * 60_000;
+
 // Returns a valid access token. If the stored token is expired, attempts a
-// silent GIS refresh. Returns null if offline or the silent refresh fails
-// (caller should degrade gracefully).
+// silent GIS refresh (at most once per cooldown window). Returns null if
+// offline, backing off, or the refresh fails (caller should degrade gracefully).
 export async function getOrRefreshToken(): Promise<string | null> {
   const token = getGoogleToken();
   if (token) return token;
   if (!navigator.onLine) return null;
-  return trySilentRefresh();
+  if (Date.now() - _lastRefreshFailAt < REFRESH_COOLDOWN_MS) return null;
+  if (_refreshInFlight) return _refreshInFlight;
+  _refreshInFlight = trySilentRefresh().then((t) => {
+    if (!t) _lastRefreshFailAt = Date.now();
+    _refreshInFlight = null;
+    return t;
+  });
+  return _refreshInFlight;
 }
 
 export function clearGoogleSession(): void {

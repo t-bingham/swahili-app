@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 
 interface Props {
@@ -10,6 +10,9 @@ interface Props {
 
 export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow }: Props) {
   const [attempted, setAttempted] = useState(false);
+  const firstBtnRef = useRef<HTMLButtonElement>(null);
+  // Focus the first choice when a new card appears, for keyboard users.
+  useEffect(() => { if (!attempted) firstBtnRef.current?.focus(); }, [card.id, attempted]);
 
   // Show a hint for conjugation cards to reduce frustration
   const hint = card.type === 'conjugation' && card.conjugation_key
@@ -28,7 +31,7 @@ export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow 
         {card.pronunciation && (
           <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
         )}
-        {hint && <div className="text-slate-600 text-xs">{hint}</div>}
+        {hint && <div className="text-slate-400 text-xs">{hint}</div>}
       </div>
 
       {!attempted ? (
@@ -36,6 +39,7 @@ export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow 
           <p className="text-slate-400 text-sm text-center">Do you know what this means?</p>
           <div className="grid grid-cols-2 gap-3">
             <button
+              ref={firstBtnRef}
               onClick={() => { setAttempted(true); onKnew(); }}
               className="py-4 rounded-xl border-2 border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20 font-semibold transition-colors"
             >

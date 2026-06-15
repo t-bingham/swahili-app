@@ -186,7 +186,7 @@ export default function ReviewScreen() {
             placeholder="e.g. ha-BA-ri"
             className="mt-1 w-full px-4 py-2.5 bg-slate-700 border border-slate-600 focus:border-cyan-400 rounded-lg text-slate-100 text-sm font-mono transition-colors outline-none"
           />
-          <div className="text-xs text-slate-600 mt-1">Capitalise stressed syllable: ha-BA-ri</div>
+          <div className="text-xs text-slate-400 mt-1">Capitalise stressed syllable: ha-BA-ri</div>
         </div>
 
         {/* Register (editable) */}

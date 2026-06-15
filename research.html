@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swahili App — Review Research &amp; Justification</title>
+<style>
+  :root{
+    --bg:#0b1120; --panel:#111a2e; --panel2:#0f1830; --border:#1e293b;
+    --ink:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
+    --cyan:#22d3ee; --cyan2:#67e8f9; --amber:#fbbf24; --red:#f87171;
+    --green:#34d399; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:920px;margin:0 auto;padding:40px 24px 90px;}
+  header{border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:8px;}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.4px;}
+  .sub{color:var(--muted);font-size:15px;}
+  .meta{color:var(--dim);font-size:13px;margin-top:10px;}
+  a{color:var(--cyan2);text-decoration:none;word-break:break-word;} a:hover{text-decoration:underline;}
+  h2{font-size:21px;margin:46px 0 6px;letter-spacing:-.2px;padding-top:8px;}
+  h2 .k{color:var(--cyan);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:2px;}
+  h3{font-size:16.5px;margin:26px 0 4px;color:var(--cyan2);}
+  p{margin:8px 0;font-size:15px;}
+  .lead{color:var(--muted);font-size:15px;}
+  code{background:var(--panel2);border:1px solid var(--border);border-radius:5px;
+    padding:1px 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--cyan2);}
+  .box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin:18px 0;}
+  .meth{background:var(--panel2);border-left:3px solid var(--violet);border-radius:8px;padding:14px 18px;margin:16px 0;color:var(--muted);font-size:14px;}
+  .ev{font-size:13px;color:var(--dim);margin-top:6px;}
+  .ev b{color:var(--muted);font-weight:600;}
+  .plan-ref{display:inline-block;font-size:11px;font-weight:700;font-family:ui-monospace,monospace;
+    color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);
+    border-radius:6px;padding:2px 8px;margin-right:8px;vertical-align:middle;}
+  ul{margin:8px 0;padding-left:22px;} li{margin:5px 0;font-size:14.5px;color:var(--ink);}
+  ul.src li{color:var(--muted);font-size:13px;}
+  .tablewrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{color:var(--cyan);font-size:11px;letter-spacing:.8px;text-transform:uppercase;}
+  .red{color:var(--red);font-weight:600;} .green{color:var(--green);}
+  .toc{columns:2;column-gap:34px;font-size:14px;margin:10px 0 0;}
+  .toc a{display:block;margin:3px 0;color:var(--cyan2);}
+  blockquote{margin:12px 0;padding:8px 16px;border-left:3px solid var(--cyan);color:var(--muted);font-size:14px;background:var(--panel2);border-radius:6px;}
+  .foot{margin-top:54px;border-top:1px solid var(--border);padding-top:18px;color:var(--dim);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🔬 Swahili App — Review Research &amp; Justification</h1>
+  <div class="sub">The reasoning, evidence, and sources behind every recommendation in the <a href="plan.html">action plan</a>.</div>
+  <div class="meta">Review date: 15 June 2026 · Companion to <a href="plan.html">plan.html</a></div>
+</header>
+
+<div class="meth">
+  <b style="color:var(--ink)">How this review was run.</b> A senior reviewer coordinated four parallel lenses, then
+  cross-validated the findings:
+  <ul style="margin-top:8px">
+    <li><b>Live learner simulation</b> — the app was driven in a browser (onboarding → home → learn session → all tabs) as a first-time beginner. Auth, onboarding, first-exposure cards, reveal/feedback, and every screen were exercised directly.</li>
+    <li><b>Swahili linguistics audit</b> (specialist agent) — dumped and analysed the seed curriculum <code>public/swahili_default.db</code> by tracing generator <i>templates</i> exhaustively rather than spot-checking random cards.</li>
+    <li><b>Pedagogy &amp; competitor research</b> (specialist agent) — grounded recommendations in the SLA/SRS literature and a scan of Clozemaster, Anki/FSRS, Memrise, Drops, Language Transfer, Duolingo.</li>
+    <li><b>Code &amp; accessibility audit</b> (specialist agent) — read the source for WCAG 2.1 AA conformance, correctness bugs, and maintainability; confirmed a clean build.</li>
+  </ul>
+  The headline content finding was <b>independently re-verified</b> by the senior against the database before being ranked #1.
+</div>
+
+<div class="toc box">
+  <b style="color:var(--cyan)">Contents</b>
+  <div class="toc">
+    <a href="#headline">1 · The headline finding</a>
+    <a href="#content">2 · Curriculum correctness (Phase 0)</a>
+    <a href="#codebugs">3 · Correctness &amp; data bugs (Phase 1)</a>
+    <a href="#pedagogy">4 · Pedagogical upgrades (Phase 2)</a>
+    <a href="#audio">5 · Audio (Phase 3)</a>
+    <a href="#a11y">6 · Accessibility (Phase 4)</a>
+    <a href="#motivation">7 · Motivation &amp; retention (Phase 5)</a>
+    <a href="#maint">8 · Maintainability (Phase 6)</a>
+    <a href="#strengths">9 · What to keep</a>
+    <a href="#sources">10 · Consolidated sources</a>
+  </div>
+</div>
+
+<!-- 1 -->
+<h2 id="headline"><span class="k">1 · The headline finding</span>Content correctness outranks everything else</h2>
+<p class="lead">The app's structure is sound, but a language-learning product's core promise is that what it teaches is
+<i>correct</i>. The single most important discovery of this review is that it currently is not, for the generated
+grammar tracks.</p>
+
+<div class="box">
+<p>All 25,353 cards are machine-<code>generated</code> (18,180 conjugation, 4,508 grammar, 2,665 vocabulary).
+The hand-curated <i>vocabulary</i> is excellent. But two generator bugs produce thousands of incorrect forms — and
+because they're template-driven, the same error repeats identically across ~159 verbs and dozens of nouns.</p>
+
+<p><b>Senior validation.</b> Before ranking this #1, I queried the seed DB directly. The results confirmed the audit exactly:</p>
+<blockquote>
+sisoma | I [neg present] to read &nbsp;→ should be <b class="green">sisomi</b><br>
+silisoma | I [neg past] to read &nbsp;→ should be <b class="green">sikusoma</b><br>
+simesoma | I [neg perfect] to read &nbsp;→ should be <b class="green">sijasoma</b><br>
+siku nbaya | bad days &nbsp;→ should be <b class="green">siku mbaya</b><br>
+siku nkubwa | big days &nbsp;→ should be <b class="green">siku kubwa</b>
+</blockquote>
+<p>Counts confirmed by query: <span class="red">3,636</span> negative-conjugation cards and <span class="red">1,053</span>
+adjective-concord cards carry certain errors — ~4,700 in total.</p>
+</div>
+
+<!-- 2 -->
+<h2 id="content"><span class="k">2 · Phase 0 — curriculum correctness</span>Why these are blockers, and why they're cheap to fix</h2>
+
+<h3><span class="plan-ref">P0.1</span>Negative-tense conjugations</h3>
+<p>Bantu verb negation is rule-governed and unambiguous. The generator misses three rules:
+the negative <b>present</b> changes the final <code>-a → -i</code> (so <code>sisoma</code> must be <code>sisomi</code>); the negative
+<b>past</b> marker is <code>-ku-</code> not <code>-li-</code> (<code>sikusoma</code>, not <code>silisoma</code>); the negative <b>perfect</b>
+("not yet") marker is <code>-ja-</code> not <code>-me-</code> (<code>sijasoma</code>, not <code>simesoma</code>). A side effect of the
+present-tense bug: generated <code>husoma</code> (2nd-sg negative) collides with the habitual <code>husoma</code> — impossible in
+correct Swahili, where the <code>-i</code> ending disambiguates. Because affirmative conjugations (including the hard
+monosyllabic and subjunctive cases) <i>are</i> correct, the fix is localized to three template rules + a regenerate.</p>
+<p class="ev"><b>Confidence:</b> Certain. <b>Evidence:</b>
+<a href="https://en.wiktionary.org/wiki/Appendix:Swahili_verbs">Wiktionary: Swahili verbs</a> ·
+<a href="https://2seedsswahili.wordpress.com/2013/06/19/swahili-unit-7-negations-and-swahili-time/">2Seeds Swahili — negations</a></p>
+
+<h3><span class="plan-ref">P0.2</span>Adjective–noun concord</h3>
+<p>Swahili adjectives agree with their noun's class via prefixes, and the rules involve nasal assimilation and
+animacy — not literal letter-prepending. <code>n + baya → mbaya</code>; <code>n</code> drops before <code>k</code> (<code>kubwa</code>),
+so <code>nbaya</code> and <code>nkubwa</code> are non-words. Animate nouns (people) take human (M-Wa) concord regardless of class,
+so <code>daktari mzuri</code>, not <code>daktari nzuri</code>. Class-5 takes a zero prefix for these stems (<code>gari zuri</code>),
+and abstract U-class nouns pattern with class-3 <code>m-</code> (<code>upole mzuri</code>, flagged <i>Likely</i> pending a native check).
+Implementing real concord (assimilation + animacy override + class-5 zero + U-class mapping) fixes all ~1,000 cards at once.</p>
+<p class="ev"><b>Confidence:</b> Certain (N-class/animacy/class-5), Likely (U-class). <b>Evidence:</b>
+<a href="https://openbooks.library.baylor.edu/elementaryswahili1/chapter/lesson-1-noun-classes-and-number-agreements/">Baylor — noun classes &amp; agreement</a> ·
+<a href="https://wisc.pb.unizin.org/lctlresources/chapter/noun-classes-an-introduction-and-practicing-possessive-agreements/">UW–Madison — noun-class agreement</a></p>
+
+<h3><span class="plan-ref">P0.3 / P0.4</span>Monosyllabic forms &amp; minor cleanups</h3>
+<p>Monosyllabic verbs (<i>la</i>, <i>ja</i>, <i>kunywa</i>) compound the negative bug and need stem-specific handling
+(<code>hali</code>, <code>hajala</code>; subjunctive <code>aje</code> not <code>akuje</code> — reference-confirmed). Lower-severity:
+prefer standard <code>ndiyo</code> over <code>ndio</code>; the invariant habitual <code>husoma</code> shouldn't be split into six
+per-person cards (it doesn't mark person); and cross-unit duplicate words (<code>kiti</code> ×4 etc.) inflate the deck.</p>
+<p class="ev"><b>Evidence:</b> <a href="https://duolinguists.wordpress.com/2022/03/01/ku-and-monosyllabic-verbs/">-KU- and monosyllabic verbs</a></p>
+
+<h3><span class="plan-ref">P0.5</span>Why a native-speaker pass still matters</h3>
+<p>Generator fixes should be verified empirically. A short native/advanced-speaker spot-check of the regenerated
+negatives and concord (and the "Likely" U-class forms) is cheap insurance against a second template bug before these
+tracks are declared teaching-ready.</p>
+
+<!-- 3 -->
+<h2 id="codebugs"><span class="k">3 · Phase 1 — correctness &amp; data bugs</span>Small fixes, real user impact</h2>
+
+<h3><span class="plan-ref">P1.1</span>Star state can be lost on review</h3>
+<p>In <code>upsertCardState</code> (<code>db.ts:941–966</code>) the <code>ON CONFLICT DO UPDATE SET</code> clause omits
+<code>starred</code>. Reviews call this on every rating; the INSERT path sets the star but the conflict path won't update it,
+creating an inconsistency where star changes made elsewhere can be silently dropped. One-line fix
+(<code>starred = excluded.starred</code>) or remove <code>starred</code> from the upsert entirely.</p>
+
+<h3><span class="plan-ref">P1.2</span>FillInBlank can accept any answer</h3>
+<p>The correct answer is reconstructed by subtracting the <code>before</code>/<code>after</code> strings from the example
+sentence (<code>FillInBlank.tsx:23–25</code>). <code>String.replace</code> only removes the first occurrence, so repeated
+substrings break extraction; worse, when extraction yields an empty string the card marks <i>any</i> input correct — a
+silent correctness failure in a learning exercise. Store an explicit answer field or anchor with a regex, and guard the empty case.</p>
+
+<h3><span class="plan-ref">P1.3</span>Biased multiple-choice ordering</h3>
+<p><code>[...arr].sort(() =&gt; Math.random()-0.5)</code> is a well-known non-uniform shuffle; distractor positions become
+predictable, which can let learners pattern-match position instead of meaning. Fisher–Yates is the correct, equally simple choice.</p>
+
+<h3><span class="plan-ref">P1.4</span>The OAuth popup loop (observed live)</h3>
+<p>During the live review, ending a session and reloading triggered the Drive sync, which attempted a Google Identity
+popup with no valid token and logged <code>[GSI_LOGGER] Failed to open popup</code> repeatedly — enough to wedge the page
+renderer. Background sync should only run with an already-valid silent token and should never trigger an interactive popup
+except on explicit user action, with back-off on failure. (This also makes the app testable in sandboxed/popup-blocked environments.)</p>
+
+<!-- 4 -->
+<h2 id="pedagogy"><span class="k">4 · Phase 2 — pedagogical upgrades</span>The biggest learning gains, mostly on data you already have</h2>
+<p class="lead">The research consensus across the SLA/SRS literature points to two strategic gaps versus best-in-class
+competitors: <b>sentence-level input</b> and <b>teaching grammar as a generative system</b>. Both are achievable with the
+existing schema (<code>example_sentences</code>, <code>noun_class</code>).</p>
+
+<h3><span class="plan-ref">P2.1</span>Sentence-level cloze — the marquee feature</h3>
+<p>Clozemaster's core thesis is that <i>words learned in isolation stay in isolation</i>: cloze-in-context delivers
+comprehensible input (i+1) and retrieval practice in a single exercise. This is the highest-leverage change because the
+data already exists — a <code>fill_blank</code> mechanism is present; generalising it to blank the target word inside a
+vocabulary card's example sentence is UI + scheduling work, not a data-generation project.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://www.clozemaster.com/blog/sentence-mining/">Clozemaster — sentence mining</a> ·
+<a href="https://www.clozemaster.com/blog/comprehensible-input-clozemaster-mirrors-natural-acquisition/">cloze &amp; comprehensible input</a> ·
+comprehensible-input theory: <a href="https://gianfrancoconti.com/2025/02/27/why-the-input-we-give-our-learners-must-be-95-98-comprehensible-in-order-to-enhance-language-acquisition-the-theory-and-the-research-evidence/">Conti (2025) on 95–98% comprehensibility</a></p>
+
+<h3><span class="plan-ref">P2.2</span>Noun-class concord as a generative pattern</h3>
+<p>Every serious Swahili pedagogy source converges on the same advice: don't memorise nouns one at a time — start with
+the most frequent classes, group semantically, always pair singular+plural, and <i>drill agreement</i> (adjective, verb
+subject prefix, possessive) across classes. Mastery lives in <i>generating</i> the concord. A "fill the agreeing prefix"
+exercise plus a class-overview reference chart turns the app's biggest content liability (concord) into a teaching strength —
+and dovetails with the P0.2 fix, since both need a correct concord-rule table.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://openbooks.library.baylor.edu/elementaryswahili1/chapter/lesson-1-noun-classes-and-number-agreements/">Baylor Elementary Swahili</a> ·
+<a href="https://talkpal.ai/mastering-swahili-noun-classes-a-complete-guide-to-language-success/">noun-class guide</a></p>
+
+<h3><span class="plan-ref">P2.3</span>Tune FSRS desired retention</h3>
+<p>Among FSRS parameters, desired retention dominates outcomes. Community consensus and the FSRS maintainers put the
+efficiency sweet spot at ~0.85–0.90: it minimises total study time while keeping recall high, whereas 0.95 roughly doubles
+daily reviews and 0.97 quadruples them. For a self-study app where burnout is the main churn risk, defaulting to ~0.88 (and
+optionally surfacing an auto-computed minimum) is a low-effort, high-impact knob worth verifying in <code>fsrs.ts</code>.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-optimal-retention">FSRS — optimal retention</a> ·
+<a href="https://faqs.ankiweb.net/frequently-asked-questions-about-fsrs.html">Anki FSRS FAQ</a></p>
+
+<h3><span class="plan-ref">P2.4</span>Interleave skill categories</h3>
+<p>The "desirable difficulties" trio (spacing, retrieval, interleaving) is the best-established finding in vocabulary
+learning, and 2024 work shows interleaving layered on spaced repetition produces larger gains and better long-term retention
+than spacing alone. The app already spaces and retrieves; adding an anti-clustering pass to the weighted draw (so a session
+doesn't run long streaks of one skill tag) captures the third leg cheaply.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://callej.org/index.php/journal/article/view/87">CALL-EJ 2024 — interleaving + SRS</a> ·
+<a href="https://cirl.etoncollege.com/strategies-for-making-learning-last-retrieval-practice-spaced-practice-and-interleaving/">Eton CIRL summary</a></p>
+
+<h3><span class="plan-ref">P2.5</span>Elaborative feedback</h3>
+<p>The corrective-feedback literature ranks elaboration (the <i>why</i>, with an example) above correction (the right
+answer) above bare verification (right/wrong). The app already shows a "Remember it with:" example on errors; the next step is
+to surface the relevant concord/tense <i>rule</i> as primary content on rule-based errors, and to elicit self-correction for
+already-learned forms rather than just revealing.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9995700/">Feedback types &amp; L2 learning</a> ·
+<a href="https://www.cambridge.org/core/journals/language-teaching/article/timing-of-corrective-feedback-in-second-language-learning/0E8856852D0183E9DD91EDB4C249E245">timing of corrective feedback</a></p>
+
+<h3><span class="plan-ref">P2.6</span>Why exercise variety is missing</h3>
+<p>The prior review noted sessions felt monotonous (type-answer / limited variety). The code audit located the cause: the
+scaffold function in <code>afm.ts</code> clamps level to 3 for any card at depth ≤ 3, which caps mature-but-not-deep cards at
+multiple-choice. Re-balancing the clamp (and adding a dev-only badge showing exercise type + scaffold level) lets cloze and
+type-answer appear when earned — and is the natural home for the new cloze/concord exercises.</p>
+<p class="ev"><b>Source:</b> code audit (<code>afm.ts:22–27</code>, <code>LearnScreen.pickExercise</code>); receptive-before-productive ordering is itself correct (<a href="https://files.eric.ed.gov/fulltext/EJ1077387.pdf">receptive/productive acquisition</a>).</p>
+
+<!-- 5 -->
+<h2 id="audio"><span class="k">5 · Phase 3 — audio</span>The clearest competitive gap</h2>
+<p>Vocabulary apps over-index on receptive recognition; audio in/out is where Memrise and Duolingo pull ahead, and the
+app currently ships no audio. Swahili's phonemic spelling and lack of tone make this unusually tractable.</p>
+
+<h3><span class="plan-ref">P3.1</span>Browser TTS — but detect the voice</h3>
+<p><code>SpeechSynthesis</code> with <code>lang="sw"</code> works with zero backend, and Swahili is among Chrome desktop's
+voices. The catch the research flags: voice availability is OS/browser-dependent and many devices have <i>no</i> Swahili voice,
+where the browser silently falls back to an English-accented reading — actively miseducating pronunciation. So the SpeakButton
+must feature-detect (<code>getVoices().some(v =&gt; v.lang.startsWith('sw'))</code>) and hide/disable itself when no real
+Swahili voice exists.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://www.testmuai.com/learning-hub/speech-synthesis-api-browser-support/">SpeechSynthesis browser support</a> ·
+<a href="https://atlasaidev.com/docs/text-to-speech/usage-setup/supported-languages-and-browser-compatibility/">TTS language/browser compatibility</a></p>
+
+<h3><span class="plan-ref">P3.2</span>Pre-generated cloud-TTS assets</h3>
+<p>For uniform quality, pre-generate per-card audio offline with a higher-quality engine (Google Cloud TTS and Azure
+Neural TTS both list Swahili) and ship MP3s as static assets cached by the service worker — a perfect fit for the Vercel
+static-site + PWA model, with browser TTS as the fallback. Native-speaker clips (Memrise's edge) are the eventual ceiling but
+are a content-sourcing project, not engineering.</p>
+<p class="ev"><b>Evidence:</b>
+<a href="https://docs.cloud.google.com/text-to-speech/docs/list-voices-and-types">Google Cloud TTS voices</a> ·
+<a href="https://www.fluentu.com/blog/reviews/memrise/">Memrise native clips</a></p>
+
+<!-- 6 -->
+<h2 id="a11y"><span class="k">6 · Phase 4 — accessibility</span>Closing the last AA gaps</h2>
+<p>Credit where due: the hardest accessibility work is already done — non-colour feedback badges with <code>aria-live</code>,
+star-button labels, and opt-in Large-text / High-contrast (WCAG AAA) settings. The remaining items are mostly small,
+mechanical, and standards-anchored.</p>
+<div class="tablewrap">
+<table>
+  <tr><th>Gap</th><th>WCAG</th><th>Why it matters</th></tr>
+  <tr><td>Toggle <code>&lt;button&gt;</code> with no <code>role="switch"</code>/<code>aria-checked</code> (×8)</td><td>4.1.2</td><td>Screen readers announce "button" with no state or label</td></tr>
+  <tr><td><code>div onClick</code> for unit/gallery cards</td><td>2.1.1</td><td>Not keyboard-focusable; invisible as controls to AT</td></tr>
+  <tr><td>Gallery search input, no <code>&lt;label&gt;</code></td><td>1.3.1</td><td>Placeholder isn't a label; disappears on input</td></tr>
+  <tr><td><code>animate-spin</code> unconditional</td><td>2.3.3</td><td>Ignores <code>prefers-reduced-motion</code> (vestibular triggers)</td></tr>
+  <tr><td>Card-detail modal, no <code>role="dialog"</code>/focus trap</td><td>2.4.3 / 4.1.2</td><td>Focus escapes to background; modal not announced</td></tr>
+  <tr><td>Heatmap: <code>title</code>-only, colour-only</td><td>1.4.1 / 1.3.1</td><td>Not announced; opacity encoding invisible to colour-blind</td></tr>
+  <tr><td><code>text-slate-600</code> on <code>bg-slate-800</code> ≈ 2.6:1</td><td>1.4.3</td><td>Below 4.5:1 minimum for normal text</td></tr>
+</table>
+</div>
+<p class="ev"><b>Source:</b> code &amp; accessibility audit (full file:line list in <code>review/code-a11y.md</code>).</p>
+
+<!-- 7 -->
+<h2 id="motivation"><span class="k">7 · Phase 5 — motivation &amp; retention</span>Design for SDT, not points</h2>
+<p>The motivation research is unambiguous: durable engagement comes from satisfying <b>autonomy, competence, and
+relatedness</b> (Self-Determination Theory). Gamification helps when it delivers competence feedback and meaningful choice,
+and backfires when points/badges become controlling — there is a documented case of gamification <i>misuse</i> reducing
+motivation in a language app. Concretely:</p>
+<ul>
+  <li><b>Streaks with a safety valve.</b> Streaks drive retention (Duolingo: restoration +8% retention) but only because
+  freeze/repair relieves anxiety — streak freeze cut churn 21%, while punitive streaks cause burnout and "streak creep." If the
+  app turns on the existing Streaks &amp; XP setting, ship freeze/repair simultaneously.</li>
+  <li><b>Honest progress (competence).</b> Show mastery growth, not curriculum size — the Stats "not yet seen" relabel was
+  exactly right; keep emphasising personal progress over the intimidating total card count.</li>
+  <li><b>Dialect labelling (relatedness/expectations).</b> A one-line note that the target is Standard Swahili
+  (Kiunguja/Zanzibar coastal basis) sets correct learner expectations at trivial cost.</li>
+</ul>
+<p class="ev"><b>Evidence:</b>
+<a href="https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2024.1295709/full">SDT &amp; gamification (Frontiers 2024)</a> ·
+<a href="https://thedecisionlab.com/insights/consumer-insights/streak-creep-the-perils-of-too-much-gamification">streak creep</a> ·
+<a href="https://www.nngroup.com/articles/autonomy-relatedness-competence/">NN/g — autonomy/relatedness/competence</a> ·
+<a href="https://en.wikipedia.org/wiki/Standard_Swahili_language">Standard Swahili</a></p>
+
+<!-- 8 -->
+<h2 id="maint"><span class="k">8 · Phase 6 — maintainability</span>Pay down before scaling</h2>
+<p>These don't affect learners today but will slow every future change. The two that matter most:</p>
+<ul>
+  <li><b>Migration version can't be incremented safely.</b> A single <code>LEGACY_MIGRATION_VERSION = 1</code> gate fronts a
+  390-line monolithic block; new migrations are easy to add in a way that bypasses the version check and runs on every open.
+  Establish a sequential, numbered migration array <i>before</i> the next schema change — and Phase 0's regenerate plus several
+  Phase 2 features <i>are</i> schema-adjacent, so this should come first among the maintainability items.</li>
+  <li><b><code>db.ts</code> is 1,757 lines.</b> ~400 lines of content-transformation helpers used only by migrations should move
+  to their own module to make the data layer navigable and testable.</li>
+</ul>
+<p>Lower-priority: move the exercise <code>setTimeout</code> reveal delay into <code>LearnScreen</code>'s phase transition
+(removes a keyboard race + rating-button flash), debounce gallery search, and tidy minor smells (duplicate <code>!register</code>
+check, overlapping <code>depthWeight</code> branches, <code>mode</code>/<code>activeMode</code> duplication).</p>
+<p class="ev"><b>Source:</b> code audit (Q-01…Q-15 in <code>review/code-a11y.md</code>).</p>
+
+<!-- 9 -->
+<h2 id="strengths"><span class="k">9 · What to keep</span>Genuine strengths the plan deliberately doesn't touch</h2>
+<ul>
+  <li><b>Onboarding flow.</b> Four clear steps, sensible defaults, in-context explanations, working back-navigation, and a
+  no-pressure placement test ("stops as soon as you miss 5"). One of the strongest parts of the app.</li>
+  <li><b>Hand-curated vocabulary.</b> Natural multi-sense glosses (<code>kali</code> = "sharp / spicy / fierce / strict"),
+  correct noun-class tags, and authentic East-African register (<code>shikamoo/marahaba</code>, <code>ugali</code>). No remediation needed.</li>
+  <li><b>Sound learning architecture.</b> FSRS scheduling, a scaffolded exercise ladder (correctly receptive→productive), a
+  dedicated grammar track, syllable guides on first exposure, and goal-weighted session assembly.</li>
+  <li><b>Clean engineering baseline.</b> Strict TypeScript, zero build errors/warnings, a 412 kB bundle, and most prior-review
+  accessibility items already shipped.</li>
+</ul>
+<p>The plan is intentionally surgical: fix what's wrong (Phase 0–1), add the few high-ROI features the foundation makes cheap
+(Phase 2–3), and polish (Phase 4–6) — without rewriting what already works.</p>
+
+<!-- 10 -->
+<h2 id="sources"><span class="k">10 · Consolidated sources</span></h2>
+<div class="box">
+<b style="color:var(--cyan)">Swahili linguistics</b>
+<ul class="src">
+  <li><a href="https://en.wiktionary.org/wiki/Appendix:Swahili_verbs">Wiktionary — Swahili verbs (conjugation)</a></li>
+  <li><a href="https://duolinguists.wordpress.com/2022/03/01/ku-and-monosyllabic-verbs/">-KU- and monosyllabic verbs</a></li>
+  <li><a href="https://2seedsswahili.wordpress.com/2013/06/19/swahili-unit-7-negations-and-swahili-time/">2Seeds — negations</a></li>
+  <li><a href="https://openbooks.library.baylor.edu/elementaryswahili1/chapter/lesson-1-noun-classes-and-number-agreements/">Baylor — noun classes &amp; agreement</a></li>
+  <li><a href="https://wisc.pb.unizin.org/lctlresources/chapter/noun-classes-an-introduction-and-practicing-possessive-agreements/">UW–Madison — noun-class agreement</a> · <a href="https://wisc.pb.unizin.org/lctlresources/chapter/swahili-dialects/">Swahili dialects</a></li>
+  <li><a href="https://talkpal.ai/mastering-swahili-noun-classes-a-complete-guide-to-language-success/">Noun-class guide</a> · <a href="https://en.wikipedia.org/wiki/Standard_Swahili_language">Standard Swahili</a></li>
+</ul>
+<b style="color:var(--cyan)">Pedagogy &amp; SRS</b>
+<ul class="src">
+  <li><a href="https://callej.org/index.php/journal/article/view/87">CALL-EJ 2024 — interleaving + SRS</a> · <a href="https://cirl.etoncollege.com/strategies-for-making-learning-last-retrieval-practice-spaced-practice-and-interleaving/">Eton CIRL</a></li>
+  <li><a href="https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-optimal-retention">FSRS optimal retention</a> · <a href="https://faqs.ankiweb.net/frequently-asked-questions-about-fsrs.html">Anki FSRS FAQ</a></li>
+  <li><a href="https://gianfrancoconti.com/2025/02/27/why-the-input-we-give-our-learners-must-be-95-98-comprehensible-in-order-to-enhance-language-acquisition-the-theory-and-the-research-evidence/">Comprehensible input (Conti 2025)</a> · <a href="https://files.eric.ed.gov/fulltext/EJ1077387.pdf">receptive/productive acquisition</a></li>
+  <li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9995700/">Feedback types &amp; L2</a> · <a href="https://www.cambridge.org/core/journals/language-teaching/article/timing-of-corrective-feedback-in-second-language-learning/0E8856852D0183E9DD91EDB4C249E245">CF timing</a></li>
+</ul>
+<b style="color:var(--cyan)">Competitors, audio &amp; motivation</b>
+<ul class="src">
+  <li><a href="https://www.clozemaster.com/blog/sentence-mining/">Clozemaster — sentence mining</a> · <a href="https://www.clozemaster.com/blog/comprehensible-input-clozemaster-mirrors-natural-acquisition/">cloze &amp; CI</a></li>
+  <li><a href="https://www.languagetransfer.org/swahili">Language Transfer — Swahili</a> · <a href="https://www.fluentu.com/blog/reviews/memrise/">Memrise review</a></li>
+  <li><a href="https://www.testmuai.com/learning-hub/speech-synthesis-api-browser-support/">SpeechSynthesis support</a> · <a href="https://atlasaidev.com/docs/text-to-speech/usage-setup/supported-languages-and-browser-compatibility/">TTS compatibility</a> · <a href="https://docs.cloud.google.com/text-to-speech/docs/list-voices-and-types">Google TTS voices</a></li>
+  <li><a href="https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2024.1295709/full">SDT &amp; gamification</a> · <a href="https://thedecisionlab.com/insights/consumer-insights/streak-creep-the-perils-of-too-much-gamification">Streak creep</a> · <a href="https://www.nngroup.com/articles/autonomy-relatedness-competence/">NN/g SDT</a></li>
+</ul>
+</div>
+
+<div class="foot">
+  Companion to <a href="plan.html">plan.html</a>. Full raw audit reports: <code>review/lang-accuracy.md</code>,
+  <code>review/research-brief.md</code>, <code>review/code-a11y.md</code>. The headline content finding was independently
+  re-verified against <code>public/swahili_default.db</code> by the senior reviewer.
+</div>
+</div>
+</body>
+</html>

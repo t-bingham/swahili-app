@@ -286,7 +286,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
     // Draw the next card (excluding the one just rated)
     const nowMs = Date.now();
-    const next = drawWeightedCard(updatedPool, nowMs, card.id, newWordRate, modifiers ?? undefined);
+    const next = drawWeightedCard(updatedPool, nowMs, card.id, newWordRate, modifiers ?? undefined, card.type);
 
     set(prev => ({
       pool: updatedPool,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
+import { grammarRule } from '../../utils/grammarRule';
 
 interface Props {
   card: CardWithState;
@@ -18,7 +19,14 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
   const correctAnswer = direction === 'sw_to_en' ? card.english : card.swahili;
 
   useEffect(() => {
-    const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
     const cardTagSet = new Set(card.tags);
     const extract = (c: CardWithState) => direction === 'sw_to_en' ? c.english : c.swahili;
 
@@ -43,7 +51,8 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
   function choose(opt: string) {
     if (selected) return;
     setSelected(opt);
-    setTimeout(() => onAnswer(opt === correctAnswer, opt), 800);
+    // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
+    onAnswer(opt === correctAnswer, opt);
   }
 
   const prompt      = direction === 'sw_to_en' ? card.swahili : card.english;
@@ -106,6 +115,9 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
       )}
 
 
+      {selected !== null && selected !== correctAnswer && grammarRule(card) && (
+        <p className="text-cyan-300/80 text-xs text-center">💡 {grammarRule(card)}</p>
+      )}
       {selected !== null && selected !== correctAnswer && card.example_sentences[0] && (
         <div className="bg-slate-800/60 rounded-xl p-3 space-y-1">
           <p className="text-slate-500 text-xs">Remember it with:</p>

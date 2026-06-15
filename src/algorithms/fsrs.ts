@@ -4,6 +4,12 @@ import type { FSRSResult } from '../types';
 
 const FACTOR = 19 / 81;
 
+// Desired retention — the single most impactful FSRS knob. 0.88 sits in the
+// research-recommended 0.85–0.90 band: it minimises total study time while
+// keeping recall high, vs 0.9+ which sharply increases daily review load and
+// drives burnout (the main churn risk for a self-study app).
+export const DESIRED_RETENTION = 0.88;
+
 const W: readonly number[] = [
   0.4072, 1.1829, 3.1262, 15.4722,
   7.2102, 0.5316, 1.0651, 0.0589,
@@ -16,7 +22,9 @@ export function retrievability(t: number, S: number): number {
   return Math.pow(1 + FACTOR * (t / S), -1 / FACTOR);
 }
 
-export function nextInterval(S: number, targetRetention = 0.9): number {
+// Note: Math.log(0.9) is the FSRS anchor that *defines* stability (interval at
+// R=0.9) and must stay fixed; only the target retention is tunable.
+export function nextInterval(S: number, targetRetention = DESIRED_RETENTION): number {
   return Math.max(1, Math.round(S * Math.log(targetRetention) / Math.log(0.9)));
 }
 
@@ -51,7 +59,7 @@ export interface ReviewInput {
 }
 
 export function processReview(input: ReviewInput): FSRSResult {
-  const { currentStability, currentDifficulty, daysSinceLastReview, rating, isNewCard, targetRetention = 0.9 } = input;
+  const { currentStability, currentDifficulty, daysSinceLastReview, rating, isNewCard, targetRetention = DESIRED_RETENTION } = input;
   let newS: number, newD: number;
   if (isNewCard) {
     newS = initialStability(rating);

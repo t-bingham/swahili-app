@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUnits, getAllUnitProgress, getUnitMasteryStats } from '../database/db';
 import { computeStatus } from '../utils/unitStatus';
 import { unitsForTrack, type UnitTrack } from '../utils/unitTracks';
+import NounClassReference from '../components/NounClassReference';
 import type { Unit, UnitProgress } from '../types';
 
 const LEVEL_LABELS: Record<number, string> = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
@@ -52,8 +53,13 @@ function VocabUnitCard({ unit, displayNum, status, stats, onClick }: VocabCardPr
 
   return (
     <div
+      role="button"
+      tabIndex={isLocked ? -1 : 0}
+      aria-disabled={isLocked || undefined}
+      aria-label={`Unit ${displayNum}: ${unit.name}${isLocked ? ' (locked)' : ''}`}
       onClick={() => !isLocked && onClick()}
-      className={`bg-slate-800 border-2 rounded-xl p-4 transition-colors ${borderColor}`}
+      onKeyDown={e => { if (!isLocked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
+      className={`bg-slate-800 border-2 rounded-xl p-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${borderColor}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -100,8 +106,13 @@ function GrammarUnitCard({ unit, displayNum, status, stats, onClick }: GrammarCa
 
   return (
     <div
+      role="button"
+      tabIndex={isLocked ? -1 : 0}
+      aria-disabled={isLocked || undefined}
+      aria-label={`${unit.name}${isLocked ? ' (locked)' : ''}`}
       onClick={() => !isLocked && onClick()}
-      className={`bg-slate-800/80 border-2 rounded-xl p-4 transition-colors ${borderColor}`}
+      onKeyDown={e => { if (!isLocked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
+      className={`bg-slate-800/80 border-2 rounded-xl p-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${borderColor}`}
     >
       <div className="flex items-start gap-3">
         {/* Grammar label badge */}
@@ -208,7 +219,10 @@ export default function UnitMapScreen({ track }: { track: UnitTrack }) {
         <div>
           <p className="text-slate-500 text-xs mb-4 leading-relaxed">
             How Swahili works: noun classes, verb tenses, agreement, and sentence structure.
+            <br />
+            <span className="text-slate-400">You're learning Standard Swahili (Kiunguja / Zanzibar coastal basis).</span>
           </p>
+          <div className="mb-4"><NounClassReference /></div>
           <div className="space-y-2">
             {grammarUnits.map(unit => (
               <GrammarUnitCard

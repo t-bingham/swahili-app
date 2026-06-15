@@ -30,7 +30,7 @@ export default function UserPickerScreen() {
     // Merge Drive data into the open DB (replaces the old replace-on-download strategy)
     if (token || navigator.onLine) {
       setOpenStatus('Syncing…');
-      await syncWithDrive(token).catch(() => {});
+      await syncWithDrive({ tokenOverride: token, allowRefresh: true }).catch(() => {});
       setOpenStatus('');
     }
 

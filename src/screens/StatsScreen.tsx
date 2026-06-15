@@ -49,15 +49,21 @@ export default function StatsScreen() {
     return { dateStr, count: activityMap.get(dateStr) ?? 0 };
   });
 
+  const activeDays = grid.filter(d => d.count > 0).length;
+  const periodReviews = grid.reduce((s, d) => s + d.count, 0);
+  const heatmapSummary = `Activity over the last 12 weeks: ${periodReviews} reviews across ${activeDays} active day${activeDays !== 1 ? 's' : ''}.`;
+
   return (
     <div className="p-4 space-y-5 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-slate-100 pt-2">Stats</h1>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Summary cards — emphasise personal mastery (Learning vs genuinely Known),
+          not the intimidating curriculum total. */}
+      <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Reviews', value: totalReviews, color: 'text-slate-100' },
-          { label: 'Learned', value: Object.entries(depths).filter(([d]) => Number(d) >= 2).reduce((s, [, c]) => s + c, 0), color: 'text-cyan-400' },
+          { label: 'Learning', value: Object.entries(depths).filter(([d]) => Number(d) >= 2 && Number(d) < 3).reduce((s, [, c]) => s + c, 0), color: 'text-cyan-400' },
+          { label: 'Known', value: Object.entries(depths).filter(([d]) => Number(d) >= 3).reduce((s, [, c]) => s + c, 0), color: 'text-green-400' },
         ].map(s => (
           <div key={s.label} className="bg-slate-800 rounded-xl p-3 text-center">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -85,7 +91,7 @@ export default function StatsScreen() {
                     <div className="w-10 text-right text-xs text-slate-400">{count}</div>
                   </div>
                   {d === 1 && (
-                    <p className="text-slate-600 text-xs pl-20 -mt-1">all curriculum cards not yet started</p>
+                    <p className="text-slate-400 text-xs pl-20 -mt-1">all curriculum cards not yet started</p>
                   )}
                 </React.Fragment>
               );
@@ -117,7 +123,7 @@ export default function StatsScreen() {
       {/* Activity heatmap */}
       <div className="bg-slate-800 rounded-xl p-4">
         <h2 className="text-slate-400 text-sm font-medium mb-3">Activity (12 weeks)</h2>
-        <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
+        <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }} role="img" aria-label={heatmapSummary}>
           {Array.from({ length: 12 }, (_, week) => {
             const firstDay = grid[week * 7];
             const prevFirstDay = week > 0 ? grid[(week - 1) * 7] : null;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getUnits, searchGalleryCards, getVerbConjugations, setCardStarred } from '../database/db';
 import { printFlashcards } from '../utils/printFlashcards';
 import type { CardWithState, Unit } from '../types';
@@ -25,7 +25,7 @@ const REGISTER_COLOURS: Record<string, string> = {
 };
 
 function RegisterBadge({ register }: { register?: string }) {
-  if (!register || register === 'neutral' || !register) return null;
+  if (!register || register === 'neutral') return null;
   return (
     <span className={`px-2 py-0.5 rounded text-xs font-medium ${REGISTER_COLOURS[register] ?? 'bg-slate-700 text-slate-400'}`}>
       {register}
@@ -34,7 +34,7 @@ function RegisterBadge({ register }: { register?: string }) {
 }
 
 function DepthBadge({ depth }: { depth: number }) {
-  if (depth <= 1) return <span className="text-slate-600 text-xs">new</span>;
+  if (depth <= 1) return <span className="text-slate-400 text-xs">new</span>;
   if (depth < 3)  return <span className="text-cyan-600 text-xs">learning</span>;
   if (depth < 5)  return <span className="text-green-600 text-xs">known</span>;
   return <span className="text-emerald-400 text-xs">mastered</span>;
@@ -166,6 +166,31 @@ function CardDetail({ card, onClose, onToggleStar }: {
 }) {
   const [showConjugations, setShowConjugations] = useState(false);
   const starred = card.state.starred ?? false;
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Modal focus management: focus into the dialog on open, restore on close,
+  // and trap Tab within it (WCAG 2.4.3 / 2.1.2).
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ) ?? []).filter(el => !el.hasAttribute('disabled'));
+    focusables()[0]?.focus();
+    return () => prev?.focus();
+  }, []);
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') { onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const f = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ) ?? []).filter(el => !el.hasAttribute('disabled'));
+    if (f.length === 0) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
 
   function toggleStar() {
     onToggleStar(card.id, !starred);
@@ -174,7 +199,14 @@ function CardDetail({ card, onClose, onToggleStar }: {
   const isVerb = card.type === 'vocabulary' && card.verb_root;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/90 z-50 flex flex-col">
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${card.swahili} — ${card.english}`}
+      onKeyDown={onKeyDown}
+      className="fixed inset-0 bg-slate-950/90 z-50 flex flex-col"
+    >
       <div className="flex items-center justify-between p-4 border-b border-slate-800">
         <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-sm">← Back</button>
         <button onClick={toggleStar} aria-label={starred ? 'Remove from starred words' : 'Add to starred words'} className={`text-xl ${starred ? 'text-yellow-400' : 'text-slate-700'}`}>
@@ -261,7 +293,7 @@ function CardDetail({ card, onClose, onToggleStar }: {
 
         {/* Etymology */}
         {card.etymology && (
-          <p className="text-slate-600 text-xs">Etymology: {card.etymology}</p>
+          <p className="text-slate-400 text-xs">Etymology: {card.etymology}</p>
         )}
 
         {/* Verb conjugation table */}
@@ -285,11 +317,11 @@ function CardDetail({ card, onClose, onToggleStar }: {
           <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Study status</p>
           <div className="flex items-center gap-4">
             <DepthBadge depth={card.state.depth_level} />
-            <span className="text-slate-600 text-xs">
+            <span className="text-slate-400 text-xs">
               {card.state.review_count} review{card.state.review_count !== 1 ? 's' : ''}
             </span>
             {card.state.next_review && (
-              <span className="text-slate-600 text-xs">
+              <span className="text-slate-400 text-xs">
                 Due {new Date(card.state.next_review).toLocaleDateString()}
               </span>
             )}
@@ -308,22 +340,23 @@ function CardItem({ card, onClick, onToggleStar }: {
   onToggleStar: (id: string, starred: boolean) => void;
 }) {
   return (
-    <div
-      onClick={onClick}
-      className="w-full text-left bg-slate-800/50 hover:bg-slate-800 rounded-xl px-3 py-3 transition-colors cursor-pointer"
-    >
-      <div className="flex items-center gap-2">
-        {/* Inline star — stops propagation so it doesn't open the detail */}
-        <button
-          onClick={e => { e.stopPropagation(); onToggleStar(card.id, !card.state.starred); }}
-          className={`text-lg leading-none flex-shrink-0 transition-colors ${
-            card.state.starred ? 'text-yellow-400' : 'text-slate-600 hover:text-slate-400'
-          }`}
-          aria-label={card.state.starred ? 'Unstar' : 'Star'}
-        >
-          {card.state.starred ? '★' : '☆'}
-        </button>
+    <div className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 rounded-xl px-3 py-3 transition-colors">
+      {/* Star is a sibling button (not nested) so both controls are keyboard-reachable */}
+      <button
+        onClick={() => onToggleStar(card.id, !card.state.starred)}
+        className={`text-lg leading-none flex-shrink-0 transition-colors ${
+          card.state.starred ? 'text-yellow-400' : 'text-slate-600 hover:text-slate-400'
+        }`}
+        aria-label={`${card.state.starred ? 'Unstar' : 'Star'} ${card.swahili}`}
+      >
+        {card.state.starred ? '★' : '☆'}
+      </button>
 
+      <button
+        onClick={onClick}
+        aria-label={`${card.swahili} — ${card.english}`}
+        className="flex-1 flex items-center gap-2 min-w-0 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+      >
         <div className="flex-1 min-w-0">
           <div className="text-slate-100 font-semibold">{card.swahili}</div>
           <div className="text-slate-400 text-sm truncate">{card.english}</div>
@@ -332,9 +365,9 @@ function CardItem({ card, onClick, onToggleStar }: {
         <div className="flex items-center gap-2 flex-shrink-0">
           <RegisterBadge register={card.register} />
           <DepthBadge depth={card.state.depth_level} />
-          <span className="text-slate-600 text-lg">›</span>
+          <span className="text-slate-600 text-lg" aria-hidden="true">›</span>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
@@ -420,7 +453,11 @@ export default function CardGalleryScreen() {
     );
   }
 
-  useEffect(() => { runSearch(); }, [runSearch]);
+  // Debounce so typing doesn't fire a synchronous DB read on every keystroke. (P6.4)
+  useEffect(() => {
+    const t = setTimeout(runSearch, 250);
+    return () => clearTimeout(t);
+  }, [runSearch]);
 
   const filterPillCls = (active: boolean) =>
     `flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -441,9 +478,10 @@ export default function CardGalleryScreen() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search Swahili or English…"
+              aria-label="Search words by Swahili or English"
               className="w-full pl-9 pr-4 py-2.5 bg-slate-800 rounded-xl text-slate-200 text-sm placeholder-slate-500 border border-slate-700 focus:outline-none focus:border-cyan-500"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" aria-hidden="true">🔍</span>
           </div>
 
           {/* Type filter tabs */}
@@ -480,7 +518,7 @@ export default function CardGalleryScreen() {
 
           {/* Results count + export row */}
           <div className="flex items-center justify-between mb-2">
-            <p className="text-slate-600 text-xs">
+            <p className="text-slate-400 text-xs">
               {loading ? 'Searching…' : `${cards.length} card${cards.length !== 1 ? 's' : ''}${cards.length === 500 ? ' (max)' : ''}`}
             </p>
             {!loading && cards.length > 0 && (

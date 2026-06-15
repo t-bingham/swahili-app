@@ -56,7 +56,7 @@ export default function Layout() {
       <main className="flex-1 overflow-y-auto min-h-0">
         <Outlet />
       </main>
-      <nav className="shrink-0 flex border-t border-slate-800 bg-slate-900 pb-safe">
+      <nav aria-label="Main" className="shrink-0 flex border-t border-slate-800 bg-slate-900 pb-safe">
         {tabs.map(t => (
           <NavLink
             key={t.to}
@@ -67,7 +67,7 @@ export default function Layout() {
               }`
             }
           >
-            <span className="text-xl">{t.icon}</span>
+            <span className="text-xl" aria-hidden="true">{t.icon}</span>
             <span>{t.label}</span>
           </NavLink>
         ))}

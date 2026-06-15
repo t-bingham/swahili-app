@@ -97,11 +97,13 @@ The app is served at `http://localhost:5173`. It must be served over HTTP (not o
 
 ### Updating the word database
 
-The template DB lives in the sibling `SwahiliApp/data/` directory. To copy it into the web app's public folder after making changes:
+`public/swahili_default.db` is the source of truth for all cards, units, and seed
+state — there is no external generator. Edit it with a one-off Node script (see
+`scripts/` for examples that open it via `sql.js`, transform rows, and write it back).
 
-```bash
-npm run copy-db
-```
+When a fix must also reach users who already have a cloned copy in IndexedDB, mirror
+it as an idempotent migration in `src/database/` (e.g. `grammarFixes.ts`) so existing
+DBs are repaired on open.
 
 ---
 

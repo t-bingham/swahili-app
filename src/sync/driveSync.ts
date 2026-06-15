@@ -1,5 +1,5 @@
 import { getDb, mergeRemoteDb } from '../database/db';
-import { getOrRefreshToken, getGoogleProfile } from '../auth/googleAuth';
+import { getOrRefreshToken, getGoogleToken, getGoogleProfile } from '../auth/googleAuth';
 
 const FILE_NAME = 'swahili.db';
 
@@ -62,12 +62,16 @@ async function _upload(token: string, file: { id: string } | null): Promise<bool
  * downloadIfNewer + uploadToDrive pair and is safe to call at any point after
  * openDatabase() has returned.
  *
- * tokenOverride: pass the freshly-minted access token on first login so we
- * don't need a second getOrRefreshToken() call.
+ * Background syncs (Layout visibility/online, end-of-session upload) must never
+ * trigger interactive auth, so they use only an already-valid stored token.
+ * Explicit user actions pass allowRefresh to attempt a silent refresh, and a
+ * fresh login passes tokenOverride to skip the lookup entirely.
  */
-export async function syncWithDrive(tokenOverride?: string): Promise<boolean> {
+export async function syncWithDrive(
+  opts: { tokenOverride?: string; allowRefresh?: boolean } = {},
+): Promise<boolean> {
   if (!navigator.onLine) return false;
-  const token = tokenOverride ?? await getOrRefreshToken();
+  const token = opts.tokenOverride ?? (opts.allowRefresh ? await getOrRefreshToken() : getGoogleToken());
   if (!token) return false;
 
   try {
@@ -97,7 +101,7 @@ export async function syncWithDrive(tokenOverride?: string): Promise<boolean> {
 // Kept for the Settings "Sync now" button — delegates to syncWithDrive so
 // it also merges any remote changes the user might have made on another device.
 export async function uploadToDrive(): Promise<boolean> {
-  return syncWithDrive();
+  return syncWithDrive({ allowRefresh: true });
 }
 
 export function getLastSyncTime(): Date | null {

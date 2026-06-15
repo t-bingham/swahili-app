@@ -1,33 +1,41 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 import { normalize } from '../../utils/normalize';
-import { grammarRule } from '../../utils/grammarRule';
 
 interface Props {
   card: CardWithState;
   onAnswer: (correct: boolean, typed: string) => void;
 }
 
-export default function FillInBlank({ card, onAnswer }: Props) {
+function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// Blank the target word inside the card's first example sentence. Returns null
+// when the word can't be located (the picker uses canCloze to avoid that).
+export function buildCloze(card: CardWithState):
+  { before: string; after: string; answer: string; english: string } | null {
+  const ex = card.example_sentences?.[0];
+  const target = card.swahili?.trim() ?? '';
+  if (!ex || card.type !== 'vocabulary' || !target || /\s/.test(target)) return null;
+  const m = ex.swahili.match(new RegExp(`\\b${escapeRe(target)}\\b`, 'i'));
+  if (!m || m.index === undefined) return null;
+  return {
+    before: ex.swahili.slice(0, m.index),
+    after: ex.swahili.slice(m.index + m[0].length),
+    answer: m[0],
+    english: ex.english,
+  };
+}
+
+export function canCloze(card: CardWithState): boolean {
+  return buildCloze(card) !== null;
+}
+
+export default function SentenceCloze({ card, onAnswer }: Props) {
+  const cloze = buildCloze(card)!; // guaranteed by canCloze in the picker
   const [value, setValue] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [correct, setCorrect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Derive the blank answer from the swahili field (the card already has ___ in it)
-  // The english field is the full sentence translation
-  const blankIndex = card.swahili.indexOf('___');
-  const before = blankIndex >= 0 ? card.swahili.slice(0, blankIndex) : card.swahili;
-  const after = blankIndex >= 0 ? card.swahili.slice(blankIndex + 3) : '';
-
-  // The blanked word is whatever sits between `before` and `after` in the full
-  // example sentence. Extract it by position — String.replace only removes the
-  // first match and breaks when `before`/`after` recur elsewhere in the sentence.
-  const full = card.example_sentences[0]?.swahili ?? '';
-  const correctAnswer =
-    blankIndex >= 0 && full.startsWith(before) && full.endsWith(after) && full.length > before.length + after.length
-      ? full.slice(before.length, full.length - after.length).trim()
-      : (card.verb_root ?? '');
 
   useEffect(() => {
     setValue('');
@@ -37,25 +45,25 @@ export default function FillInBlank({ card, onAnswer }: Props) {
 
   function submit() {
     if (!value.trim() || submitted) return;
-    const isCorrect = !!correctAnswer && normalize(value) === normalize(correctAnswer);
-    setCorrect(isCorrect);
+    const ok = normalize(value) === normalize(cloze.answer);
+    setCorrect(ok);
     setSubmitted(true);
     // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
-    onAnswer(isCorrect, value);
+    onAnswer(ok, value);
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-800 rounded-2xl p-6">
-        <div className="text-slate-400 text-sm mb-4">Fill in the blank</div>
+        <div className="text-slate-400 text-sm mb-4">Fill in the missing word</div>
         <div className="text-xl text-slate-100 leading-relaxed">
-          {before}
+          {cloze.before}
           <span className={`inline-block border-b-2 min-w-16 text-center mx-1 px-2 ${submitted ? (correct ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400') : 'border-cyan-400 text-cyan-400'}`}>
             {submitted ? value || '–' : value || ' '}
           </span>
-          {after}
+          {cloze.after}
         </div>
-        <div className="mt-4 text-slate-500 text-sm italic">"{card.english}"</div>
+        <div className="mt-4 text-slate-500 text-sm italic">"{cloze.english}"</div>
       </div>
 
       {submitted && (
@@ -71,7 +79,7 @@ export default function FillInBlank({ card, onAnswer }: Props) {
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && submit()}
         disabled={submitted}
-        placeholder="Fill in…"
+        placeholder="Type the missing word…"
         className={`w-full px-5 py-4 rounded-xl bg-slate-800 border-2 text-slate-100 text-lg placeholder-slate-500 transition-colors ${
           submitted
             ? correct ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'
@@ -80,24 +88,14 @@ export default function FillInBlank({ card, onAnswer }: Props) {
       />
 
       {submitted && !correct && (
-        <div className="bg-slate-800 rounded-xl p-3 space-y-2">
-          <div className="flex items-center justify-center gap-2">
+        <div className="bg-slate-800 rounded-xl p-3 text-center space-y-1">
+          <div>
             <span className="text-slate-400 text-sm">Answer: </span>
-            <span className="text-green-400 font-semibold">{correctAnswer}</span>
+            <span className="text-green-400 font-semibold">{cloze.answer}</span>
           </div>
-          {grammarRule(card) && (
-            <p className="text-cyan-300/80 text-xs text-center">💡 {grammarRule(card)}</p>
-          )}
-          {card.example_sentences[0] && (
-            <div className="border-t border-slate-700 pt-2">
-              <p className="text-slate-500 text-xs mb-1">Remember it with:</p>
-              <p className="text-slate-300 text-sm italic">"{card.example_sentences[0].swahili}"</p>
-              <p className="text-slate-500 text-xs">"{card.example_sentences[0].english}"</p>
-            </div>
-          )}
+          <p className="text-slate-500 text-xs">{card.swahili} — "{card.english}"</p>
         </div>
       )}
-
 
       {!submitted && (
         <button

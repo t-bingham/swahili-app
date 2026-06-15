@@ -86,8 +86,15 @@ function weightedDraw(
   candidates: CardWithState[],
   nowMs: number,
   modifiers?: SessionModifiers,
+  prevType?: string,
 ): CardWithState {
-  const weights = candidates.map(c => fullCardWeight(c, nowMs, modifiers));
+  // Interleaving (P2.4): down-weight cards of the same kind as the one just shown
+  // so a session doesn't run long streaks of one skill (e.g. conjugation drills).
+  // Interleaving on top of spaced repetition improves long-term retention.
+  const weights = candidates.map(c => {
+    const w = fullCardWeight(c, nowMs, modifiers);
+    return prevType && c.type === prevType ? w * 0.4 : w;
+  });
   const total = weights.reduce((s, w) => s + w, 0);
   if (total === 0) return candidates[Math.floor(Math.random() * candidates.length)];
   let r = Math.random() * total;
@@ -104,6 +111,7 @@ export function drawWeightedCard(
   excludeId?: string,
   newWordRate = 0, // 0–100: % chance of drawing a new (depth-1) card
   modifiers?: SessionModifiers,
+  prevType?: string, // card.type of the card just shown — for interleaving
 ): CardWithState | null {
   if (!pool.length) return null;
 
@@ -117,11 +125,11 @@ export function drawWeightedCard(
     if (newCards.length > 0 && Math.random() * 100 < newWordRate) {
       return newCards[Math.floor(Math.random() * newCards.length)];
     }
-    if (reviewCards.length > 0) return weightedDraw(reviewCards, nowMs, modifiers);
+    if (reviewCards.length > 0) return weightedDraw(reviewCards, nowMs, modifiers, prevType);
     return newCards[Math.floor(Math.random() * newCards.length)];
   }
 
-  return weightedDraw(eligible, nowMs, modifiers);
+  return weightedDraw(eligible, nowMs, modifiers, prevType);
 }
 
 // ─── Pool loader ──────────────────────────────────────────────────────────────

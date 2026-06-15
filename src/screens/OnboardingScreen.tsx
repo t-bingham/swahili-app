@@ -254,6 +254,10 @@ export default function OnboardingScreen() {
             <span className="block text-xs text-slate-500 mt-0.5">Unit 1 · Greetings & Introductions</span>
           </button>
         </div>
+
+        <p className="text-slate-400 text-xs text-center">
+          You'll be learning Standard Swahili (Kiunguja / Zanzibar coastal basis) — the variety used in education and media across East Africa.
+        </p>
       </div>
       <button
         onClick={() => setStep('pace')}

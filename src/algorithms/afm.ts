@@ -15,14 +15,14 @@ export function scaffoldLevel(
   else level = 1;
 
   // Topic tags (e.g. 'nouns', 'food') are shared across many cards and can
-  // inflate mastery for recently introduced cards. Clamp the level so that a
-  // card's per-card depth never allows a harder exercise than the card has
-  // earned individually:
-  //   depth 2 (learning)    → at most multiple_choice (level ≥ 3)
-  //   depth 3 (young/known) → at most multiple_choice (level ≥ 3)
-  //   depth 4+ (established) → no clamp (type_answer allowed)
+  // inflate mastery for recently introduced cards. Clamp the level so new/learning
+  // cards can't jump straight to production:
+  //   depth < 3 (new / learning / young) → at most multiple_choice (level ≥ 3)
+  //   depth ≥ 3 (known+)                  → no clamp (cloze / type_answer can appear)
+  // (Previously clamped through depth 3 inclusive, which starved sessions of
+  //  variety — even known cards never progressed past multiple_choice.)
   const depth = card.state.depth_level;
-  if (depth <= 3 && level < 3) level = 3;
+  if (depth < 3 && level < 3) level = 3;
 
   return level;
 }

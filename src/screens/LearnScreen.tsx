@@ -11,9 +11,12 @@ import TypeAnswer from '../components/exercises/TypeAnswer';
 import FillInBlank from '../components/exercises/FillInBlank';
 import RecallPrompt from '../components/exercises/RecallPrompt';
 import NounClassExercise from '../components/exercises/NounClassExercise';
+import SentenceCloze, { canCloze } from '../components/exercises/SentenceCloze';
+import ConcordExercise, { canConcord } from '../components/exercises/ConcordExercise';
 import { ALL_NOUN_CLASSES } from '../data/nounClasses';
 import RatingButtons from '../components/RatingButtons';
 import SessionInsights from '../components/SessionInsights';
+import SpeakButton from '../components/SpeakButton';
 import type { CardWithState, ExerciseType, ProfileSettings } from '../types';
 
 // ─── Exercise picker ──────────────────────────────────────────────────────────
@@ -30,6 +33,11 @@ function pickExercise(
   }
   if (card.state.depth_level === 1 || card.state.review_count === 0) {
     return { exercise: 'recall_prompt', level: 5 };
+  }
+  // Adjective-agreement grammar cards → generative concord practice (produce the
+  // agreeing form) rather than a generic multiple-choice. (P2.2)
+  if (canConcord(card)) {
+    return { exercise: 'concord', level: 3 };
   }
   const level = scaffoldLevel(card, mastery);
   let exercise: UiPhaseExercise =
@@ -53,6 +61,13 @@ function pickExercise(
   }
   if (exercise === 'flashcard' && settings.disable_flashcard) {
     exercise = 'multiple_choice';
+  }
+  // Sentence-level cloze (P2.1): for established vocabulary whose example sentence
+  // contains the word, blank it in context instead of a bare type-answer. Delivers
+  // comprehensible input + retrieval together. Slots between MC (L3+) and the
+  // hardest, context-free type-answer (L1). Skipped when type-answer is disabled.
+  if (exercise === 'type_answer' && level === 2 && canCloze(card)) {
+    exercise = 'sentence_cloze';
   }
   // For vocabulary nouns with a known class, occasionally swap in a noun class quiz.
   // Only at scaffold level ≥ 3 (card is reasonably established) and 40% of the time
@@ -96,7 +111,6 @@ export default function LearnScreen() {
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [mode, setMode] = useState<'review' | 'learn' | 'starred'>('review');
-  const [activeMode, setActiveMode] = useState<'review' | 'learn' | 'starred'>('review');
   const [assembling, setAssembling] = useState(false);
   const [exercise, setExercise] = useState<UiPhaseExercise>('flashcard');
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
@@ -111,12 +125,18 @@ export default function LearnScreen() {
   const settingsRef = useRef<ProfileSettings>({ new_words_per_day: 10, reviews_per_day: 20, new_word_rate: 20 });
   const goalsNotified = useRef(new Set<'reviews' | 'new_words'>());
   const sessionStartStats = useRef({ reviewsToday: 0, newWordsToday: 0 });
+  // Owns the post-answer feedback delay (see onExerciseAnswer). Centralised here so
+  // a pending transition is cancelled when the card changes — preventing the
+  // setTimeout-in-each-exercise keyboard race. (P6.3)
+  const answerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const card = store.current;
 
   // When the current card changes, set up the exercise
   useEffect(() => {
     if (!store.isActive || !card) return;
+    // Cancel any pending feedback→rating transition from the previous card.
+    if (answerTimer.current) { clearTimeout(answerTimer.current); answerTimer.current = null; }
     const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current);
     setExercise(ex);
     setLevel(lv);
@@ -146,7 +166,6 @@ export default function LearnScreen() {
     if (profile) settingsRef.current = profile.settings;
     sessionStartStats.current = startStats;
 
-    setActiveMode(mode);
     const [rawPool, modifiers] = await Promise.all([
       mode === 'starred' ? getStarredCards() : buildPracticePool(mode, profile?.settings),
       loadSessionModifiers(profile?.settings.learning_goal),
@@ -202,8 +221,15 @@ export default function LearnScreen() {
     keystrokeCountRef.current = keystrokeCount;
     setAutoCorrect(correct);
     setWrongAnswer(correct ? null : (typed ?? null));
-    setPhase('rating');
+    // Briefly hold on the exercise's own correct/incorrect feedback, then reveal the
+    // rating buttons. The delay lives here (not in each exercise's onAnswer) so it is
+    // cancelled on card change — no stale callback firing on the next card. (P6.3)
+    if (answerTimer.current) clearTimeout(answerTimer.current);
+    answerTimer.current = setTimeout(() => setPhase('rating'), 900);
   }
+
+  // Clear the feedback timer if the screen unmounts mid-delay.
+  useEffect(() => () => { if (answerTimer.current) clearTimeout(answerTimer.current); }, []);
 
   // ── Goal check ───────────────────────────────────────────────────────────────
 
@@ -290,9 +316,9 @@ export default function LearnScreen() {
 
   if (phase === 'loading' || assembling) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full items-center justify-center" role="status">
         <div className="text-center text-slate-400">
-          <div className="text-4xl mb-3 animate-spin">⏳</div>
+          <div className="text-4xl mb-3 animate-spin motion-reduce:animate-none" aria-hidden="true">⏳</div>
           Loading…
         </div>
       </div>
@@ -300,7 +326,7 @@ export default function LearnScreen() {
   }
 
   if (phase === 'empty') {
-    const isStarredEmpty = activeMode === 'starred';
+    const isStarredEmpty = mode === 'starred';
     return (
       <div className="flex h-full items-center justify-center p-6">
         <div className="text-center space-y-4">
@@ -419,6 +445,16 @@ export default function LearnScreen() {
           </div>
         )}
 
+        {/* Dev-only: surface the chosen exercise + scaffold level to make
+            exercise selection verifiable (P2.6). */}
+        {import.meta.env.DEV && (
+          <div className="flex justify-center">
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-500 font-mono">
+              {exercise} · L{level} · d{card.state.depth_level}
+            </span>
+          </div>
+        )}
+
         {/* ── Recall prompt (first exposure) ── */}
         {phase === 'recall_prompt' && (
           <RecallPrompt card={card} onKnew={onRecallKnew} onDidntKnow={onRecallDidntKnow} onAlreadyKnow={onRecallAlreadyKnow} />
@@ -432,6 +468,7 @@ export default function LearnScreen() {
               {card.pronunciation && (
                 <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
               )}
+              <SpeakButton text={card.swahili} enabled={!!settingsRef.current.enable_audio} />
             </div>
             <div className="bg-slate-800/50 rounded-2xl p-6 text-center space-y-2">
               <div className="text-2xl text-cyan-400 font-semibold">{card.english}</div>
@@ -485,6 +522,20 @@ export default function LearnScreen() {
             {exercise === 'noun_class' && (
               <NounClassExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
             )}
+            {exercise === 'sentence_cloze' && (
+              <SentenceCloze key={card.id} card={card} onAnswer={onExerciseAnswer} />
+            )}
+            {exercise === 'concord' && (
+              <ConcordExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
+            )}
+
+            {/* 🔊 Hear it — shown once the answer is revealed, for every exercise type.
+                Self-hides unless audio is enabled and a Swahili voice exists. */}
+            {(phase === 'rating' || (exercise === 'flashcard' && revealed)) && (
+              <div className="flex justify-center">
+                <SpeakButton text={card.swahili} enabled={!!settingsRef.current.enable_audio} />
+              </div>
+            )}
 
             {/* Pronunciation + example sentence — shown after answering any non-flashcard
                 exercise. FlashCard handles both internally. */}
@@ -492,8 +543,9 @@ export default function LearnScreen() {
               const showPron = settingsRef.current.show_pronunciation_on_reveal &&
                 settingsRef.current.pronunciation_style !== 'none' &&
                 card.pronunciation;
+              // sentence_cloze already shows the example sentence as its prompt.
               const showEx = settingsRef.current.show_example_sentences !== false &&
-                card.example_sentences[0];
+                card.example_sentences[0] && exercise !== 'sentence_cloze';
               if (!showPron && !showEx) return null;
               return (
                 <div className="bg-slate-800/40 rounded-xl px-4 py-3 space-y-1.5">

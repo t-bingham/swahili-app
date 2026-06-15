@@ -34,7 +34,8 @@ export default function NounClassExercise({ card, onAnswer }: Props) {
   function choose(cls: NounClass) {
     if (selected) return;
     setSelected(cls);
-    setTimeout(() => onAnswer(cls === correct, cls), 900);
+    // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
+    onAnswer(cls === correct, cls);
   }
 
   function optionStyle(cls: NounClass) {
@@ -70,6 +71,12 @@ export default function NounClassExercise({ card, onAnswer }: Props) {
           );
         })}
       </div>
+
+      {selected && (
+        <p aria-live="polite" className={`text-sm font-semibold text-center ${selected === correct ? 'text-green-400' : 'text-red-400'}`}>
+          {selected === correct ? '✓ Correct' : '✗ Incorrect'}
+        </p>
+      )}
 
       {/* Post-answer class detail */}
       {selected && info && (

@@ -41,7 +41,7 @@ function ResultScreen({ questions, label, orderIndex, targetUnit, onStartHere, o
             Start from the very beginning for the best foundation.
           </p>
         )}
-        <p className="text-slate-600 text-xs pt-1">
+        <p className="text-slate-400 text-xs pt-1">
           Calibrated in {questions} question{questions !== 1 ? 's' : ''}
         </p>
       </div>
@@ -67,7 +67,7 @@ function ResultScreen({ questions, label, orderIndex, targetUnit, onStartHere, o
         </button>
       </div>
 
-      <p className="text-slate-600 text-xs text-center">
+      <p className="text-slate-400 text-xs text-center">
         You can re-take the placement test anytime in Settings.
       </p>
     </div>
