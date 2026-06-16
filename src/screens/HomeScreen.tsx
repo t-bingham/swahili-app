@@ -42,9 +42,24 @@ export default function HomeScreen() {
   return (
     <div className="p-5 space-y-4 max-w-lg mx-auto">
       {/* Header */}
-      <div className="pt-2">
-        <p className="text-slate-400 text-sm">Welcome back</p>
-        <h1 className="text-2xl font-bold text-slate-100">{profile?.display_name}</h1>
+      <div className="pt-2 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-slate-400 text-sm">Welcome back</p>
+          <h1 className="text-2xl font-bold text-slate-100">{profile?.display_name}</h1>
+        </div>
+        <button
+          onClick={async () => {
+            const { closeDatabase } = await import('../database/db');
+            await closeDatabase();
+            // Drop sessionStorage's language so the picker doesn't auto-restore on next openDatabase
+            sessionStorage.removeItem('currentLanguage');
+            navigate('/');
+          }}
+          className="mt-1 py-1.5 px-3 rounded-lg border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors whitespace-nowrap"
+          aria-label="Back to language selection"
+        >
+          <span aria-hidden="true">{getLanguage(getCurrentLanguage()).flag}</span> Change language
+        </button>
       </div>
 
       {/* Stats row */}
