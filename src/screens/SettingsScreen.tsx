@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile, updateProfileSettings, closeDatabase, resetCurrentUserData } from '../database/db';
+import { getProfile, updateProfileSettings, closeDatabase, resetCurrentUserData, getCurrentLanguage, getCurrentUser, openDatabase } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
 import { getGoogleProfile, clearGoogleSession } from '../auth/googleAuth';
 import { uploadToDrive, getLastSyncTime, clearSyncState } from '../sync/driveSync';
+import { LANGUAGES } from '../data/languages';
 import type { ProfileSettings, LearningGoal, GrammarDepth } from '../types';
 
 function formatRelative(date: Date): string {
@@ -205,6 +206,20 @@ export default function SettingsScreen() {
     navigate('/');
   }
 
+  async function switchLanguage(newLang: string) {
+    const user = getCurrentUser();
+    if (!user || newLang === getCurrentLanguage()) return;
+    await closeDatabase();
+    try { await openDatabase(user, newLang); } catch { await openDatabase(user, newLang); }
+    sessionStorage.setItem('currentLanguage', newLang);
+    // Check whether this user has been onboarded in the new language; if not,
+    // route to onboarding to set goal / depth / pace before learning starts.
+    const profile = await getProfile();
+    navigate(profile ? '/app/home' : '/onboarding');
+    // Force a reload so all in-memory state (Zustand store, etc.) is reset.
+    setTimeout(() => window.location.reload(), 0);
+  }
+
   async function syncNow() {
     setSyncing(true);
     setSyncMsg('');
@@ -223,6 +238,35 @@ export default function SettingsScreen() {
   return (
     <div className="p-4 max-w-lg mx-auto pb-12">
       <h1 className="text-2xl font-bold text-slate-100 pt-2 mb-6">Settings</h1>
+
+      {/* ── Language ── */}
+      <SectionHeader>Language</SectionHeader>
+      <SettingsCard>
+        <div className="p-4">
+          <p className="text-slate-200 text-sm font-medium mb-3">Currently learning</p>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.values(LANGUAGES).map(l => {
+              const active = l.id === getCurrentLanguage();
+              return (
+                <button
+                  key={l.id}
+                  onClick={() => switchLanguage(l.id)}
+                  aria-pressed={active}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                    active ? 'border-cyan-400 bg-cyan-400/10 text-cyan-300' : 'border-slate-700 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <span aria-hidden="true">{l.flag}</span> {l.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-slate-500 text-xs mt-3">
+            Switching reopens your saved progress for that language. Each language keeps its own
+            cards, units, and review history.
+          </p>
+        </div>
+      </SettingsCard>
 
       {/* ── Learning Path ── */}
       <SectionHeader>Learning Path</SectionHeader>

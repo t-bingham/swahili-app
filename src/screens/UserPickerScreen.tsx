@@ -114,55 +114,61 @@ export default function UserPickerScreen() {
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="text-6xl mb-4">{LANGUAGES[language]?.flag ?? '🌍'}</div>
-          <h1 className="text-3xl font-bold text-slate-100">{LANGUAGES[language]?.name ?? 'Learn'}</h1>
-          <p className="text-slate-400 mt-1">Choose a language, then sign in</p>
-        </div>
-
-        {/* Language picker */}
-        <div className="flex gap-2 mb-6">
-          {Object.values(LANGUAGES).map(l => (
-            <button
-              key={l.id}
-              onClick={() => setLanguage(l.id)}
-              aria-pressed={language === l.id}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
-                language === l.id ? 'border-cyan-400 bg-cyan-400/10 text-cyan-300' : 'border-slate-700 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <span aria-hidden="true">{l.flag}</span> {l.name}
-            </button>
-          ))}
+          <div className="text-6xl mb-4">{googleProfile ? (LANGUAGES[language]?.flag ?? '🌍') : '🌍'}</div>
+          <h1 className="text-3xl font-bold text-slate-100">
+            {googleProfile ? (LANGUAGES[language]?.name ?? 'Learn') : 'Sign in to continue'}
+          </h1>
+          <p className="text-slate-400 mt-1">
+            {googleProfile ? 'Choose a language to learn' : 'Sign in with Google to get started'}
+          </p>
         </div>
 
         {googleProfile ? (
-          <div className="bg-slate-800 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <img
-                src={googleProfile.picture}
-                alt={googleProfile.name}
-                className="w-10 h-10 rounded-full"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-slate-100 font-medium truncate">{googleProfile.name}</p>
-                <p className="text-slate-500 text-xs truncate">{googleProfile.email}</p>
-              </div>
+          <>
+            {/* Language picker — shown after auth so the user picks per-session */}
+            <div className="flex gap-2 mb-6">
+              {Object.values(LANGUAGES).map(l => (
+                <button
+                  key={l.id}
+                  onClick={() => setLanguage(l.id)}
+                  aria-pressed={language === l.id}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                    language === l.id ? 'border-cyan-400 bg-cyan-400/10 text-cyan-300' : 'border-slate-700 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <span aria-hidden="true">{l.flag}</span> {l.name}
+                </button>
+              ))}
             </div>
-            <button
-              onClick={continueAsGoogle}
-              disabled={opening}
-              className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-colors"
-            >
-              {opening ? (openStatus || 'Opening…') : 'Continue →'}
-            </button>
-            <button
-              onClick={switchAccounts}
-              disabled={opening}
-              className="w-full mt-2 py-2 text-slate-500 hover:text-slate-300 text-sm transition-colors"
-            >
-              Switch accounts
-            </button>
-          </div>
+
+            <div className="bg-slate-800 rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src={googleProfile.picture}
+                  alt={googleProfile.name}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-100 font-medium truncate">{googleProfile.name}</p>
+                  <p className="text-slate-500 text-xs truncate">{googleProfile.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={continueAsGoogle}
+                disabled={opening}
+                className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-colors"
+              >
+                {opening ? (openStatus || 'Opening…') : 'Continue →'}
+              </button>
+              <button
+                onClick={switchAccounts}
+                disabled={opening}
+                className="w-full mt-2 py-2 text-slate-500 hover:text-slate-300 text-sm transition-colors"
+              >
+                Switch accounts
+              </button>
+            </div>
+          </>
         ) : (
           <button
             onClick={() => googleLogin()}
