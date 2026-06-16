@@ -1,20 +1,46 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProfile, getCurrentUser, getCurrentLanguage } from '../database/db';
+import { getLanguage } from '../data/languages';
 import type { LearningGoal, GrammarDepth, ProfileSettings } from '../types';
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
 type Step = 'goal' | 'depth' | 'pace' | 'placement';
 
-const GOALS: { value: LearningGoal; title: string; subtitle: string }[] = [
-  { value: 'travel_survival',      title: 'Travel',                 subtitle: 'Getting by on a trip to East Africa' },
-  { value: 'live_in_country',      title: 'Living there',           subtitle: 'Moving to Tanzania, Kenya, or another Swahili region' },
-  { value: 'family_community',     title: 'Family & community',     subtitle: 'Speaking with family or community members' },
-  { value: 'business_professional',title: 'Business',               subtitle: 'Work or formal professional settings' },
-  { value: 'academic_literary',    title: 'Academic',               subtitle: 'Reading, writing, or formal study of Swahili' },
-  { value: 'cultural_curiosity',   title: 'Cultural curiosity',     subtitle: 'Exploring the culture and history' },
-];
+type GoalCopy = { value: LearningGoal; title: string; subtitle: string };
+
+function getGoals(langId: string): GoalCopy[] {
+  if (langId === 'ko') {
+    return [
+      { value: 'travel_survival',      title: 'Travel',                 subtitle: 'Getting by on a trip to South Korea' },
+      { value: 'live_in_country',      title: 'Living there',           subtitle: 'Moving to South Korea' },
+      { value: 'family_community',     title: 'Family & community',     subtitle: 'Speaking with family or community members' },
+      { value: 'business_professional',title: 'Business',               subtitle: 'Work or formal professional settings' },
+      { value: 'academic_literary',    title: 'Academic',               subtitle: 'Reading, writing, or formal study of Korean' },
+      { value: 'cultural_curiosity',   title: 'K-culture & curiosity',  subtitle: 'K-pop, K-dramas, food, and the wider culture' },
+    ];
+  }
+  if (langId === 'mi') {
+    return [
+      { value: 'travel_survival',      title: 'Travel',                 subtitle: 'Visiting Aotearoa New Zealand' },
+      { value: 'live_in_country',      title: 'Living in Aotearoa',     subtitle: 'Everyday life — kura, work, the marae' },
+      { value: 'family_community',     title: 'Whānau & community',     subtitle: 'Reconnecting with whānau, hapū, or iwi' },
+      { value: 'business_professional',title: 'Work',                   subtitle: 'Workplaces, hui, and the public sector' },
+      { value: 'academic_literary',    title: 'Academic',               subtitle: 'Formal study of te reo Māori' },
+      { value: 'cultural_curiosity',   title: 'Te ao Māori',            subtitle: 'Exploring tikanga, mātauranga, and culture' },
+    ];
+  }
+  // Default: Swahili
+  return [
+    { value: 'travel_survival',      title: 'Travel',                 subtitle: 'Getting by on a trip to East Africa' },
+    { value: 'live_in_country',      title: 'Living there',           subtitle: 'Moving to Tanzania, Kenya, or another Swahili region' },
+    { value: 'family_community',     title: 'Family & community',     subtitle: 'Speaking with family or community members' },
+    { value: 'business_professional',title: 'Business',               subtitle: 'Work or formal professional settings' },
+    { value: 'academic_literary',    title: 'Academic',               subtitle: 'Reading, writing, or formal study of Swahili' },
+    { value: 'cultural_curiosity',   title: 'Cultural curiosity',     subtitle: 'Exploring the culture and history' },
+  ];
+}
 
 const DEPTHS: { value: GrammarDepth; title: string; subtitle: string; detail: string }[] = [
   {
@@ -64,6 +90,9 @@ export default function OnboardingScreen() {
   const [depth, setDepth] = useState<GrammarDepth>('fluency');
   const [newWordsPerDay, setNewWordsPerDay] = useState(10);
 
+  const lang = getLanguage(getCurrentLanguage());
+  const goals = getGoals(lang.id);
+
   async function finish(wantsPlacementTest: boolean) {
     const user = getCurrentUser() ?? 'default';
     const displayName = user.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -97,11 +126,11 @@ export default function OnboardingScreen() {
         <StepHeader step={1} total={4} />
         <div className="flex-1 flex flex-col justify-center space-y-6 max-w-sm mx-auto w-full">
           <div>
-            <h2 className="text-2xl font-bold text-slate-100 mb-2">Why are you learning Swahili?</h2>
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">Why are you learning {lang.name}?</h2>
             <p className="text-slate-400 text-sm">This helps us prioritise the right vocabulary for you.</p>
           </div>
           <div className="space-y-2">
-            {GOALS.map(g => (
+            {goals.map(g => (
               <button
                 key={g.value}
                 onClick={() => setGoal(g.value)}
@@ -233,7 +262,7 @@ export default function OnboardingScreen() {
       <StepHeader step={4} total={4} />
       <div className="flex-1 flex flex-col justify-center space-y-6 max-w-sm mx-auto w-full">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100 mb-2">Do you already know some Swahili?</h2>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">Do you already know some {lang.name}?</h2>
           <p className="text-slate-400 text-sm">A short placement test will skip you past content you already know. It stops as soon as you miss 5 questions — no pressure.</p>
         </div>
 
