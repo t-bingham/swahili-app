@@ -7,6 +7,7 @@ import {
   googleUsername,
 } from '../auth/googleAuth';
 import { syncWithDrive, clearSyncState } from '../sync/driveSync';
+import { LANGUAGES } from '../data/languages';
 
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -15,6 +16,7 @@ export default function UserPickerScreen() {
   const [opening, setOpening] = useState(false);
   const [openStatus, setOpenStatus] = useState('');
   const [error, setError] = useState('');
+  const [language, setLanguage] = useState<string>(() => sessionStorage.getItem('currentLanguage') ?? 'sw');
 
   const googleProfile = getGoogleProfile();
 
@@ -24,11 +26,12 @@ export default function UserPickerScreen() {
 
   async function openDbAndNavigate(username: string, token?: string) {
     // Retry once — first-load WASM init can fail transiently.
-    try { await openDatabase(username); } catch { await openDatabase(username); }
+    try { await openDatabase(username, language); } catch { await openDatabase(username, language); }
     sessionStorage.setItem('currentUser', username);
+    sessionStorage.setItem('currentLanguage', language);
 
-    // Merge Drive data into the open DB (replaces the old replace-on-download strategy)
-    if (token || navigator.onLine) {
+    // Drive sync currently targets the Swahili profile only.
+    if (language === 'sw' && (token || navigator.onLine)) {
       setOpenStatus('Syncing…');
       await syncWithDrive({ tokenOverride: token, allowRefresh: true }).catch(() => {});
       setOpenStatus('');
@@ -110,10 +113,26 @@ export default function UserPickerScreen() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="text-6xl mb-4">🦁</div>
-          <h1 className="text-3xl font-bold text-slate-100">Swahili</h1>
-          <p className="text-slate-400 mt-1">Sign in to continue</p>
+        <div className="text-center mb-6">
+          <div className="text-6xl mb-4">{LANGUAGES[language]?.flag ?? '🌍'}</div>
+          <h1 className="text-3xl font-bold text-slate-100">{LANGUAGES[language]?.name ?? 'Learn'}</h1>
+          <p className="text-slate-400 mt-1">Choose a language, then sign in</p>
+        </div>
+
+        {/* Language picker */}
+        <div className="flex gap-2 mb-6">
+          {Object.values(LANGUAGES).map(l => (
+            <button
+              key={l.id}
+              onClick={() => setLanguage(l.id)}
+              aria-pressed={language === l.id}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                language === l.id ? 'border-cyan-400 bg-cyan-400/10 text-cyan-300' : 'border-slate-700 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span aria-hidden="true">{l.flag}</span> {l.name}
+            </button>
+          ))}
         </div>
 
         {googleProfile ? (

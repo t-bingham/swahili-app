@@ -10,6 +10,7 @@
 
 import type { Database, SqlJsStatic } from 'sql.js';
 import { runMigrations } from './migrations';
+import { getLanguage, DEFAULT_LANGUAGE } from '../data/languages';
 import type {
   Card, CardState, CardWithState, Profile, ProfileSettings,
   Session, ReviewLog, Unit, UnitProgress, ErrorType, MorphemeMastery,
@@ -79,7 +80,19 @@ async function idbDelete(key: string): Promise<void> {
 
 let _db: Database | null = null;
 let _currentUser: string | null = null;
+let _currentLanguage: string = DEFAULT_LANGUAGE;
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function getCurrentLanguage(): string {
+  return _currentLanguage;
+}
+
+// IndexedDB key for a user's DB. Swahili keeps the legacy un-prefixed key for
+// back-compat with existing users; other languages get a `db_<lang>_<user>` key
+// so each language is an independent profile/progress store.
+function dbKey(lang: string, user: string): string {
+  return lang === DEFAULT_LANGUAGE ? `db_${user}` : `db_${lang}_${user}`;
+}
 
 function scheduleFlush() {
   if (_flushTimer) clearTimeout(_flushTimer);
@@ -89,7 +102,7 @@ function scheduleFlush() {
 async function flushToDisk() {
   if (!_db || !_currentUser) return;
   const data = _db.export();
-  await idbSave(`db_${_currentUser}`, data);
+  await idbSave(dbKey(_currentLanguage, _currentUser), data);
 }
 
 export function getDb(): Database {
@@ -125,21 +138,22 @@ export async function importDatabase(userName: string, data: Uint8Array): Promis
   await idbSave(`db_${userName}`, data);
 }
 
-export async function openDatabase(userName: string): Promise<void> {
-  if (_db && _currentUser === userName) return;
+export async function openDatabase(userName: string, lang: string = _currentLanguage): Promise<void> {
+  if (_db && _currentUser === userName && _currentLanguage === lang) return;
   if (_db) {
     await flushToDisk();
     _db.close();
     _db = null;
   }
 
+  _currentLanguage = lang;
   const sql = await getSql();
-  const key = `db_${userName}`;
+  const key = dbKey(lang, userName);
   let existing = await idbLoad(key);
 
   if (!existing) {
-    // First time for this user — clone the template DB
-    const resp = await fetch('/swahili_default.db');
+    // First time for this user+language — clone the language's template DB
+    const resp = await fetch(getLanguage(lang).templateDb);
     if (!resp.ok) throw new Error('Failed to load template database');
     existing = new Uint8Array(await resp.arrayBuffer());
     await idbSave(key, existing);
@@ -148,7 +162,8 @@ export async function openDatabase(userName: string): Promise<void> {
   _db = new sql.Database(existing);
   _currentUser = userName;
 
-  runMigrations(_db);
+  // Migrations are tagged by language; Swahili-specific ones never run on other DBs.
+  runMigrations(_db, lang);
 
   scheduleFlush();
 }
@@ -172,11 +187,12 @@ export async function flushDatabase(): Promise<void> {
 // Call clearGoogleSession() + clearSyncState() + navigate('/') after this.
 export async function resetCurrentUserData(): Promise<void> {
   const user = _currentUser;
+  const lang = _currentLanguage;
   if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null; }
   _db?.close();
   _db = null;
   _currentUser = null;
-  if (user) await idbDelete(`db_${user}`);
+  if (user) await idbDelete(dbKey(lang, user));
 }
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────

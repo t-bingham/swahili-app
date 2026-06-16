@@ -4,6 +4,8 @@ import { getUnits, getAllUnitProgress, getUnitMasteryStats } from '../database/d
 import { computeStatus } from '../utils/unitStatus';
 import { unitsForTrack, type UnitTrack } from '../utils/unitTracks';
 import NounClassReference from '../components/NounClassReference';
+import { getCurrentLanguage } from '../database/db';
+import { getLanguage } from '../data/languages';
 import type { Unit, UnitProgress } from '../types';
 
 const LEVEL_LABELS: Record<number, string> = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
@@ -218,11 +220,21 @@ export default function UnitMapScreen({ track }: { track: UnitTrack }) {
       {track === 'grammar' && grammarUnits.length > 0 && (
         <div>
           <p className="text-slate-500 text-xs mb-4 leading-relaxed">
-            How Swahili works: noun classes, verb tenses, agreement, and sentence structure.
-            <br />
-            <span className="text-slate-400">You're learning Standard Swahili (Kiunguja / Zanzibar coastal basis).</span>
+            {getLanguage(getCurrentLanguage()).id === 'ko' ? (
+              <>
+                How Korean works: particles, speech levels, and sentence structure.
+                <br />
+                <span className="text-slate-400">You're learning Standard (Seoul) Korean — 표준어.</span>
+              </>
+            ) : (
+              <>
+                How Swahili works: noun classes, verb tenses, agreement, and sentence structure.
+                <br />
+                <span className="text-slate-400">You're learning Standard Swahili (Kiunguja / Zanzibar coastal basis).</span>
+              </>
+            )}
           </p>
-          <div className="mb-4"><NounClassReference /></div>
+          {getLanguage(getCurrentLanguage()).features.nounClass && <div className="mb-4"><NounClassReference /></div>}
           <div className="space-y-2">
             {grammarUnits.map(unit => (
               <GrammarUnitCard

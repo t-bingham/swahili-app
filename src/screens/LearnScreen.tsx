@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile, getSkillMastery, getDailyStats, getStarredCards } from '../database/db';
+import { getProfile, getSkillMastery, getDailyStats, getStarredCards, getCurrentLanguage } from '../database/db';
+import { getLanguage, type LanguageFeatures } from '../data/languages';
 import { scaffoldLevel, scaffoldHint } from '../algorithms/afm';
 import { buildPracticePool, loadSessionModifiers } from '../scheduling/sessionAssembly';
 import { syncWithDrive } from '../sync/driveSync';
@@ -27,6 +28,7 @@ function pickExercise(
   card: CardWithState,
   mastery: Map<string, number>,
   settings: ProfileSettings,
+  features: LanguageFeatures,
 ): { exercise: UiPhaseExercise; level: 1 | 2 | 3 | 4 | 5 } {
   if (card.type === 'grammar' && card.swahili.includes('___')) {
     return { exercise: 'fill_blank', level: 3 };
@@ -35,8 +37,8 @@ function pickExercise(
     return { exercise: 'recall_prompt', level: 5 };
   }
   // Adjective-agreement grammar cards → generative concord practice (produce the
-  // agreeing form) rather than a generic multiple-choice. (P2.2)
-  if (canConcord(card)) {
+  // agreeing form) rather than a generic multiple-choice. (P2.2) — Swahili-only.
+  if (features.concord && canConcord(card)) {
     return { exercise: 'concord', level: 3 };
   }
   const level = scaffoldLevel(card, mastery);
@@ -73,6 +75,7 @@ function pickExercise(
   // Only at scaffold level ≥ 3 (card is reasonably established) and 40% of the time
   // so vocabulary meaning practice still dominates.
   if (
+    features.nounClass &&
     exercise === 'multiple_choice' &&
     card.type === 'vocabulary' &&
     card.noun_class &&
@@ -137,7 +140,8 @@ export default function LearnScreen() {
     if (!store.isActive || !card) return;
     // Cancel any pending feedback→rating transition from the previous card.
     if (answerTimer.current) { clearTimeout(answerTimer.current); answerTimer.current = null; }
-    const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current);
+    const features = getLanguage(getCurrentLanguage()).features;
+    const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current, features);
     setExercise(ex);
     setLevel(lv);
     // Grammar cards always show Swahili → English: "What does -na- mean?"

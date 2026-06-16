@@ -666,24 +666,31 @@ function runLegacyMigration(db: Database): void {
 
 interface Migration {
   version: number;
+  languages?: string[]; // if set, only applies to these language ids (default: all)
   run: (db: Database) => void;
 }
 
 // Ordered list of migrations. Append new entries with the next version number.
+// Both current migrations are Swahili content/schema, so they are tagged sw-only —
+// they never run on the Korean (or any non-Swahili) DB, which ships fully migrated.
 const MIGRATIONS: Migration[] = [
-  { version: 1, run: runLegacyMigration },
+  { version: 1, languages: ['sw'], run: runLegacyMigration },
   // v2: Phase 0 grammar-content correctness repair (negatives, concord, ndiyo).
-  { version: 2, run: (db) => fixGrammarContent(db) },
+  { version: 2, languages: ['sw'], run: (db) => fixGrammarContent(db) },
 ];
 
-// Applies every migration newer than the DB's recorded version, in order.
-export function runMigrations(db: Database): void {
+// Applies every migration newer than the DB's recorded version (and applicable to
+// the given language), in order, then records the highest known version so a future
+// schema migration isn't blocked by a skipped language-specific one.
+export function runMigrations(db: Database, lang: string = 'sw'): void {
   ensureMigrationTable(db);
   const current = getMigrationVersion(db);
+  let target = current;
   for (const m of MIGRATIONS) {
-    if (current < m.version) {
+    if (current < m.version && (!m.languages || m.languages.includes(lang))) {
       m.run(db);
-      setMigrationVersion(db, m.version);
     }
+    target = Math.max(target, m.version);
   }
+  if (target > current) setMigrationVersion(db, target);
 }

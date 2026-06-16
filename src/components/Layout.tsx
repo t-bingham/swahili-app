@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { getCurrentUser, openDatabase, getProfile } from '../database/db';
+import { getCurrentUser, getCurrentLanguage, openDatabase, getProfile } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
 import { syncWithDrive } from '../sync/driveSync';
 
@@ -26,8 +26,9 @@ export default function Layout() {
     }
     const stored = sessionStorage.getItem('currentUser');
     if (!stored) { navigate('/', { replace: true }); return; }
-    openDatabase(stored)
-      .catch(() => openDatabase(stored))  // retry once for WASM cold-start
+    const lang = sessionStorage.getItem('currentLanguage') ?? undefined;
+    openDatabase(stored, lang)
+      .catch(() => openDatabase(stored, lang))  // retry once for WASM cold-start
       .then(() => {
         setReady(true);
         getProfile().then(p => { if (p) applyDisplaySettings(p.settings); });
@@ -38,7 +39,9 @@ export default function Layout() {
   // Background sync: upload to Drive when coming back online or returning to the tab.
   useEffect(() => {
     function trySyncIfOnline() {
-      if (navigator.onLine && getCurrentUser() !== null) syncWithDrive();
+      // Drive sync currently targets the Swahili profile only; don't let a Korean
+      // session overwrite the Swahili backup.
+      if (navigator.onLine && getCurrentUser() !== null && getCurrentLanguage() === 'sw') syncWithDrive();
     }
     const handleVisibility = () => { if (!document.hidden) trySyncIfOnline(); };
     window.addEventListener('online', trySyncIfOnline);

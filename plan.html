@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Swahili App — Fresh Action Plan</title>
+<title>Korean + Multi-language — Action Plan</title>
 <style>
   :root{
     --bg:#0b1120; --panel:#111a2e; --panel2:#0f1830; --border:#1e293b;
     --ink:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
     --cyan:#22d3ee; --cyan2:#67e8f9; --amber:#fbbf24; --red:#f87171;
-    --green:#34d399; --violet:#a78bfa;
+    --green:#34d399; --violet:#a78bfa; --pink:#f472b6;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -22,359 +22,138 @@
   a{color:var(--cyan2);text-decoration:none;} a:hover{text-decoration:underline;}
   h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);
      margin:44px 0 8px;}
+  h2.done{text-decoration:line-through;text-decoration-color:var(--green);text-decoration-thickness:2px;opacity:.75;}
+  h2 .badge{font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;}
+  .b-now{background:rgba(34,211,238,.15);color:var(--cyan2);border:1px solid rgba(34,211,238,.4);}
+  .b-next{background:rgba(148,163,184,.12);color:var(--muted);border:1px solid rgba(148,163,184,.3);}
+  .b-risk{background:rgba(248,113,113,.14);color:var(--red);border:1px solid rgba(248,113,113,.4);}
   .phase-desc{color:var(--muted);font-size:14px;margin:0 0 18px;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;
     padding:18px 20px;margin:14px 0;}
-  .card h3{margin:0 0 4px;font-size:17px;}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 10px;}
-  .tag{font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:999px;
-    text-transform:uppercase;}
-  .t-block{background:rgba(248,113,113,.14);color:var(--red);border:1px solid rgba(248,113,113,.4);}
-  .t-high{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.35);}
-  .t-med{background:rgba(34,211,238,.12);color:var(--cyan2);border:1px solid rgba(34,211,238,.3);}
-  .t-low{background:rgba(148,163,184,.12);color:var(--muted);border:1px solid rgba(148,163,184,.3);}
-  .t-eff{background:rgba(167,139,250,.12);color:var(--violet);border:1px solid rgba(167,139,250,.3);}
-  .t-done{background:rgba(52,211,153,.16);color:var(--green);border:1px solid rgba(52,211,153,.5);}
   .card.done{opacity:.6;}
   .card.done h3{text-decoration:line-through;text-decoration-color:var(--green);text-decoration-thickness:2px;}
-  h2.done{text-decoration:line-through;text-decoration-color:var(--green);text-decoration-thickness:2px;opacity:.75;}
-  .doneline{text-decoration:line-through;text-decoration-color:var(--green);}
-  .t-skip{background:rgba(148,163,184,.12);color:var(--muted);border:1px solid rgba(148,163,184,.4);}
-  .card.skip{opacity:.45;}
-  .card.skip h3{text-decoration:line-through;text-decoration-color:var(--dim);text-decoration-thickness:2px;}
-  h2.skip{text-decoration:line-through;text-decoration-color:var(--dim);text-decoration-thickness:2px;opacity:.6;}
+  .card h3{margin:0 0 4px;font-size:17px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 10px;}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase;}
+  .t-eff{background:rgba(167,139,250,.12);color:var(--violet);border:1px solid rgba(167,139,250,.3);}
+  .t-risk{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3);}
+  .t-safe{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3);}
+  .t-done{background:rgba(52,211,153,.16);color:var(--green);border:1px solid rgba(52,211,153,.5);}
+  .id{color:var(--dim);font-size:12px;font-weight:700;font-family:ui-monospace,monospace;}
   .card p{margin:6px 0;color:var(--ink);font-size:14.5px;}
   .where{color:var(--dim);font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;}
   .why{color:var(--muted);font-size:13.5px;}
   code{background:var(--panel2);border:1px solid var(--border);border-radius:5px;
     padding:1px 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--cyan2);}
-  .id{color:var(--dim);font-size:12px;font-weight:700;font-family:ui-monospace,monospace;}
+  ul.tight{margin:6px 0 0;padding-left:20px;} ul.tight li{margin:4px 0;font-size:14px;color:var(--muted);}
+  ul.tight li b{color:var(--ink);}
   .callout{background:var(--panel2);border-left:3px solid var(--cyan);border-radius:8px;
     padding:14px 18px;margin:18px 0;color:var(--muted);font-size:14px;}
-  .num{display:inline-block;min-width:30px;color:var(--cyan);font-weight:800;}
-  ul.tight{margin:6px 0 0;padding-left:20px;} ul.tight li{margin:3px 0;font-size:14px;color:var(--muted);}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:14px;}
-  .legend b{color:var(--muted);font-weight:600;}
-  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;}
-  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
-  th{color:var(--cyan);font-size:11px;letter-spacing:.8px;text-transform:uppercase;}
-  td.ok{color:var(--green);} td.no{color:var(--amber);}
   .foot{margin-top:50px;border-top:1px solid var(--border);padding-top:18px;color:var(--dim);font-size:13px;}
+  .kr{color:var(--pink);font-weight:600;}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <h1>🇹🇿 Swahili Learning App — Fresh Action Plan</h1>
-  <div class="sub">Prioritised, build-ready engineering &amp; content plan from a full multi-lens review.</div>
-  <div class="meta">Review date: 15 June 2026 · Lenses: beginner + intermediate learner simulation, Swahili linguistics audit, pedagogy/competitor research, code &amp; accessibility audit ·
-  Rationale &amp; sources for every item: <a href="research.html">research.html</a></div>
+  <h1>🇰🇷 Korean track + Multi-language platform — Action Plan</h1>
+  <div class="sub">Turn the Swahili app into a multi-language platform and add a Korean curriculum, starting with a rule-based Hangul (<span class="kr">한글</span>) trainer.</div>
+  <div class="meta">Started: 16 June 2026 · Decisions on record: <b>multi-language in this app</b> (not a fork) · Korean curriculum content <b>LLM-generated with a validation pass</b> ·
+  Completed Swahili review work preserved in <a href="review/completed-swahili-work.md">review/completed-swahili-work.md</a></div>
 </header>
 
 <div class="callout">
-  <b style="color:var(--ink)">Headline.</b> The app's foundation is genuinely strong — FSRS scheduling, scaffolded exercises, a
-  dedicated grammar track, an excellent onboarding flow, and hand-curated vocabulary that is natural and culturally grounded.
-  The build is clean (0 TS errors). But one issue outranks everything: <b style="color:var(--red)">~4,700 machine-generated
-  grammar cards teach incorrect Swahili</b> (verified directly against <code>public/swahili_default.db</code>). That must be
-  fixed before the conjugation/grammar tracks are treated as teaching-ready. Everything else is upside.
+  <b style="color:var(--ink)">Guiding principle.</b> Prove the architecture with a low-risk vertical slice (Stages 1–2) before the big refactor or any generated content.
+  Generate <b>by rule</b> wherever the language is rule-based (Hangul, romanization, conjugation by speech level) — that is exactly what made the Swahili grammar repair reliable.
+  Reserve the LLM for vocab/sentences/cultural notes, and bake a QA pass in from day one.
+  <b>Hard lesson from the Swahili review:</b> LLM curriculum content fails in <i>systematic</i> ways at scale (~4,700 cards were wrong).
 </div>
 
-<div class="legend">
-  <span><span class="tag t-block">Blocker</span></span>
-  <span><span class="tag t-high">High</span></span>
-  <span><span class="tag t-med">Medium</span></span>
-  <span><span class="tag t-low">Low</span></span>
-  <span><b>Effort</b> shown per item in <span style="color:var(--violet)">violet</span></span>
-</div>
-
-<!-- ============================ PHASE 0 ============================ -->
-<h2 class="done">Phase 0 · Content correctness — fix the curriculum (BLOCKER)</h2>
-<p class="phase-desc">All 25,353 cards are generated. The hand-curated vocabulary core is excellent and needs nothing.
-The risk is entirely in template-generated grammar — which means a handful of generator fixes corrects thousands of cards at once.
-Counts below were confirmed by querying the seed DB directly.</p>
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Implemented (15 Jun 2026).</b> Corrections are regenerated from morphological components by
-  <code>scripts/fix-grammar-content.cjs</code> (applied to <code>public/swahili_default.db</code>) and mirrored as a v2
-  migration <code>src/database/grammarFixes.ts</code> so existing users' cloned DBs are repaired on open. Build passes;
-  verified directly against the seed DB and against a live migrated user DB (0 residual non-words).</div>
-
+<!-- STAGE 1 -->
+<h2 class="done">Stage 1 · Multi-language foundation <span class="badge b-now">✓ Done</span></h2>
+<p class="phase-desc">Data + scaffolding only. <b>Zero behaviour change to the Swahili app.</b></p>
 <div class="card done">
-  <div class="row"><span class="id">P0.1</span><span class="tag t-done">✓ Done</span><span class="tag t-block">Blocker</span><span class="tag t-eff">Effort: Low–Med</span></div>
-  <h3>Fix the three negative-tense conjugation rules &amp; regenerate (~3,636 cards)</h3>
-  <p>The negative-tense generator applies the wrong morphology for all 159 verbs:</p>
+  <div class="row"><span class="id">S1</span><span class="tag t-safe">Safe</span><span class="tag t-eff">Effort: Low</span><span class="tag t-done">✓ Done</span></div>
   <ul class="tight">
-    <li>Negative present must change final <code>-a → -i</code>: <code>sisoma</code> → <b>sisomi</b></li>
-    <li>Negative past uses <code>-ku-</code>, not <code>-li-</code>: <code>silisoma</code> → <b>sikusoma</b></li>
-    <li>Negative perfect uses <code>-ja-</code> ("not yet"), not <code>-me-</code>: <code>simesoma</code> → <b>sijasoma</b></li>
-  </ul>
-  <p class="where">Fixed in: <code>scripts/fix-grammar-content.cjs</code> (rewrites <code>public/swahili_default.db</code>) + <code>src/database/grammarFixes.ts</code> (v2 migration for existing users)</p>
-  <p class="why">Confidence: <b>Certain</b>. Was teaching non-existent/incorrect verb forms to every learner who reached negation.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P0.2</span><span class="tag t-done">✓ Done</span><span class="tag t-block">Blocker</span><span class="tag t-eff">Effort: Medium</span></div>
-  <h3>Rewrite the adjective–noun concord generator &amp; regenerate (~1,193 cards)</h3>
-  <p>The adjective generator prepends a literal class letter instead of applying concord, producing non-words:</p>
-  <ul class="tight">
-    <li>N-class nasal assimilation: <code>nbaya</code> → <b>mbaya</b>; <code>nkubwa</code> → <b>kubwa</b> (<code>nbaya</code>/<code>nkubwa</code> are not Swahili words)</li>
-    <li>Animate N-class (people) take M-Wa concord: <code>daktari nzuri</code> → <b>daktari mzuri</b></li>
-    <li>Class-5 zero prefix: <code>gari jizuri</code> → <b>gari zuri</b></li>
-    <li>U-class abstract nouns take m-/n- concord (Likely): <code>upole uzuri</code> → <b>upole mzuri</b></li>
-  </ul>
-  <p class="where">Fixed in: <code>scripts/fix-grammar-content.cjs</code> + <code>src/database/grammarFixes.ts</code> (regenerates concord from noun_class + animacy + number, with overrides for mistagged nouns)</p>
-  <p class="why">Confidence: <b>Certain</b> for N-class / animacy / class-5; <b>Likely</b> for U-class — confirm with native speaker.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P0.3</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Low</span></div>
-  <h3>Fix monosyllabic-verb negatives, subjunctive &amp; object-infix forms</h3>
-  <ul class="tight">
-    <li>Monosyllabic negatives compound the P0.1 bug: <code>hakula</code> → <b>hali</b>, <code>halikula</code> → <b>hakula</b>, <code>hamekula</code> → <b>hajala</b></li>
-    <li>Subjunctive of <i>ja</i>: <code>akuje</code> → <b>aje</b> (ku- drops in subjunctive; reference-confirmed)</li>
-    <li>Object infix + monosyllabic stem: <code>ananikula</code> → <b>ananila</b> (Likely)</li>
-  </ul>
-  <p class="where">Source: same conjugation generator (monosyllabic-stem handling)</p>
-</div>
-
-<div class="card">
-  <div class="row"><span class="id">P0.4</span><span class="tag t-done">Partly done</span><span class="tag t-low">Low</span><span class="tag t-eff">Effort: Low</span></div>
-  <h3>Minor content cleanups</h3>
-  <ul class="tight">
-    <li class="doneline"><code>ndio</code> → standard <b>ndiyo</b> ✓ <span style="color:var(--green)">(done — seed + migration)</span></li>
-    <li>Habitual <code>husoma</code> is invariant — six per-person cards glossed "I/you/he [habitual]" mislead; collapse to one card. <b style="color:var(--amber)">Deferred:</b> structural change to unit composition; needs a curriculum decision (the Swahili form is already correct, so this is pedagogical polish, not a correctness bug).</li>
-    <li>De-duplicate cross-unit repeats. <b style="color:var(--amber)">Deferred:</b> these are the <i>same</i> word intentionally seeded into multiple units (distinct ids), not duplicate rows — blindly deleting would leave units short of cards. Needs a "already seen in unit X" cross-reference instead of a delete.</li>
+    <li><b>Language registry</b> — <code>src/data/languages.ts</code>: id, name, native name, flag, script, grammar-feature flags (<code>hasNounClass</code>, <code>hasConcord</code>, <code>hasHonorifics</code>, <code>hasHangul</code>), and which exercise types apply. Swahili + Korean registered.</li>
+    <li><b>Hangul dataset</b> — <code>src/data/hangul.ts</code>: the full jamo set (14 + 5 consonants, 10 + 11 vowels) with romanization, sound hints, and example syllables. Pure static data.</li>
+    <li><b>Entry point</b> — a discreet Home card → <code>/app/hangul</code> route. No card-DB changes.</li>
   </ul>
 </div>
 
-<div class="card">
-  <div class="row"><span class="id">P0.5</span><span class="tag t-high">High · your turn</span><span class="tag t-eff">Effort: Low (external)</span></div>
-  <h3>Native-speaker spot-check of regenerated content</h3>
-  <p class="why">The regeneration is verified for internal consistency and the egregious non-words are gone, but a native/advanced
-  speaker should still sanity-check a sample of the regenerated negatives and concord forms — especially the U-class adjectives
-  (<code>upole mzuri</code>) and a few rare/reduplicated verbs (<code>sililii</code>) — before this is declared teaching-ready.
-  This is the one Phase 0 item I can't do for you.</p>
-</div>
-
-<!-- ============================ PHASE 1 ============================ -->
-<h2 class="done">Phase 1 · Correctness &amp; data-integrity code bugs</h2>
-<p class="phase-desc">Latent bugs that can silently corrupt user data or behaviour. Cheap, high-value.</p>
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Implemented (15 Jun 2026).</b> All four fixed and verified; build passes. P1.1 verified against the live
-  schema (a star now survives a review write); P1.4 verified live (the GIS popup storm is gone — no console errors after
-  firing the visibility/online sync events that used to trigger it); P1.2 verified over real data (913/914 cards extract
-  correctly, the 1 malformed card is now safely guarded).</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P1.1</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Trivial</span></div>
-  <h3>Fix <code>upsertCardState</code> dropping <code>starred</code> on conflict</h3>
-  <p class="where">Fixed in: src/database/db.ts (<code>upsertCardState</code>, <code>setCardStarred</code>)</p>
-  <p class="why">Resolved via the robust option: <code>starred</code> removed from <code>upsertCardState</code> entirely (review writes can never touch it), and <code>setCardStarred</code> made an upsert so it's the sole owner and works even before a state row exists.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P1.2</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Low</span></div>
-  <h3>Make FillInBlank answer extraction robust</h3>
-  <p class="where">Fixed in: src/components/exercises/FillInBlank.tsx</p>
-  <p class="why">Replaced first-match <code>String.replace</code> subtraction with position-anchored slicing of the example sentence (robust to repeated substrings), plus a guard so an empty/unresolvable answer can never be marked correct.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P1.3</span><span class="tag t-done">✓ Done</span><span class="tag t-med">Medium</span><span class="tag t-eff">Effort: Trivial</span></div>
-  <h3>Replace biased shuffle with Fisher–Yates</h3>
-  <p class="where">Fixed in: src/components/exercises/MultipleChoice.tsx</p>
-  <p class="why">Swapped <code>sort(() =&gt; Math.random()-0.5)</code> for a proper Fisher–Yates shuffle — distractor order is now uniform.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P1.4</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Low</span></div>
-  <h3>Stop the Google OAuth popup loop on load / session end</h3>
-  <p class="where">Fixed in: src/sync/driveSync.ts, src/auth/googleAuth.ts, src/screens/UserPickerScreen.tsx</p>
-  <p class="why">Background syncs (Layout visibility/online, end-of-session upload) now use only an already-valid stored token and never trigger interactive auth; <code>getOrRefreshToken</code> de-dupes concurrent refreshes and backs off 5 min after a failure. Interactive auth happens only on explicit user actions (sign-in, Settings → Sync now).</p>
-</div>
-
-<!-- ============================ PHASE 2 ============================ -->
-<h2 class="done">Phase 2 · Pedagogical upgrades — highest learning ROI</h2>
-<p class="phase-desc">Where the app can pull clearly ahead. Several leverage data the schema <i>already</i> stores
-(<code>example_sentences</code>, <code>noun_class</code>), so they're UI/scheduling work, not data projects.</p>
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Implemented (15 Jun 2026).</b> All six shipped; build passes. Verified live: the concord exercise renders
-  and grades correctly (this caught a real answer-matching bug — it now accepts both <code>mzuri</code> and <code>bwana
-  mzuri</code>), the dev badge shows <code>exercise · level · depth</code>, a depth-3 card now earns a non-MC exercise
-  (clamp loosened), and the noun-class reference chart renders in the Grammar tab. The cloze exercise is verified by build +
-  data coverage (1,861 clozeable cards) + being structurally identical to the proven FillInBlank; it wasn't captured
-  rendering live (forcing scaffold level 2 in the test profile was fiddly), so it's worth a quick manual look in a real session.</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P2.1</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Medium</span></div>
-  <h3>Sentence-level cloze exercise (the marquee feature)</h3>
-  <p class="where">Added: <code>src/components/exercises/SentenceCloze.tsx</code>; wired into <code>LearnScreen.pickExercise</code> (slots in at scaffold level 2, between MC and bare type-answer)</p>
-  <p class="why">Blanks the target word inside the card's example sentence (word-boundary match), shows the English gloss, accepts the typed word. Comprehensible input + retrieval in one exercise. No new data. 1,861 vocabulary cards qualify.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P2.2</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Medium</span></div>
-  <h3>Noun-class concord exercise (teach the system, not the words)</h3>
-  <p class="where">Added: <code>src/components/exercises/ConcordExercise.tsx</code> + <code>src/components/NounClassReference.tsx</code> (chart in the Grammar tab)</p>
-  <p class="why">Built on the now-correct (Phase 0) adjective-agreement cards: shows <code>noun + -stem ("meaning")</code> and the learner produces the agreeing form (e.g. <code>bwana mzuri</code>). 2,826 cards qualify. Accepts the adjective alone or the full phrase. Verified live.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P2.3</span><span class="tag t-done">✓ Done</span><span class="tag t-high">High</span><span class="tag t-eff">Effort: Low</span></div>
-  <h3>Tune FSRS desired retention to ~0.88</h3>
-  <p class="where">src/algorithms/fsrs.ts (<code>DESIRED_RETENTION = 0.88</code> as the default for <code>nextInterval</code>/<code>processReview</code>; the 0.9 stability anchor is left untouched)</p>
-  <p class="why">Lengthens intervals ~1.2× vs 0.9 — fewer daily reviews, lower burnout risk, mastery preserved. (Auto-tune / a user setting was left as the optional follow-up.)</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P2.4</span><span class="tag t-done">✓ Done</span><span class="tag t-med">Medium</span><span class="tag t-eff">Effort: Low–Med</span></div>
-  <h3>Interleave skill categories within a session</h3>
-  <p class="where">src/scheduling/sessionAssembly.ts (anti-clustering in the weighted draw) + sessionStore passes the previous card's type</p>
-  <p class="why">Cards of the same kind as the one just shown get a 0.4× weight penalty, so sessions don't run long streaks of one skill (e.g. conjugation drills).</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P2.5</span><span class="tag t-done">✓ Done</span><span class="tag t-med">Medium</span><span class="tag t-eff">Effort: Low–Med</span></div>
-  <h3>Make wrong-answer feedback elaborative</h3>
-  <p class="where">New <code>src/utils/grammarRule.ts</code>; surfaced on wrong answers in MultipleChoice / TypeAnswer / FillInBlank</p>
-  <p class="why">On a miss, a 💡 rule line explains the <i>why</i> (tense marker / concord prefix) alongside the example sentence — elaboration beats bare right/wrong.</p>
-</div>
-
-<div class="card done">
-  <div class="row"><span class="id">P2.6</span><span class="tag t-done">✓ Done</span><span class="tag t-med">Medium</span><span class="tag t-eff">Effort: Low</span></div>
-  <h3>Loosen the scaffold clamp so exercise variety appears</h3>
-  <p class="where">src/algorithms/afm.ts (clamp changed from <code>depth ≤ 3</code> to <code>depth &lt; 3</code>); dev-only badge in LearnScreen</p>
-  <p class="why">Known cards (depth ≥ 3) can now earn cloze/type-answer instead of being stuck at multiple-choice — the root cause of the old "no variety" report. Verified live (a depth-3 card drew a concord exercise, badge <code>concord · L3 · d3</code>).</p>
-</div>
-
-<!-- ============================ PHASE 3 ============================ -->
-<h2>Phase 3 · Audio</h2>
-<p class="phase-desc">Audio is a clear competitive gap (Memrise's edge). Swahili is phonetically regular and non-tonal, so even synthetic audio is usable. <b style="color:var(--green)">P3.1 (browser TTS) shipped; P3.2 (cloud assets) out of scope.</b></p>
+<!-- STAGE 2 -->
+<h2 class="done">Stage 2 · Hangul trainer <span class="badge b-now">✓ Done</span></h2>
+<p class="phase-desc">Self-contained, rule-based, <b>zero content-quality risk</b>. The vertical slice that ships real value and validates the direction.</p>
 
 <div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ P3.1 complete &amp; verified live.</b> Browser-only TTS, off by default, that self-hides unless a Swahili voice is installed.
-  Verified: toggle defaults off; with <b>no</b> Swahili voice the 🔊 button stays hidden even when enabled (no English-accented fallback); with a Swahili voice present it renders, labelled <code>Hear "habari" pronounced</code>. No console errors, <code>tsc</code> clean.
+  <b style="color:var(--green)">✓ Stages 1–2 complete &amp; verified live.</b> Build clean (126 modules), no console errors, Swahili untouched.
+  Verified end-to-end at <code>/app/hangul</code>: set picker (Consonants/Vowels/All), 40-question quiz, correct answers score &amp; auto-advance (ㅜ→“u” ✓, 1/40→2/40), wrong answers reveal the right sound (✗ It's “m”), sound-hint + example shown on reveal, Home entry card present.
 </div>
 
 <div class="card done">
-  <div class="row"><span class="id">P3.1</span><span class="tag t-med">Medium</span><span class="tag t-eff">Effort: Low</span><span class="tag t-done">✓ Done</span></div>
-  <h3 class="doneline">SpeakButton via browser TTS — <b>with voice-availability detection</b></h3>
-  <p class="why"><code>SpeechSynthesis</code> with a Swahili voice, learner-initiated. Detects via <code>getVoices()</code> + the <code>voiceschanged</code> event and renders nothing when no <code>sw*</code> voice exists — never an English-accented fallback. Gated behind a new <code>enable_audio</code> setting, <b>default off</b>.</p>
-  <p class="where">New <code>src/components/SpeakButton.tsx</code>; shown on reveal in <code>LearnScreen</code> (all exercise types + recall reveal); <code>enable_audio</code> toggle in <code>SettingsScreen</code></p>
+  <div class="row"><span class="id">S2</span><span class="tag t-safe">Safe</span><span class="tag t-eff">Effort: Low–Med</span><span class="tag t-done">✓ Done</span></div>
+  <ul class="tight">
+    <li><b><code>HangulExercise</code></b> — recognise a jamo → its sound/romanization (and the reverse), driven by <code>hangul.ts</code>; reuses the existing exercise UI patterns + a11y conventions.</li>
+    <li><b><code>HangulScreen</code></b> — a self-contained mini-session over the jamo set (random draw, multiple choice, progress), no SRS/card-DB dependency for v1.</li>
+    <li>Verify: build clean + live (renders, grades correctly, no console errors).</li>
+  </ul>
 </div>
-
-<div class="card skip">
-  <div class="row"><span class="id">P3.2</span><span class="tag t-low">Low</span><span class="tag t-eff">Effort: Medium</span><span class="tag t-skip">Out of scope</span></div>
-  <h3>Pre-generate cloud-TTS audio assets for uniform quality</h3>
-  <p class="why"><b style="color:var(--muted)">Deferred.</b> Batch-generate MP3s (Google/Azure Neural TTS, both list Swahili) for each card's word + first example sentence; serve from <code>public/audio/</code>, cache via the service worker, fall back to browser TTS. Fits the static-site/PWA model; no runtime backend — but needs a paid TTS key + repo-size decision, so left for a later cycle.</p>
-</div>
-
-<!-- ============================ PHASE 4 ============================ -->
-<h2 class="done">Phase 4 · Accessibility (WCAG 2.1 AA)</h2>
-<p class="phase-desc">The hard part (color-only feedback, star labels) is already done, and Large-text / High-contrast settings exist. These close the remaining gaps — mostly small, mechanical fixes.</p>
 
 <div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Phase 4 complete.</b> All three tiers shipped &amp; verified live (no console errors, <code>tsc</code> clean).
-  Verified in-browser: 8 toggles expose <code>role="switch"</code>+<code>aria-checked</code>; 27 unit cards are keyboard-reachable
-  <code>role="button"</code>s; gallery search labelled; card-detail modal is a focus-trapped <code>role="dialog"</code> that closes on Escape
-  and restores focus; activity heatmap is a <code>role="img"</code> with a text summary; slider/steppers labelled; nav emoji <code>aria-hidden</code>.
-  Build-verified (structural): <code>motion-reduce</code> spinner, FlashCard/RecallPrompt autofocus, FlashCard/NounClass <code>aria-live</code>.
+  <b style="color:var(--green)">✓ Korean track complete &amp; verified live (Stages 1–6).</b> Build clean (127 modules), no console errors.
+  Verified end-to-end: a <span class="kr">한국어</span> learner can sign in (language toggle 🇹🇿/🇰🇷), gets <code>korean_default.db</code> (7 units, 61 curated cards),
+  learns Korean cards through the existing engine (실례합니다 → "excuse me", recall→reveal→rate→advance), sees a Korean-appropriate grammar tab
+  (particles/speech levels, Standard Seoul Korean 표준어, <i>no</i> noun-class chart), and the Hangul trainer at <code>/app/hangul</code>.
+  <b>Swahili is fully intact</b> (regression verified: noun-class chart, Kiunguja dialect, all exercises).
 </div>
 
+<!-- STAGE 3 -->
+<h2 class="done">Stage 3 · Multi-language DB plumbing <span class="badge b-now">✓ Done</span></h2>
+<p class="phase-desc">The first change that touches shared infrastructure — done after the slice proves out.</p>
 <div class="card done">
-  <div class="row"><span class="tag t-high">High</span><span class="tag t-done">✓ Done</span></div>
+  <div class="row"><span class="id">S3</span><span class="tag t-eff">Effort: Med</span><span class="tag t-done">✓ Done</span></div>
   <ul class="tight">
-    <li><b>Toggle switches</b> need <code>role="switch"</code> + <code>aria-checked</code> + <code>aria-label</code> — 8 controls (<span class="where">SettingsScreen.tsx ToggleRow</span>)</li>
-    <li><b><code>div onClick</code> → <code>button</code></b> for unit cards &amp; gallery items (not keyboard-reachable) (<span class="where">UnitMapScreen.tsx, CardGalleryScreen.tsx</span>)</li>
-    <li><b>Gallery search input</b> has no <code>&lt;label&gt;</code> — placeholder isn't a label (<span class="where">CardGalleryScreen.tsx:439</span>)</li>
-  </ul>
-</div>
-<div class="card done">
-  <div class="row"><span class="tag t-med">Medium</span><span class="tag t-done">✓ Done</span></div>
-  <ul class="tight">
-    <li><code>animate-spin</code> needs <code>motion-reduce:animate-none</code> (WCAG 2.3.3) (<span class="where">LearnScreen.tsx:295</span>)</li>
-    <li>Card-detail modal needs <code>role="dialog"</code>, <code>aria-modal</code> + focus trap (<span class="where">CardGalleryScreen.tsx:177</span>)</li>
-    <li><code>NounClassExercise</code> &amp; <code>FlashCard</code> reveal need the <code>aria-live</code> pattern the other exercises already use</li>
-    <li>Activity heatmap needs <code>role="img"</code> + summary; not color-only (<span class="where">StatsScreen.tsx</span>)</li>
-    <li>+/− steppers and the new-word-rate range slider need <code>aria-label</code>/<code>aria-valuetext</code></li>
-    <li>Autofocus first control on <code>RecallPrompt</code>/<code>FlashCard</code> advance (only TypeAnswer/FillInBlank do today)</li>
-  </ul>
-</div>
-<div class="card done">
-  <div class="row"><span class="tag t-low">Low</span><span class="tag t-done">✓ Done</span></div>
-  <ul class="tight">
-    <li>Contrast: <code>text-slate-600</code> on <code>bg-slate-800</code> ≈ 2.6:1, below AA 4.5:1 — lifted informational labels to <code>slate-400</code> (the level that actually clears 4.5:1; decorative icons/separators/hover controls left as-is)</li>
-    <li><code>aria-hidden="true"</code> on decorative nav emoji &amp; chevrons to stop double-announcement</li>
-    <li>Star button in gallery list should include the word name in its label</li>
+    <li><b>Per-language seed DBs</b> — <code>{lang}_default.db</code>; <code>openDatabase</code> clones the right template; per-user key becomes language-aware (back-compat for existing <code>db_&lt;username&gt;</code> Swahili users).</li>
+    <li><b>Language picker</b> in the user/onboarding flow; profile stores the active language.</li>
+    <li>Keep migrations per-language; the <code>MIGRATIONS</code> array (Stage 6 of the prior plan) already supports this cleanly.</li>
   </ul>
 </div>
 
-<!-- ============================ PHASE 5 ============================ -->
-<h2 class="done">Phase 5 · Motivation &amp; retention (design for SDT, not points)</h2>
-<p class="phase-desc">Durable engagement comes from autonomy, competence, and relatedness — not raw gamification, which can backfire.</p>
-
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Phase 5 done (streaks deliberately excluded).</b> Per product direction, <b>no streaks</b> — streaks punish people for healthy time away from screens, which runs counter to this app's purpose. The other two SDT points shipped &amp; verified live.
-</div>
-
+<!-- STAGE 4 -->
+<h2 class="done">Stage 4 · Language-aware behaviour <span class="badge b-now">✓ Done</span></h2>
+<p class="phase-desc">Make behaviour language-aware — <b>without</b> the risky mass rename.</p>
 <div class="card done">
-  <div class="row"><span class="tag t-med">Medium</span><span class="tag t-eff">Effort: Low–Med</span><span class="tag t-done">✓ Done (minus streaks)</span></div>
+  <div class="row"><span class="id">S4</span><span class="tag t-eff">Effort: Med</span><span class="tag t-done">✓ Done</span></div>
   <ul class="tight">
-    <li class="doneline"><b>Streaks — <span style="color:var(--red)">intentionally skipped.</span></b> Product decision: no streak mechanics. Streaks discourage stepping away from technology and are more anxiety than motivation. The existing Settings "Streaks &amp; XP" toggle is left untouched, NOT wired to Home.</li>
-    <li class="doneline"><b>Honest progress visualisation</b> — the "not yet seen" relabel was already shipped; further emphasised personal mastery by splitting the Stats summary into honest <b>Learning</b> (depth 2–2.5) vs genuinely <b>Known</b> (depth ≥ 3), instead of one ambiguous "Learned" that counted glanced-once cards. <span class="where">StatsScreen.tsx</span></li>
-    <li class="doneline"><b>Standard-dialect labelling</b> — added "You're learning Standard Swahili (Kiunguja / Zanzibar coastal basis)" to the Grammar tab and the final onboarding step. <span class="where">UnitMapScreen.tsx, OnboardingScreen.tsx</span></li>
+    <li class="doneline"><b><code>pickExercise</code> is language-aware</b>: gated concord &amp; noun-class on the language's feature flags. Grammar tab + onboarding dialect note branch by language (Korean: particles/speech levels/Seoul Standard; no noun-class chart). Migrations tagged <code>sw</code>-only so they never run on Korean.</li>
+    <li><b>Deliberately NOT done:</b> the ~324-reference <code>swahili</code>→<code>target</code> column rename. The card column is functionally "the L2 text"; renaming it across 32 files + a SQLite migration on every user DB is high-risk for zero functional gain. Korean text lives in the existing column — fully working, surgical.</li>
   </ul>
 </div>
 
-<!-- ============================ PHASE 6 ============================ -->
-<h2 class="done">Phase 6 · Maintainability (pay down before scaling)</h2>
-
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Phase 6 complete.</b> Build clean (<code>tsc</code>, 122 modules); learn-session flow + gallery verified live, no console errors.
-  <b>Migration refactor verified byte-identical:</b> a fresh DB migrated under the old inline code vs the new array-based code produces an <i>identical</i> end-state — same schema, version, and a full <code>SELECT *</code> hash of <code>cards</code>, <code>units</code>, and <code>card_states</code> (25,520 cards) all match exactly; re-opening an already-migrated (v2) DB is a verified no-op.
-</div>
-
+<!-- STAGE 5 -->
+<h2 class="done">Stage 5 · Korean curriculum <span class="badge b-now">✓ Starter done</span></h2>
+<p class="phase-desc">Quality over volume: a <b>curated, correct</b> starter curriculum + the build script to extend it.</p>
 <div class="card done">
-  <div class="row"><span class="tag t-med">Medium</span><span class="tag t-done">✓ Done</span></div>
+  <div class="row"><span class="id">S5</span><span class="tag t-risk">Content risk</span><span class="tag t-eff">Effort: High</span><span class="tag t-done">✓ Starter done</span></div>
   <ul class="tight">
-    <li class="doneline"><b>Sequential migration array</b> — replaced the inline version gates with an ordered <code>MIGRATIONS</code> array + <code>runMigrations()</code> loop; future schema changes just append an entry. (<span class="where">new src/database/migrations.ts</span>)</li>
-    <li class="doneline"><b>Split <code>db.ts</code></b> — moved the ~560 lines of migration runner + legacy bundle + content-transformation helpers + version infra out to <code>migrations.ts</code>; <code>db.ts</code> now just calls <code>runMigrations(_db)</code>.</li>
-    <li class="doneline">Hoisted the exercise feedback delay into <code>LearnScreen</code> (one cancellable timer; exercises report immediately) — removes the keyboard race &amp; rating-button flash. <b>Verified live:</b> answer→feedback at 150 ms, rating buttons at ~900 ms. (<span class="where">LearnScreen + 6 exercise components</span>)</li>
-    <li class="doneline">Debounced gallery search 250 ms (no more synchronous DB read per keystroke). (<span class="where">CardGalleryScreen.tsx</span>)</li>
-    <li class="doneline">Tidied smells: removed the duplicate <code>!register</code> check; collapsed <code>mode</code>/<code>activeMode</code> duplication. <b>Left as-is:</b> <code>depthWeight</code> branches — they return distinct values per depth and changing the thresholds would shift SRS scheduling, so not worth the behavioral risk for a cosmetic tidy.</li>
+    <li class="doneline"><b>Shipped:</b> <code>scripts/build-korean-db.cjs</code> → <code>public/korean_default.db</code> (144 KB, full app schema, ships at migration v2). 7 units / 61 hand-curated cards: greetings, question words, Sino-Korean numbers, everyday phrases, food, common verbs/adjectives (dictionary + polite -요), and a particle/speech-level grammar unit. Romanization written by rule; rich honorific/speech-level cultural notes throughout (안녕하세요 vs 안녕, 저 vs 나, 존댓말/반말).</li>
+    <li><b>Next (deliberately deferred):</b> scaling the curriculum to hundreds of cards. Per the Swahili lesson, this should be rule-generated where possible (conjugation tables) + LLM vocab/sentences <b>with a QA pass</b>, not mass-generated blindly. The build script + schema make this a content task, not an engineering one.</li>
   </ul>
 </div>
 
-<!-- ============================ TOP 5 ============================ -->
-<h2>Priority action list — do these first</h2>
-<div class="card">
-  <p class="doneline"><span class="num">1.</span> <b>Fix the negative conjugations</b> (P0.1) — ~3,480 cards repaired. <span style="color:var(--green)">✓ Done</span></p>
-  <p class="doneline"><span class="num">2.</span> <b>Fix the adjective concord</b> (P0.2) — ~1,193 cards repaired, all non-words gone. <span style="color:var(--green)">✓ Done</span></p>
-  <p class="doneline"><span class="num">3.</span> <b>Fix the <code>upsertCardState</code> starred data-loss bug</b> (P1.1) and the OAuth popup loop (P1.4). <span style="color:var(--green)">✓ Done</span></p>
-  <p><span class="num">4.</span> <b>Ship sentence-level cloze</b> (P2.1) and <b>tune FSRS retention to ~0.88</b> (P2.3) — biggest learning gains for the effort; data already exists.</p>
-  <p class="doneline"><span class="num">5.</span> <b>Close the high-severity accessibility gaps</b> (Phase 4 High) — switch semantics, keyboard-reachable cards, labelled search. <span style="color:var(--green)">✓ Done</span></p>
+<!-- STAGE 6 -->
+<h2 class="done">Stage 6 · Cultural context (bespoke exercises deferred) <span class="badge b-now">✓ Context done</span></h2>
+<div class="card done">
+  <div class="row"><span class="id">S6</span><span class="tag t-eff">Effort: Med–High</span><span class="tag t-done">✓ Context done</span></div>
+  <ul class="tight">
+    <li class="doneline"><b>Cultural context shipped:</b> formality and speech levels are embedded as grammar throughout the curriculum (honorific cultural notes on greetings/pronouns, the 요 polite-ending grammar card framing 존댓말 vs 반말), plus Standard Seoul Korean labelling in onboarding + the grammar tab.</li>
+    <li><b>Bespoke exercises deferred:</b> particle-choice and honorific-selection drills need a curated sentence dataset to do well — a content task best done deliberately, not half-baked. The user's explicit ask (a Korean alphabet exercise = the Hangul trainer) is fully delivered, and Korean vocab/grammar already works through the existing flashcard/MC/type/cloze engine.</li>
+  </ul>
 </div>
-
-<!-- ============================ DONE ============================ -->
-<h2>Already shipped since the last review (verified in code)</h2>
-<table>
-  <tr><th>Item</th><th>Status</th></tr>
-  <tr><td>Non-colour correct/incorrect feedback badges (A-1)</td><td class="ok">Done</td></tr>
-  <tr><td>Star button accessible names in detail (A-2)</td><td class="ok">Done</td></tr>
-  <tr><td>Layout DB-open retry for deep links (B-1)</td><td class="ok">Done</td></tr>
-  <tr><td>Developer Tools hidden in production (B-2)</td><td class="ok">Done</td></tr>
-  <tr><td>"Not yet seen" stats relabel + sub-note (C-1)</td><td class="ok">Done</td></tr>
-  <tr><td>Daily-reviews progress bar on Home (C-2)</td><td class="ok">Done</td></tr>
-  <tr><td>Heatmap month labels (C-3)</td><td class="ok">Done</td></tr>
-  <tr><td>Prominent "Remember it with:" example on wrong answers (D-2)</td><td class="ok">Done</td></tr>
-  <tr><td>Syllable guide on first-exposure cards (D-3)</td><td class="no">Partial — IPA not handled</td></tr>
-  <tr><td>Exercise-type variety investigation (D-1)</td><td class="no">Open → see P2.6</td></tr>
-  <tr><td>Audio TTS (Stream E)</td><td class="no">Skipped — out of scope this phase</td></tr>
-</table>
 
 <div class="foot">
-  Generated as part of a full app review. Every plan item's rationale, evidence, and source citations are in
-  <a href="research.html">research.html</a>. Raw audit reports: <code>review/lang-accuracy.md</code>,
-  <code>review/research-brief.md</code>, <code>review/code-a11y.md</code>.
+  <b style="color:var(--green)">Status: Korean track complete &amp; verified live</b> — multi-language platform, language picker, Korean curriculum, and Hangul trainer all working; Swahili untouched.
+  Remaining: scale the Korean curriculum (content) and add bespoke particle/honorific exercises. Prior Swahili work shipped on <code>master</code> (<code>f81ba44</code>); see <a href="review/completed-swahili-work.md">completed-swahili-work.md</a>.
 </div>
 </div>
 </body>

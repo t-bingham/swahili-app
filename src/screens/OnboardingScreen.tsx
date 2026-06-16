@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProfile, getCurrentUser } from '../database/db';
+import { createProfile, getCurrentUser, getCurrentLanguage } from '../database/db';
 import type { LearningGoal, GrammarDepth, ProfileSettings } from '../types';
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -256,7 +256,9 @@ export default function OnboardingScreen() {
         </div>
 
         <p className="text-slate-400 text-xs text-center">
-          You'll be learning Standard Swahili (Kiunguja / Zanzibar coastal basis) — the variety used in education and media across East Africa.
+          {getCurrentLanguage() === 'ko'
+            ? "You'll be learning Standard (Seoul) Korean — 표준어, the variety used in education, news, and media across South Korea."
+            : "You'll be learning Standard Swahili (Kiunguja / Zanzibar coastal basis) — the variety used in education and media across East Africa."}
         </p>
       </div>
       <button
