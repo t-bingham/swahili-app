@@ -258,6 +258,8 @@ export default function OnboardingScreen() {
         <p className="text-slate-400 text-xs text-center">
           {getCurrentLanguage() === 'ko'
             ? "You'll be learning Standard (Seoul) Korean — 표준어, the variety used in education, news, and media across South Korea."
+            : getCurrentLanguage() === 'mi'
+            ? "You'll be learning te reo Māori — the indigenous language of Aotearoa New Zealand, recognised as an official language and a taonga of te ao Māori."
             : "You'll be learning Standard Swahili (Kiunguja / Zanzibar coastal basis) — the variety used in education and media across East Africa."}
         </p>
       </div>

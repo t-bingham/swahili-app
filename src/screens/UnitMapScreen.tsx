@@ -226,6 +226,12 @@ export default function UnitMapScreen({ track }: { track: UnitTrack }) {
                 <br />
                 <span className="text-slate-400">You're learning Standard (Seoul) Korean — 표준어.</span>
               </>
+            ) : getLanguage(getCurrentLanguage()).id === 'mi' ? (
+              <>
+                How te reo Māori works: tense particles, possessives, and sentence structure.
+                <br />
+                <span className="text-slate-400">Tense is marked by particles before the verb (kei te, kua, ka, i).</span>
+              </>
             ) : (
               <>
                 How Swahili works: noun classes, verb tenses, agreement, and sentence structure.

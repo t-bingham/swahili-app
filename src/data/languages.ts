@@ -10,6 +10,8 @@ export interface LanguageFeatures {
   concord?: boolean;
   honorifics?: boolean;
   hangul?: boolean;
+  tenseParticles?: boolean;   // Te reo: tense is marked by pre-verb particles
+  macrons?: boolean;          // Te reo: long vowels written with macrons (ā ē ī ō ū)
 }
 
 export interface LanguageConfig {
@@ -40,9 +42,19 @@ export const LANGUAGES: Record<string, LanguageConfig> = {
     nativeName: '한국어',
     flag: '🇰🇷',
     script: 'hangul',
-    templateDb: '/korean_default.db', // built in Stage 5
-    available: false,                  // curriculum not ready; the Hangul trainer ships first
+    templateDb: '/korean_default.db',
+    available: true,
     features: { honorifics: true, hangul: true },
+  },
+  mi: {
+    id: 'mi',
+    name: 'Te Reo Māori',
+    nativeName: 'Te Reo Māori',
+    flag: '🇳🇿',
+    script: 'latin',
+    templateDb: '/maori_default.db',
+    available: true,
+    features: { tenseParticles: true, macrons: true },
   },
 };
 
