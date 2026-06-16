@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProfile, getSkillMastery, getDailyStats, getStarredCards, getCurrentLanguage } from '../database/db';
-import { getLanguage, type LanguageFeatures } from '../data/languages';
-import { scaffoldLevel, scaffoldHint } from '../algorithms/afm';
+import { getLanguageAdapter, type LanguageAdapter, type StudyDirection } from '../languages';
+import { scaffoldLevel } from '../algorithms/afm';
 import { buildPracticePool, loadSessionModifiers } from '../scheduling/sessionAssembly';
 import { syncWithDrive } from '../sync/driveSync';
 import { useSessionStore } from '../store/sessionStore';
@@ -13,8 +13,9 @@ import FillInBlank from '../components/exercises/FillInBlank';
 import RecallPrompt from '../components/exercises/RecallPrompt';
 import NounClassExercise from '../components/exercises/NounClassExercise';
 import SentenceCloze, { canCloze } from '../components/exercises/SentenceCloze';
-import ConcordExercise, { canConcord } from '../components/exercises/ConcordExercise';
-import { ALL_NOUN_CLASSES } from '../data/nounClasses';
+import ConcordExercise from '../components/exercises/ConcordExercise';
+import KoreanParticleExercise from '../components/exercises/KoreanParticleExercise';
+import MaoriTenseExercise from '../components/exercises/MaoriTenseExercise';
 import RatingButtons from '../components/RatingButtons';
 import SessionInsights from '../components/SessionInsights';
 import SpeakButton from '../components/SpeakButton';
@@ -28,7 +29,7 @@ function pickExercise(
   card: CardWithState,
   mastery: Map<string, number>,
   settings: ProfileSettings,
-  features: LanguageFeatures,
+  language: LanguageAdapter,
 ): { exercise: UiPhaseExercise; level: 1 | 2 | 3 | 4 | 5 } {
   if (card.type === 'grammar' && card.swahili.includes('___')) {
     return { exercise: 'fill_blank', level: 3 };
@@ -38,9 +39,6 @@ function pickExercise(
   }
   // Adjective-agreement grammar cards → generative concord practice (produce the
   // agreeing form) rather than a generic multiple-choice. (P2.2) — Swahili-only.
-  if (features.concord && canConcord(card)) {
-    return { exercise: 'concord', level: 3 };
-  }
   const level = scaffoldLevel(card, mastery);
   let exercise: UiPhaseExercise =
     level >= 5 ? 'flashcard' :
@@ -74,26 +72,20 @@ function pickExercise(
   // For vocabulary nouns with a known class, occasionally swap in a noun class quiz.
   // Only at scaffold level ≥ 3 (card is reasonably established) and 40% of the time
   // so vocabulary meaning practice still dominates.
-  if (
-    features.nounClass &&
-    exercise === 'multiple_choice' &&
-    card.type === 'vocabulary' &&
-    card.noun_class &&
-    (ALL_NOUN_CLASSES as readonly string[]).includes(card.noun_class) &&
-    level >= 3 &&
-    Math.random() < 0.4
-  ) {
-    exercise = 'noun_class';
+  for (const candidate of language.specialExercises(card, exercise as ExerciseType, level)) {
+    if (candidate.probability === undefined || Math.random() < candidate.probability) {
+      return { exercise: candidate.exercise, level: candidate.level };
+    }
   }
   return { exercise, level };
 }
 
 // Resolve a single exercise direction from the user's preference setting.
-function resolveDirection(setting?: ProfileSettings['exercise_direction']): 'sw_to_en' | 'en_to_sw' {
-  if (setting === 'recognition') return 'sw_to_en';
-  if (setting === 'production')  return 'en_to_sw';
+function resolveDirection(setting?: ProfileSettings['exercise_direction']): StudyDirection {
+  if (setting === 'recognition') return 'target_to_en';
+  if (setting === 'production')  return 'en_to_target';
   // balanced: 50/50
-  return Math.random() < 0.5 ? 'sw_to_en' : 'en_to_sw';
+  return Math.random() < 0.5 ? 'target_to_en' : 'en_to_target';
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -117,7 +109,7 @@ export default function LearnScreen() {
   const [assembling, setAssembling] = useState(false);
   const [exercise, setExercise] = useState<UiPhaseExercise>('flashcard');
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
-  const [direction, setDirection] = useState<'sw_to_en' | 'en_to_sw'>('sw_to_en');
+  const [direction, setDirection] = useState<StudyDirection>('target_to_en');
   const [skillMastery, setSkillMastery] = useState<Map<string, number>>(new Map());
   const [revealed, setRevealed] = useState(false);
   const [autoCorrect, setAutoCorrect] = useState<boolean | null>(null);
@@ -134,20 +126,20 @@ export default function LearnScreen() {
   const answerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const card = store.current;
+  const language = getLanguageAdapter(getCurrentLanguage());
 
   // When the current card changes, set up the exercise
   useEffect(() => {
     if (!store.isActive || !card) return;
     // Cancel any pending feedback→rating transition from the previous card.
     if (answerTimer.current) { clearTimeout(answerTimer.current); answerTimer.current = null; }
-    const features = getLanguage(getCurrentLanguage()).features;
-    const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current, features);
+    const { exercise: ex, level: lv } = pickExercise(card, skillMastery, settingsRef.current, language);
     setExercise(ex);
     setLevel(lv);
     // Grammar cards always show Swahili → English: "What does -na- mean?"
     // Asking "How do you say [complex English description] in Swahili?" makes no sense.
     const dir = card.type === 'grammar'
-      ? 'sw_to_en'
+      ? 'target_to_en'
       : resolveDirection(settingsRef.current.exercise_direction);
     setDirection(dir);
     setRevealed(false);
@@ -461,26 +453,36 @@ export default function LearnScreen() {
 
         {/* ── Recall prompt (first exposure) ── */}
         {phase === 'recall_prompt' && (
-          <RecallPrompt card={card} onKnew={onRecallKnew} onDidntKnow={onRecallDidntKnow} onAlreadyKnow={onRecallAlreadyKnow} />
+          <RecallPrompt
+            card={card}
+            language={language}
+            onKnew={onRecallKnew}
+            onDidntKnow={onRecallDidntKnow}
+            onAlreadyKnow={onRecallAlreadyKnow}
+          />
         )}
 
         {/* ── Recall reveal ── */}
         {phase === 'recall_reveal' && (
           <>
             <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-3">
-              <div className="text-4xl font-bold text-slate-100">{card.swahili}</div>
+              <div className="text-4xl font-bold text-slate-100">{language.getTargetText(card)}</div>
               {card.pronunciation && (
                 <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
               )}
-              <SpeakButton text={card.swahili} enabled={!!settingsRef.current.enable_audio} />
+              <SpeakButton
+                text={language.getTargetText(card)}
+                enabled={!!settingsRef.current.enable_audio}
+                langPrefixes={language.ttsLangPrefixes}
+              />
             </div>
             <div className="bg-slate-800/50 rounded-2xl p-6 text-center space-y-2">
-              <div className="text-2xl text-cyan-400 font-semibold">{card.english}</div>
+              <div className="text-2xl text-cyan-400 font-semibold">{language.getEnglishText(card)}</div>
             </div>
             {settingsRef.current.show_example_sentences !== false && card.example_sentences[0] && (
               <div className="bg-slate-800/40 rounded-xl px-4 py-3 space-y-1">
-                <p className="text-slate-300 text-sm">{card.example_sentences[0].swahili}</p>
-                <p className="text-slate-500 text-sm italic">"{card.example_sentences[0].english}"</p>
+                <p className="text-slate-300 text-sm">{language.getTargetExample(card)}</p>
+                <p className="text-slate-500 text-sm italic">"{language.getEnglishExample(card)}"</p>
               </div>
             )}
           </>
@@ -494,7 +496,8 @@ export default function LearnScreen() {
                 card={card}
                 onReveal={() => setRevealed(true)}
                 revealed={revealed}
-                hint={level >= 5 ? scaffoldHint(card) : undefined}
+                language={language}
+                hint={level >= 5 ? language.scaffoldHint(card) : undefined}
                 direction={direction}
                 showPronunciation={settingsRef.current.pronunciation_style !== 'none'}
                 showExamples={settingsRef.current.show_example_sentences !== false}
@@ -506,6 +509,7 @@ export default function LearnScreen() {
                 card={card}
                 allCards={store.pool}
                 onAnswer={onExerciseAnswer}
+                language={language}
                 easy={level >= 4}
                 direction={direction}
                 showMorphemeHints={showMorphemeHints}
@@ -515,13 +519,14 @@ export default function LearnScreen() {
               <TypeAnswer
                 card={card}
                 onAnswer={onExerciseAnswer}
+                language={language}
                 direction={direction}
                 showPronunciation={settingsRef.current.pronunciation_style !== 'none'}
                 showMorphemeHints={showMorphemeHints}
               />
             )}
             {exercise === 'fill_blank' && (
-              <FillInBlank card={card} onAnswer={onExerciseAnswer} />
+              <FillInBlank card={card} language={language} onAnswer={onExerciseAnswer} />
             )}
             {exercise === 'noun_class' && (
               <NounClassExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
@@ -532,12 +537,22 @@ export default function LearnScreen() {
             {exercise === 'concord' && (
               <ConcordExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
             )}
+            {exercise === 'particle_choice' && (
+              <KoreanParticleExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
+            )}
+            {exercise === 'maori_tense' && (
+              <MaoriTenseExercise key={card.id} card={card} onAnswer={onExerciseAnswer} />
+            )}
 
             {/* 🔊 Hear it — shown once the answer is revealed, for every exercise type.
                 Self-hides unless audio is enabled and a Swahili voice exists. */}
             {(phase === 'rating' || (exercise === 'flashcard' && revealed)) && (
               <div className="flex justify-center">
-                <SpeakButton text={card.swahili} enabled={!!settingsRef.current.enable_audio} />
+                <SpeakButton
+                  text={language.getTargetText(card)}
+                  enabled={!!settingsRef.current.enable_audio}
+                  langPrefixes={language.ttsLangPrefixes}
+                />
               </div>
             )}
 
@@ -558,8 +573,8 @@ export default function LearnScreen() {
                   )}
                   {showEx && (
                     <>
-                      <p className="text-slate-300 text-sm">{card.example_sentences[0].swahili}</p>
-                      <p className="text-slate-500 text-sm italic">"{card.example_sentences[0].english}"</p>
+                      <p className="text-slate-300 text-sm">{language.getTargetExample(card)}</p>
+                      <p className="text-slate-500 text-sm italic">"{language.getEnglishExample(card)}"</p>
                     </>
                   )}
                 </div>

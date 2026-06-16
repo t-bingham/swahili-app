@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import type { LanguageAdapter, StudyDirection } from '../../languages';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
 import { normalize } from '../../utils/normalize';
-import { grammarRule } from '../../utils/grammarRule';
 
 interface Props {
   card: CardWithState;
   onAnswer: (correct: boolean, typed: string, keystrokeCount: number) => void;
-  direction?: 'sw_to_en' | 'en_to_sw';
+  language: LanguageAdapter;
+  direction?: StudyDirection;
   showPronunciation?: boolean;
   showMorphemeHints?: boolean;
 }
@@ -17,21 +18,21 @@ function stripParens(s: string) {
   return s.replace(/\s*\([^)]*\)/g, '').trim();
 }
 
-function isAnswerCorrect(typed: string, card: CardWithState, direction: 'sw_to_en' | 'en_to_sw'): boolean {
+function isAnswerCorrect(typed: string, card: CardWithState, language: LanguageAdapter, direction: StudyDirection): boolean {
   const input = normalize(typed);
-  if (direction === 'en_to_sw') {
-    return normalize(card.swahili) === input;
+  if (direction === 'en_to_target') {
+    return normalize(language.getTargetText(card)) === input;
   }
-  // sw_to_en: accept any slash/comma-separated alternative, senses, or parenthetical strips
+  // Target-to-English: accept any slash/comma-separated alternative, senses, or parenthetical strips.
   const targets = card.senses?.map(s => s.english) ?? [];
-  targets.push(card.english);
+  targets.push(language.getEnglishText(card));
   return targets.some(t => {
     const alternatives = t.split(/\s*\/\s*|\s*,\s*/);
     return alternatives.some(alt => normalize(alt) === input || normalize(stripParens(alt)) === input);
   });
 }
 
-export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', showPronunciation = true, showMorphemeHints = false }: Props) {
+export default function TypeAnswer({ card, onAnswer, language, direction = 'target_to_en', showPronunciation = true, showMorphemeHints = false }: Props) {
   const [value, setValue] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [correct, setCorrect] = useState(false);
@@ -47,24 +48,25 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
 
   function submit() {
     if (!value.trim() || submitted) return;
-    const isCorrect = isAnswerCorrect(value, card, direction);
+    const isCorrect = isAnswerCorrect(value, card, language, direction);
     setCorrect(isCorrect);
     setSubmitted(true);
     // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
     onAnswer(isCorrect, value, keystrokeCount.current);
   }
 
-  const prompt    = direction === 'sw_to_en' ? card.swahili : card.english;
-  const answer    = direction === 'sw_to_en' ? card.english : card.swahili;
-  const promptLabel = direction === 'sw_to_en' ? 'Type the English translation' : 'Type the Swahili translation';
-  const hasAlts   = direction === 'sw_to_en' && (card.english.includes('/') || (card.senses?.length ?? 0) > 1);
+  const prompt    = direction === 'target_to_en' ? language.getTargetText(card) : language.getEnglishText(card);
+  const answer    = direction === 'target_to_en' ? language.getEnglishText(card) : language.getTargetText(card);
+  const promptLabel = language.promptLabel(direction, 'type_answer');
+  const hasAlts   = direction === 'target_to_en' && (card.english.includes('/') || (card.senses?.length ?? 0) > 1);
+  const grammarHint = language.grammarHint(card);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-800 rounded-2xl p-8 text-center">
         <div className="text-slate-400 text-sm mb-2">{promptLabel}</div>
         <div className="text-4xl font-bold text-slate-100">{prompt}</div>
-        {direction === 'sw_to_en' && card.pronunciation && showPronunciation && (
+        {direction === 'target_to_en' && card.pronunciation && showPronunciation && (
           <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
         )}
       </div>
@@ -109,11 +111,11 @@ export default function TypeAnswer({ card, onAnswer, direction = 'sw_to_en', sho
               <span className="text-slate-400 text-sm">Correct answer: </span>
               <span className="text-green-400 font-semibold">{answer}</span>
             </div>
-            {direction === 'en_to_sw' && card.pronunciation && (
+            {direction === 'en_to_target' && card.pronunciation && (
               <div className="text-slate-500 text-sm italic text-center">[{card.pronunciation}]</div>
             )}
-            {grammarRule(card) && (
-              <p className="text-cyan-300/80 text-xs text-center">💡 {grammarRule(card)}</p>
+            {grammarHint && (
+              <p className="text-cyan-300/80 text-xs text-center">💡 {grammarHint}</p>
             )}
             {card.example_sentences[0] && (
               <div className="border-t border-slate-700 pt-2">

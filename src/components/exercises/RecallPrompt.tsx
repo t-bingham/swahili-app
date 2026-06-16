@@ -1,20 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import type { LanguageAdapter } from '../../languages';
 
 interface Props {
   card: CardWithState;
-  onKnew: () => void;         // user claimed they knew it — reveal then full rating
-  onDidntKnow: () => void;    // user didn't know — reveal then simplified rating
-  onAlreadyKnow?: () => void; // skip entirely — sets depth=3 and advances
+  language: LanguageAdapter;
+  onKnew: () => void;
+  onDidntKnow: () => void;
+  onAlreadyKnow?: () => void;
 }
 
-export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow }: Props) {
+export default function RecallPrompt({ card, language, onKnew, onDidntKnow, onAlreadyKnow }: Props) {
   const [attempted, setAttempted] = useState(false);
   const firstBtnRef = useRef<HTMLButtonElement>(null);
-  // Focus the first choice when a new card appears, for keyboard users.
+
   useEffect(() => { if (!attempted) firstBtnRef.current?.focus(); }, [card.id, attempted]);
 
-  // Show a hint for conjugation cards to reduce frustration
   const hint = card.type === 'conjugation' && card.conjugation_key
     ? `(conjugation of ${card.verb_root ?? ''})`
     : card.type === 'grammar' && card.noun_class
@@ -27,7 +28,7 @@ export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow 
         <span className="text-xs font-semibold uppercase tracking-widest text-cyan-400/60 mb-1">
           New word
         </span>
-        <div className="text-4xl font-bold text-slate-100">{card.swahili}</div>
+        <div className="text-4xl font-bold text-slate-100">{language.getTargetText(card)}</div>
         {card.pronunciation && (
           <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
         )}
@@ -57,12 +58,12 @@ export default function RecallPrompt({ card, onKnew, onDidntKnow, onAlreadyKnow 
               onClick={() => { setAttempted(true); onAlreadyKnow(); }}
               className="w-full py-2.5 text-slate-600 hover:text-slate-400 text-xs transition-colors"
             >
-              I already know this — skip it
+              I already know this - skip it
             </button>
           )}
         </div>
       ) : (
-        <div className="py-3 text-center text-slate-500 text-sm">Revealing…</div>
+        <div className="py-3 text-center text-slate-500 text-sm">Revealing...</div>
       )}
     </div>
   );

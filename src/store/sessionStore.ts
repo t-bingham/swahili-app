@@ -4,7 +4,7 @@ import { processReview, learningIntervalMinutes } from '../algorithms/fsrs';
 import {
   upsertCardState, insertReviewLog, insertSession,
   recordActivity, updateSkillMastery, updateErrorPattern,
-  setCardStarred, flushDatabase,
+  setCardStarred, flushDatabase, getCurrentLanguage,
 } from '../database/db';
 import { drawWeightedCard, type SessionModifiers } from '../scheduling/sessionAssembly';
 import { classifyError } from '../algorithms/errorClassifier';
@@ -254,7 +254,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     };
 
     const errorType = (rating <= 2 && wrongAnswer)
-      ? classifyError(card.english, wrongAnswer, card.type, card.swahili)
+      ? classifyError(card, wrongAnswer, getCurrentLanguage())
       : null;
 
     await upsertCardState(updatedState);

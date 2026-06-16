@@ -1,8 +1,3 @@
-// Multi-language registry. Pure data + feature flags — no behaviour change to the
-// existing Swahili flows until later stages wire language selection into the DB layer.
-// Each language declares the grammar features it has so exercise selection can be made
-// language-aware (Stage 4): Swahili uses noun-class/concord; Korean uses honorifics/Hangul.
-
 export type Script = 'latin' | 'hangul';
 
 export interface LanguageFeatures {
@@ -10,18 +5,22 @@ export interface LanguageFeatures {
   concord?: boolean;
   honorifics?: boolean;
   hangul?: boolean;
-  tenseParticles?: boolean;   // Te reo: tense is marked by pre-verb particles
-  macrons?: boolean;          // Te reo: long vowels written with macrons (ā ē ī ō ū)
+  tenseParticles?: boolean;
+  macrons?: boolean;
 }
 
 export interface LanguageConfig {
-  id: string;          // BCP-47-ish short id: 'sw', 'ko'
-  name: string;        // English display name
-  nativeName: string;  // endonym
+  id: string;
+  name: string;
+  nativeName: string;
   flag: string;
   script: Script;
-  templateDb: string;  // public path to the seed DB (Korean's not built yet)
-  available: boolean;  // is a learnable curriculum ready?
+  templateDb: string;
+  available: boolean;
+  targetLanguageName: string;
+  targetLanguageShortName: string;
+  locale: string;
+  ttsLangPrefixes: string[];
   features: LanguageFeatures;
 }
 
@@ -30,30 +29,42 @@ export const LANGUAGES: Record<string, LanguageConfig> = {
     id: 'sw',
     name: 'Swahili',
     nativeName: 'Kiswahili',
-    flag: '🇹🇿',
+    flag: '\uD83C\uDDF9\uD83C\uDDFF',
     script: 'latin',
     templateDb: '/swahili_default.db',
     available: true,
+    targetLanguageName: 'Swahili',
+    targetLanguageShortName: 'Swahili',
+    locale: 'sw',
+    ttsLangPrefixes: ['sw'],
     features: { nounClass: true, concord: true },
   },
   ko: {
     id: 'ko',
     name: 'Korean',
-    nativeName: '한국어',
-    flag: '🇰🇷',
+    nativeName: '\uD55C\uAD6D\uC5B4',
+    flag: '\uD83C\uDDF0\uD83C\uDDF7',
     script: 'hangul',
     templateDb: '/korean_default.db',
     available: true,
+    targetLanguageName: 'Korean',
+    targetLanguageShortName: 'Korean',
+    locale: 'ko-KR',
+    ttsLangPrefixes: ['ko'],
     features: { honorifics: true, hangul: true },
   },
   mi: {
     id: 'mi',
-    name: 'Te Reo Māori',
-    nativeName: 'Te Reo Māori',
-    flag: '🇳🇿',
+    name: 'Te Reo Maori',
+    nativeName: 'Te Reo Maori',
+    flag: '\uD83C\uDDF3\uD83C\uDDFF',
     script: 'latin',
     templateDb: '/maori_default.db',
     available: true,
+    targetLanguageName: 'te reo Maori',
+    targetLanguageShortName: 'Maori',
+    locale: 'mi-NZ',
+    ttsLangPrefixes: ['mi'],
     features: { tenseParticles: true, macrons: true },
   },
 };

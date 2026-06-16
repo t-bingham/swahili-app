@@ -774,16 +774,16 @@ export async function getMorphemeMastery(): Promise<Map<string, Map<string, numb
 
 // ─── Human review pipeline (B-06) ────────────────────────────────────────────
 
-export type ReviewFilter = 'quick_learn' | 'unit-01' | 'unit-05' | 'all';
+export type ReviewFilter = 'generated' | 'all' | 'vocabulary' | 'phrase' | 'grammar' | 'conjugation';
 
 export async function getReviewQueue(filter: ReviewFilter): Promise<Card[]> {
   let where: string;
-  if (filter === 'quick_learn') {
-    where = `c.quick_learn = 1 AND c.source IN ('generated','reviewed') AND c.type = 'vocabulary'`;
+  if (filter === 'generated') {
+    where = `c.source = 'generated'`;
   } else if (filter === 'all') {
-    where = `c.source IN ('generated','reviewed') AND c.type IN ('vocabulary','phrase')`;
+    where = `c.source IN ('generated','reviewed')`;
   } else {
-    where = `c.unit_id = '${filter}' AND c.source IN ('generated','reviewed')`;
+    where = `c.source IN ('generated','reviewed') AND c.type = '${filter}'`;
   }
   return query<Record<string, unknown>>(
     `SELECT * FROM cards c
@@ -811,7 +811,7 @@ export async function saveReviewedCard(id: string, updates: ReviewUpdate): Promi
 export async function getReviewStats(): Promise<{ reviewed: number; generated: number }> {
   const rows = query<{ source: string; cnt: number }>(
     `SELECT source, COUNT(*) as cnt FROM cards
-     WHERE source IN ('generated','reviewed') AND type IN ('vocabulary','phrase')
+     WHERE source IN ('generated','reviewed')
      GROUP BY source`,
   );
   const map: Record<string, number> = {};

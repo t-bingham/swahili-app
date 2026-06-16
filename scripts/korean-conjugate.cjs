@@ -246,6 +246,29 @@ function honorificPolitePresent(verb) {
   return d.final === 0 ? stem + '세요' : stem + '으세요';
 }
 
+function honorificSiStem(verb) {
+  if (verb.honorificOverride && verb.honorificOverride.endsWith('세요')) {
+    return verb.honorificOverride.slice(0, -2); // 드세요 → 드시, 계세요 → 계시
+  }
+  if (verb.irreg === 'l') return getStem(verb.dict) + '시';
+  const stem = getStem(verb.dict);
+  const d = getDecomposed(stem);
+  if (!d) return stem + '으시';
+  return d.final === 0 ? stem + '시' : stem + '으시';
+}
+
+function honorificFormalPresent(verb) {
+  return formalPolitePresent({ ...verb, dict: honorificSiStem(verb) + '다', irreg: 'regular' });
+}
+
+function honorificPolitePast(verb) {
+  return politePast({ ...verb, dict: honorificSiStem(verb) + '다', irreg: 'regular' });
+}
+
+function honorificPoliteFuture(verb) {
+  return politeFuture({ ...verb, dict: honorificSiStem(verb) + '다', irreg: 'regular' });
+}
+
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 /**
@@ -272,6 +295,10 @@ function conjugateAll(verb) {
     negFormalPresent:    negative(formalPolitePresent(verb)),
     negFormalPast:       negative(formalPolitePast(verb)),
     honorificPolite:     honorificPolitePresent(verb),
+    honorificFormal:     honorificFormalPresent(verb),
+    honorificPast:       honorificPolitePast(verb),
+    honorificFuture:     honorificPoliteFuture(verb),
+    negHonorificPolite:  negative(honorificPolitePresent(verb)),
   };
 }
 

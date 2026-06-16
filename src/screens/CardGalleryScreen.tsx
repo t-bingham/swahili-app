@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getUnits, searchGalleryCards, getVerbConjugations, setCardStarred } from '../database/db';
+import { getUnits, searchGalleryCards, getVerbConjugations, setCardStarred, getCurrentLanguage } from '../database/db';
 import { printFlashcards } from '../utils/printFlashcards';
+import { getLanguageAdapter, type LanguageAdapter } from '../languages';
 import type { CardWithState, Unit } from '../types';
 
 // ─── Type filter tabs ─────────────────────────────────────────────────────────
@@ -392,13 +393,13 @@ function depthLabel(d: number): string {
   return 'Mastered';
 }
 
-function downloadCSV(cards: CardWithState[]) {
+function downloadCSV(cards: CardWithState[], language: LanguageAdapter) {
   const esc = (s: string) => `"${String(s ?? '').replace(/"/g, '""')}"`;
-  const header = ['Swahili', 'Pronunciation', 'English', 'Senses', 'Type', 'Register', 'Tags', 'Status', 'Reviews', 'Next Review'];
+  const header = [language.targetShortName, 'Pronunciation', 'English', 'Senses', 'Type', 'Register', 'Tags', 'Status', 'Reviews', 'Next Review'];
   const rows = cards.map(c => [
-    esc(c.swahili),
+    esc(language.getTargetText(c)),
     esc(c.pronunciation ?? ''),
-    esc(c.english),
+    esc(language.getEnglishText(c)),
     esc(c.senses ? c.senses.map(s => s.english).join(' / ') : ''),
     esc(c.type),
     esc(c.register ?? 'neutral'),
@@ -412,7 +413,7 @@ function downloadCSV(cards: CardWithState[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `swahili_words_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `${language.csvFilenamePrefix()}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -428,6 +429,7 @@ export default function CardGalleryScreen() {
   const [cards,        setCards]        = useState<CardWithState[]>([]);
   const [loading,      setLoading]      = useState(false);
   const [selectedCard, setSelectedCard] = useState<CardWithState | null>(null);
+  const language = getLanguageAdapter(getCurrentLanguage());
 
   useEffect(() => {
     getUnits().then(us => setUnits(us.filter(u => u.id !== 'unit-00-placement')));
@@ -477,8 +479,8 @@ export default function CardGalleryScreen() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search Swahili or English…"
-              aria-label="Search words by Swahili or English"
+              placeholder={language.searchPlaceholder()}
+              aria-label={language.searchAriaLabel()}
               className="w-full pl-9 pr-4 py-2.5 bg-slate-800 rounded-xl text-slate-200 text-sm placeholder-slate-500 border border-slate-700 focus:outline-none focus:border-cyan-500"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" aria-hidden="true">🔍</span>
@@ -524,14 +526,14 @@ export default function CardGalleryScreen() {
             {!loading && cards.length > 0 && (
               <div className="flex gap-2">
                 <button
-                  onClick={() => downloadCSV(cards)}
+                  onClick={() => downloadCSV(cards, language)}
                   title="Download CSV"
                   className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors"
                 >
                   ↓ CSV
                 </button>
                 <button
-                  onClick={() => printFlashcards(cards)}
+                  onClick={() => printFlashcards(cards, language)}
                   title="Print flashcards"
                   className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors"
                 >

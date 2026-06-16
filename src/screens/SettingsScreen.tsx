@@ -5,6 +5,7 @@ import { applyDisplaySettings } from '../utils/display';
 import { getGoogleProfile, clearGoogleSession } from '../auth/googleAuth';
 import { uploadToDrive, getLastSyncTime, clearSyncState } from '../sync/driveSync';
 import { LANGUAGES } from '../data/languages';
+import { getLanguageAdapter } from '../languages';
 import type { ProfileSettings, LearningGoal, GrammarDepth } from '../types';
 
 function formatRelative(date: Date): string {
@@ -180,6 +181,7 @@ export default function SettingsScreen() {
   const [syncMsg, setSyncMsg] = useState('');
   const googleProfile = getGoogleProfile();
   const lastSync = getLastSyncTime();
+  const language = getLanguageAdapter(getCurrentLanguage());
 
   useEffect(() => {
     getProfile().then(p => {
@@ -311,7 +313,7 @@ export default function SettingsScreen() {
       <SettingsCard>
         <SegmentedRow
           label="Exercise direction"
-          hint="Recognition = Swahili → English. Production = English → Swahili."
+          hint={`Recognition = ${language.directionLabel('target_to_en')}. Production = ${language.directionLabel('en_to_target')}.`}
           value={settings.exercise_direction ?? 'balanced'}
           options={[
             { value: 'recognition', label: 'Recognition' },
@@ -369,7 +371,7 @@ export default function SettingsScreen() {
         />
         <ToggleRow
           label="Pronunciation audio"
-          hint="Adds a 🔊 button on reveal to hear the word aloud. Only works if your device has a Swahili voice installed — otherwise the button stays hidden."
+          hint={`Adds a Hear it button on reveal to hear the word aloud. ${language.audioUnavailableHint()}`}
           value={settings.enable_audio ?? false}
           onChange={v => update('enable_audio', v)}
         />

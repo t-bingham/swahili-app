@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import type { LanguageAdapter, StudyDirection } from '../../languages';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
-import { grammarRule } from '../../utils/grammarRule';
 
 interface Props {
   card: CardWithState;
   allCards: CardWithState[];
   onAnswer: (correct: boolean, chosen: string) => void;
+  language: LanguageAdapter;
   easy?: boolean; // level 4: 2 options, obviously-different distractor
-  direction?: 'sw_to_en' | 'en_to_sw';
+  direction?: StudyDirection;
   showMorphemeHints?: boolean;
 }
 
-export default function MultipleChoice({ card, allCards, onAnswer, easy = false, direction = 'sw_to_en', showMorphemeHints = false }: Props) {
+export default function MultipleChoice({ card, allCards, onAnswer, language, easy = false, direction = 'target_to_en', showMorphemeHints = false }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
 
-  const correctAnswer = direction === 'sw_to_en' ? card.english : card.swahili;
+  const correctAnswer = direction === 'target_to_en' ? language.getEnglishText(card) : language.getTargetText(card);
 
   useEffect(() => {
     const shuffle = <T,>(arr: T[]): T[] => {
@@ -28,7 +29,7 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
       return a;
     };
     const cardTagSet = new Set(card.tags);
-    const extract = (c: CardWithState) => direction === 'sw_to_en' ? c.english : c.swahili;
+    const extract = (c: CardWithState) => direction === 'target_to_en' ? language.getEnglishText(c) : language.getTargetText(c);
 
     // Build a shuffled candidate pool, then pick unique distractors — text must
     // differ from the correct answer and from each other to avoid duplicate options.
@@ -46,7 +47,7 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
 
     setOptions(shuffle([correctAnswer, ...distractors]));
     setSelected(null);
-  }, [card.id, easy, direction]);
+  }, [card.id, easy, direction, language, correctAnswer]);
 
   function choose(opt: string) {
     if (selected) return;
@@ -55,20 +56,21 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
     onAnswer(opt === correctAnswer, opt);
   }
 
-  const prompt      = direction === 'sw_to_en' ? card.swahili : card.english;
-  const promptLabel = direction === 'sw_to_en' ? 'What does this mean?' : 'How do you say this in Swahili?';
+  const prompt      = direction === 'target_to_en' ? language.getTargetText(card) : language.getEnglishText(card);
+  const promptLabel = language.promptLabel(direction, 'multiple_choice');
+  const grammarHint = language.grammarHint(card);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-800 rounded-2xl p-8 text-center">
         <div className="text-slate-400 text-sm mb-2">{promptLabel}</div>
         <div className="text-4xl font-bold text-slate-100">{prompt}</div>
-        {direction === 'sw_to_en' && card.pronunciation && (
+        {direction === 'target_to_en' && card.pronunciation && (
           <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
         )}
       </div>
 
-      {selected && direction === 'en_to_sw' && card.pronunciation && (
+      {selected && direction === 'en_to_target' && card.pronunciation && (
         <div className="text-center text-slate-500 text-sm italic">[{card.pronunciation}]</div>
       )}
 
@@ -115,8 +117,8 @@ export default function MultipleChoice({ card, allCards, onAnswer, easy = false,
       )}
 
 
-      {selected !== null && selected !== correctAnswer && grammarRule(card) && (
-        <p className="text-cyan-300/80 text-xs text-center">💡 {grammarRule(card)}</p>
+      {selected !== null && selected !== correctAnswer && grammarHint && (
+        <p className="text-cyan-300/80 text-xs text-center">💡 {grammarHint}</p>
       )}
       {selected !== null && selected !== correctAnswer && card.example_sentences[0] && (
         <div className="bg-slate-800/60 rounded-xl p-3 space-y-1">

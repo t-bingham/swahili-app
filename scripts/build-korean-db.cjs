@@ -152,6 +152,46 @@ const CARDS = [
     note: 'Replaces the topic/subject particle to mean "also": 저도 = "me too".' },
   { id: 'ko-gram-08', ko: '의', en: "'s (possessive)", rom: '-ui', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
     note: "Marks possession: 친구의 책 (friend's book). Often dropped in casual speech. Here 의 is pronounced like 에 (e)." },
+  { id: 'ko-gram-09', ko: '에게 / 한테', en: 'to / for a person', rom: '-ege / -hante', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Marks a human recipient: 친구에게 줘요 = give it to a friend. 한테 is common in speech; 께 is the honorific form.' },
+  { id: 'ko-gram-10', ko: '으로 / 로', en: 'by / with / toward', rom: '-euro / -ro', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Marks direction, method, material, or means: 지하철로 가요 = go by subway; 한국어로 말해요 = speak in Korean.' },
+  { id: 'ko-gram-11', ko: '와 / 과', en: 'and / with', rom: '-wa / -gwa', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Formal written "and/with" between nouns. Use 과 after consonants and 와 after vowels. 하고 is the more conversational version.' },
+  { id: 'ko-gram-12', ko: '하고', en: 'and / with (conversational)', rom: '-hago', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Conversational connector between nouns: 친구하고 커피 = coffee with a friend / friend and coffee.' },
+  { id: 'ko-gram-13', ko: '부터 / 까지', en: 'from / until', rom: '-buteo / -kkaji', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Marks a range in time or place: 아침부터 밤까지 = from morning until night.' },
+  { id: 'ko-gram-14', ko: '보다', en: 'than (comparison)', rom: '-boda', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Comparison marker: 한국어가 영어보다 어려워요 = Korean is harder than English.' },
+  { id: 'ko-gram-15', ko: '만', en: 'only / just', rom: '-man', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Limits the noun: 물만 마셔요 = I only drink water.' },
+  { id: 'ko-gram-16', ko: '밖에', en: 'nothing but / only', rom: '-bakke', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Used with a negative verb: 물밖에 없어요 = there is nothing but water / only water.' },
+  { id: 'ko-gram-17', ko: '처럼', en: 'like / as if', rom: '-cheoreom', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Similarity marker: 친구처럼 말해요 = speak like a friend.' },
+  { id: 'ko-gram-18', ko: '때문에', en: 'because of', rom: '-ttaemune', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Reason/cause after nouns or clauses: 비 때문에 = because of the rain.' },
+  { id: 'ko-gram-19', ko: '그리고', en: 'and / and then', rom: 'geurigo', type: 'grammar', unit: 'ko-unit-07', pos: 'conjunction',
+    note: 'Common connector between sentences or phrases.' },
+  { id: 'ko-gram-20', ko: '하지만', en: 'but / however', rom: 'hajiman', type: 'grammar', unit: 'ko-unit-07', pos: 'conjunction',
+    note: 'Straightforward contrast connector.' },
+  { id: 'ko-gram-21', ko: '그래서', en: 'so / therefore', rom: 'geuraeseo', type: 'grammar', unit: 'ko-unit-07', pos: 'conjunction',
+    note: 'Links cause to result: 피곤해요. 그래서 집에 가요 = I am tired, so I am going home.' },
+  { id: 'ko-gram-22', ko: '그런데', en: 'but / by the way', rom: 'geureonde', type: 'grammar', unit: 'ko-unit-07', pos: 'conjunction',
+    note: 'A softer conversational pivot: "but", "and then", or "by the way" depending on context.' },
+  { id: 'ko-gram-23', ko: '(으)세요', en: 'please do / honorific request', rom: '-(eu)seyo', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Request or command ending: 앉으세요 = please sit; 오세요 = please come. Also marks honorific subject forms.' },
+  { id: 'ko-gram-24', ko: '고 싶어요', en: 'want to do', rom: '-go sipeoyo', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Attach to verb stem: 먹고 싶어요 = I want to eat.' },
+  { id: 'ko-gram-25', ko: '아/어서', en: 'because / and then', rom: '-a/eoseo', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Connects clauses by sequence or cause: 늦어서 미안해요 = sorry because I am late.' },
+  { id: 'ko-gram-26', ko: '지만', en: 'but / although', rom: '-jiman', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Attach to a verb/adjective stem: 작지만 좋아요 = it is small, but good.' },
+  { id: 'ko-gram-27', ko: '(으)면', en: 'if / when', rom: '-(eu)myeon', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Conditional frame: 시간이 있으면 = if/when there is time.' },
+  { id: 'ko-gram-28', ko: '(으)려고', en: 'in order to / intending to', rom: '-(eu)ryeogo', type: 'grammar', unit: 'ko-unit-07', pos: 'particle',
+    note: 'Intention/purpose: 공부하려고 카페에 가요 = I go to a cafe to study.' },
 
   // ── Unit 1 additions — First Words ──────────────────────────────────────────
   { id: 'ko-greet-11', ko: '여보세요', en: 'hello (on the phone)', rom: 'yeoboseyo', type: 'phrase', unit: 'ko-unit-01', register: 'formal', pos: 'phrase',
@@ -386,19 +426,35 @@ initSqlJs().then((SQL) => {
   // a card-id suffix. The English template substitutes %en (verb's gloss, e.g.
   // "to go") via a small helper below.
   const FORMS = [
-    { key: 'formalPolitePresent', en: '%pres (formal polite)',        suffix: 'fpp' },
-    { key: 'formalPolitePast',    en: '%past (formal polite)',        suffix: 'fpa' },
-    { key: 'formalPoliteFuture',  en: '%future (formal polite)',      suffix: 'fpf' },
-    { key: 'politePresent',       en: '%pres (polite)',               suffix: 'pp'  },
-    { key: 'politePast',          en: '%past (polite)',               suffix: 'ppa' },
-    { key: 'politeFuture',        en: '%future (polite)',             suffix: 'pf'  },
-    { key: 'casualPresent',       en: '%pres (casual)',               suffix: 'cp'  },
-    { key: 'casualPast',          en: '%past (casual)',               suffix: 'cpa' },
-    { key: 'negPolitePresent',    en: "don't / doesn't %base (polite)", suffix: 'npp' },
-    { key: 'negPolitePast',       en: "didn't %base (polite)",        suffix: 'npa' },
-    { key: 'negFormalPresent',    en: "don't / doesn't %base (formal polite)", suffix: 'nfp' },
-    { key: 'honorificPolite',     en: '%pres (honorific)',            suffix: 'hp'  },
+    { key: 'formalPolitePresent', en: '%pres (formal polite)',        suffix: 'fpp', speech: 'formal', tense: 'present' },
+    { key: 'formalPolitePast',    en: '%past (formal polite)',        suffix: 'fpa', speech: 'formal', tense: 'past' },
+    { key: 'formalPoliteFuture',  en: '%future (formal polite)',      suffix: 'fpf', speech: 'formal', tense: 'future' },
+    { key: 'politePresent',       en: '%pres (polite)',               suffix: 'pp',  speech: 'polite', tense: 'present' },
+    { key: 'politePast',          en: '%past (polite)',               suffix: 'ppa', speech: 'polite', tense: 'past' },
+    { key: 'politeFuture',        en: '%future (polite)',             suffix: 'pf',  speech: 'polite', tense: 'future' },
+    { key: 'casualPresent',       en: '%pres (casual)',               suffix: 'cp',  speech: 'casual', tense: 'present' },
+    { key: 'casualPast',          en: '%past (casual)',               suffix: 'cpa', speech: 'casual', tense: 'past' },
+    { key: 'negPolitePresent',    en: "don't / doesn't %base (polite)", suffix: 'npp', speech: 'polite', tense: 'present', negative: true },
+    { key: 'negPolitePast',       en: "didn't %base (polite)",        suffix: 'npa', speech: 'polite', tense: 'past', negative: true },
+    { key: 'negFormalPresent',    en: "don't / doesn't %base (formal polite)", suffix: 'nfp', speech: 'formal', tense: 'present', negative: true },
+    { key: 'negFormalPast',       en: "didn't %base (formal polite)", suffix: 'nfa', speech: 'formal', tense: 'past', negative: true },
+    { key: 'honorificPolite',     en: '%pres (honorific)',            suffix: 'hp',  speech: 'polite', tense: 'present', honorific: true },
+    { key: 'honorificFormal',     en: '%pres (formal honorific)',     suffix: 'hf',  speech: 'formal', tense: 'present', honorific: true },
+    { key: 'honorificPast',       en: '%past (honorific)',            suffix: 'hpa', speech: 'polite', tense: 'past', honorific: true },
+    { key: 'honorificFuture',     en: '%future (honorific)',          suffix: 'hfut', speech: 'polite', tense: 'future', honorific: true },
+    { key: 'negHonorificPolite',  en: "don't / doesn't %base (honorific)", suffix: 'nhp', speech: 'polite', tense: 'present', negative: true, honorific: true },
   ];
+
+  function uniqTags(tags) {
+    return [...new Set((tags || []).filter(Boolean))];
+  }
+
+  function koreanTags(c) {
+    const tags = [...(c.tags || [])];
+    if (c.type === 'grammar' && c.pos === 'particle') tags.push('grammar:particle');
+    if (c.type === 'conjugation') tags.push('grammar:conjugation');
+    return uniqTags(tags);
+  }
 
   // Build present/past/future English from a verb's "to X" gloss.
   // For verbs: "to go" → pres "I go", past "I went", future "I will go".
@@ -449,9 +505,18 @@ initSqlJs().then((SQL) => {
         type: 'conjugation',
         unit: v.unit,
         pos: v.pos,
-        tags: ['conjugation', f.suffix],
+        tags: uniqTags([
+          'conjugation',
+          'grammar:conjugation',
+          'grammar:tense',
+          'tense:' + f.tense,
+          'speech:' + f.speech,
+          f.negative ? 'grammar:negative' : null,
+          f.honorific ? 'grammar:honorific' : null,
+          'form:' + f.suffix,
+        ]),
         verb_root: v.dict,
-        conjugation_key: f.suffix,
+        conjugation_key: `ko:${f.speech}:${f.tense}:${f.negative ? 'negative' : 'positive'}:${f.honorific ? 'honorific' : 'plain'}:${f.suffix}`,
         register: f.suffix.startsWith('f') ? 'formal' : f.suffix.startsWith('c') ? 'informal' : 'neutral',
       });
       formIdx++;
@@ -485,7 +550,7 @@ initSqlJs().then((SQL) => {
           example_sentences, register, morpheme_breakdown, part_of_speech, etymology, dialect,
           cultural_note, senses, placement_only)
        VALUES (?,?,?,?,?,?,NULL,?,?,?,?,?,?,?,NULL,?,?,NULL,?,NULL,'standard',?,?,0)`,
-      [c.id, c.ko, c.en, c.rom, c.type, JSON.stringify(c.tags || []),
+      [c.id, c.ko, c.en, c.rom, c.type, JSON.stringify(koreanTags(c)),
        c.verb_root || null, c.conjugation_key || null,
        2.5, rank, c.type === 'phrase' ? 1 : 0, c.unit, source, examples,
        c.register || 'neutral', c.pos || null,

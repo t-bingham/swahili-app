@@ -1,11 +1,21 @@
 import type { CardWithState } from '../types';
+import type { LanguageAdapter } from '../languages';
 
-export function printFlashcards(cards: CardWithState[]): void {
+function escapeHtml(value: string): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function printFlashcards(cards: CardWithState[], language: LanguageAdapter): void {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Swahili Flashcards</title>
+<title>${escapeHtml(language.targetShortName)} Flashcards</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Georgia, 'Times New Roman', serif; background: #fff; color: #111; }
@@ -61,26 +71,27 @@ export function printFlashcards(cards: CardWithState[]): void {
 </head>
 <body>
 <div class="info">
-  Swahili Flashcards — ${cards.length} cards — printed ${new Date().toLocaleDateString()}
-  &nbsp;·&nbsp; Fold each card along the dashed line, then cut along the outer borders.
-  &nbsp;·&nbsp; <button onclick="window.print()" style="cursor:pointer;">Print</button>
+  ${escapeHtml(language.targetShortName)} Flashcards - ${cards.length} cards - printed ${new Date().toLocaleDateString()}
+  &nbsp;&middot;&nbsp; Fold each card along the dashed line, then cut along the outer borders.
+  &nbsp;&middot;&nbsp; <button onclick="window.print()" style="cursor:pointer;">Print</button>
 </div>
 <div class="grid">
 ${cards.map(c => {
   const altMeanings = c.senses && c.senses.length > 1
     ? c.senses.slice(1, 3).map(s => s.english).join(', ')
     : '';
+  const targetExample = language.getTargetExample(c);
   return `  <div class="card">
     <div class="card-front">
-      <div class="sw">${c.swahili}</div>
-      ${c.pronunciation ? `<div class="pr">[${c.pronunciation}]</div>` : ''}
-      <div class="type-badge">${c.type}${c.register && c.register !== 'neutral' ? ' · ' + c.register : ''}</div>
+      <div class="sw">${escapeHtml(language.getTargetText(c))}</div>
+      ${c.pronunciation ? `<div class="pr">[${escapeHtml(c.pronunciation)}]</div>` : ''}
+      <div class="type-badge">${escapeHtml(c.type)}${c.register && c.register !== 'neutral' ? ' &middot; ' + escapeHtml(c.register) : ''}</div>
     </div>
-    <div class="fold-hint">· · · fold · · ·</div>
+    <div class="fold-hint">&middot; &middot; &middot; fold &middot; &middot; &middot;</div>
     <div class="card-back">
-      <div class="en">${c.english}</div>
-      ${altMeanings ? `<div class="senses">also: ${altMeanings}</div>` : ''}
-      ${c.example_sentences[0] ? `<div class="senses" style="font-style:italic;margin-top:3px;">"${c.example_sentences[0].swahili}"</div>` : ''}
+      <div class="en">${escapeHtml(language.getEnglishText(c))}</div>
+      ${altMeanings ? `<div class="senses">also: ${escapeHtml(altMeanings)}</div>` : ''}
+      ${targetExample ? `<div class="senses" style="font-style:italic;margin-top:3px;">"${escapeHtml(targetExample)}"</div>` : ''}
     </div>
   </div>`;
 }).join('\n')}

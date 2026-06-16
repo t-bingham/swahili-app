@@ -1,160 +1,488 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Korean + Multi-language — Action Plan</title>
+<title>Multilingual Intelligence Plan</title>
 <style>
-  :root{
-    --bg:#0b1120; --panel:#111a2e; --panel2:#0f1830; --border:#1e293b;
-    --ink:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
-    --cyan:#22d3ee; --cyan2:#67e8f9; --amber:#fbbf24; --red:#f87171;
-    --green:#34d399; --violet:#a78bfa; --pink:#f472b6;
+  :root {
+    --bg: #0b1020;
+    --panel: #121a2c;
+    --panel2: #0f1728;
+    --line: #263449;
+    --ink: #e5edf8;
+    --muted: #9fb0c7;
+    --dim: #6f8097;
+    --blue: #57b8ff;
+    --teal: #38d9c8;
+    --green: #45d483;
+    --yellow: #f3c969;
+    --red: #ff7777;
+    --violet: #b79cff;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 80px;}
-  header{border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:32px;}
-  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.4px;}
-  .sub{color:var(--muted);font-size:15px;}
-  .meta{color:var(--dim);font-size:13px;margin-top:10px;}
-  a{color:var(--cyan2);text-decoration:none;} a:hover{text-decoration:underline;}
-  h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);
-     margin:44px 0 8px;}
-  h2.done{text-decoration:line-through;text-decoration-color:var(--green);text-decoration-thickness:2px;opacity:.75;}
-  h2 .badge{font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;}
-  .b-now{background:rgba(34,211,238,.15);color:var(--cyan2);border:1px solid rgba(34,211,238,.4);}
-  .b-next{background:rgba(148,163,184,.12);color:var(--muted);border:1px solid rgba(148,163,184,.3);}
-  .b-risk{background:rgba(248,113,113,.14);color:var(--red);border:1px solid rgba(248,113,113,.4);}
-  .phase-desc{color:var(--muted);font-size:14px;margin:0 0 18px;}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;
-    padding:18px 20px;margin:14px 0;}
-  .card.done{opacity:.6;}
-  .card.done h3{text-decoration:line-through;text-decoration-color:var(--green);text-decoration-thickness:2px;}
-  .card h3{margin:0 0 4px;font-size:17px;}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 10px;}
-  .tag{font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase;}
-  .t-eff{background:rgba(167,139,250,.12);color:var(--violet);border:1px solid rgba(167,139,250,.3);}
-  .t-risk{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3);}
-  .t-safe{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3);}
-  .t-done{background:rgba(52,211,153,.16);color:var(--green);border:1px solid rgba(52,211,153,.5);}
-  .id{color:var(--dim);font-size:12px;font-weight:700;font-family:ui-monospace,monospace;}
-  .card p{margin:6px 0;color:var(--ink);font-size:14.5px;}
-  .where{color:var(--dim);font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;}
-  .why{color:var(--muted);font-size:13.5px;}
-  code{background:var(--panel2);border:1px solid var(--border);border-radius:5px;
-    padding:1px 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--cyan2);}
-  ul.tight{margin:6px 0 0;padding-left:20px;} ul.tight li{margin:4px 0;font-size:14px;color:var(--muted);}
-  ul.tight li b{color:var(--ink);}
-  .callout{background:var(--panel2);border-left:3px solid var(--cyan);border-radius:8px;
-    padding:14px 18px;margin:18px 0;color:var(--muted);font-size:14px;}
-  .foot{margin-top:50px;border-top:1px solid var(--border);padding-top:18px;color:var(--dim);font-size:13px;}
-  .kr{color:var(--pink);font-weight:600;}
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.58 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 36px 24px 72px; }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 30px;
+  }
+  h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; letter-spacing: -0.02em; }
+  .lede { max-width: 900px; color: var(--muted); font-size: 17px; margin: 0; }
+  .meta { margin-top: 16px; color: var(--dim); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+  nav {
+    position: sticky;
+    top: 18px;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  nav a {
+    display: block;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  nav a:hover { background: rgba(87,184,255,.08); color: var(--ink); }
+  main { min-width: 0; }
+  section { margin: 0 0 36px; }
+  h2 {
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+  }
+  h3 { margin: 0 0 5px; font-size: 18px; }
+  p { margin: 8px 0; }
+  code {
+    color: #9de7ff;
+    background: #0a1324;
+    border: 1px solid #243248;
+    border-radius: 5px;
+    padding: 1px 5px;
+    font-size: 13px;
+  }
+  .callout {
+    background: linear-gradient(180deg, rgba(87,184,255,.09), rgba(56,217,200,.05));
+    border: 1px solid rgba(87,184,255,.28);
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 0 0 24px;
+    color: var(--muted);
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 12px 0;
+  }
+  .card p { color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .p0 { color: var(--red); border: 1px solid rgba(255,119,119,.4); background: rgba(255,119,119,.08); }
+  .p1 { color: var(--yellow); border: 1px solid rgba(243,201,105,.4); background: rgba(243,201,105,.08); }
+  .p2 { color: var(--blue); border: 1px solid rgba(87,184,255,.4); background: rgba(87,184,255,.08); }
+  .safe { color: var(--green); border: 1px solid rgba(69,212,131,.4); background: rgba(69,212,131,.08); }
+  .phase { color: var(--violet); border: 1px solid rgba(183,156,255,.4); background: rgba(183,156,255,.08); }
+  ul { margin: 10px 0 0; padding-left: 22px; }
+  li { margin: 6px 0; color: var(--muted); }
+  li strong, p strong { color: var(--ink); }
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .matrix th, .matrix td {
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+  }
+  .matrix th {
+    background: #162238;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .matrix td { color: var(--muted); background: rgba(18,26,44,.65); }
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li {
+    position: relative;
+    padding-left: 28px;
+  }
+  .checklist li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .35em;
+    width: 15px;
+    height: 15px;
+    border: 1px solid var(--dim);
+    border-radius: 4px;
+    background: #0a1324;
+  }
+  .footer {
+    color: var(--dim);
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+    margin-top: 44px;
+    font-size: 13px;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+    nav { position: static; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <h1>🇰🇷 Korean track + Multi-language platform — Action Plan</h1>
-  <div class="sub">Turn the Swahili app into a multi-language platform and add a Korean curriculum, starting with a rule-based Hangul (<span class="kr">한글</span>) trainer.</div>
-  <div class="meta">Started: 16 June 2026 · Decisions on record: <b>multi-language in this app</b> (not a fork) · Korean curriculum content <b>LLM-generated with a validation pass</b> ·
-  Completed Swahili review work preserved in <a href="review/completed-swahili-work.md">review/completed-swahili-work.md</a></div>
-</header>
+<div class="shell">
+  <header>
+    <h1>Multilingual Intelligence Plan</h1>
+    <p class="lede">
+      Bring Korean, MÄori, and future languages up to the level of support that Swahili currently receives, without turning the codebase into a pile of language-specific branches.
+    </p>
+    <div class="meta">Created: 17 June 2026 Â· Current state: React/Vite local-first PWA Â· Seed DBs: Swahili, Korean, MÄori</div>
+  </header>
 
-<div class="callout">
-  <b style="color:var(--ink)">Guiding principle.</b> Prove the architecture with a low-risk vertical slice (Stages 1–2) before the big refactor or any generated content.
-  Generate <b>by rule</b> wherever the language is rule-based (Hangul, romanization, conjugation by speech level) — that is exactly what made the Swahili grammar repair reliable.
-  Reserve the LLM for vocab/sentences/cultural notes, and bake a QA pass in from day one.
-  <b>Hard lesson from the Swahili review:</b> LLM curriculum content fails in <i>systematic</i> ways at scale (~4,700 cards were wrong).
-</div>
+  <div class="grid">
+    <nav aria-label="Plan sections">
+      <a href="#principle">Guiding Principle</a>
+      <a href="#audit">Current Gaps</a>
+      <a href="#architecture">Target Architecture</a>
+      <a href="#phase-1">Phase 1: Shared Language Layer</a>
+      <a href="#phase-2">Phase 2: UI De-Swahilify</a>
+      <a href="#phase-3">Phase 3: Grammar Feedback</a>
+      <a href="#phase-4">Phase 4: Error Classification</a>
+      <a href="#phase-5">Phase 5: Special Exercises</a>
+      <a href="#phase-6">Phase 6: Content Metadata</a>
+      <a href="#phase-7">Phase 7: Review Workflow</a>
+      <a href="#future">Future Languages</a>
+      <a href="#order">Implementation Order</a>
+    </nav>
 
-<!-- STAGE 1 -->
-<h2 class="done">Stage 1 · Multi-language foundation <span class="badge b-now">✓ Done</span></h2>
-<p class="phase-desc">Data + scaffolding only. <b>Zero behaviour change to the Swahili app.</b></p>
-<div class="card done">
-  <div class="row"><span class="id">S1</span><span class="tag t-safe">Safe</span><span class="tag t-eff">Effort: Low</span><span class="tag t-done">✓ Done</span></div>
-  <ul class="tight">
-    <li><b>Language registry</b> — <code>src/data/languages.ts</code>: id, name, native name, flag, script, grammar-feature flags (<code>hasNounClass</code>, <code>hasConcord</code>, <code>hasHonorifics</code>, <code>hasHangul</code>), and which exercise types apply. Swahili + Korean registered.</li>
-    <li><b>Hangul dataset</b> — <code>src/data/hangul.ts</code>: the full jamo set (14 + 5 consonants, 10 + 11 vowels) with romanization, sound hints, and example syllables. Pure static data.</li>
-    <li><b>Entry point</b> — a discreet Home card → <code>/app/hangul</code> route. No card-DB changes.</li>
-  </ul>
-</div>
+    <main>
+      <section id="principle">
+        <h2>Guiding Principle</h2>
+        <div class="callout">
+          <strong>Build capability-by-capability, not language-by-language.</strong>
+          Swahili should become the first language adapter, not the hidden default. Korean and MÄori should prove that the same app can provide language-specific support through pluggable modules.
+        </div>
+        <div class="card">
+          <h3>Why This Matters</h3>
+          <p>
+            The current app began as Swahili, so Swahili-specific assumptions live in names, labels, grammar hints, error classification, and exercises. Adding Korean/MÄori by copying those patterns would work briefly, then become expensive.
+          </p>
+          <p>
+            The target is a small multilingual engine where each language provides what it needs: grammar hints, error classifiers, exercise types, TTS preferences, generated practice metadata, and cultural support.
+          </p>
+        </div>
+      </section>
 
-<!-- STAGE 2 -->
-<h2 class="done">Stage 2 · Hangul trainer <span class="badge b-now">✓ Done</span></h2>
-<p class="phase-desc">Self-contained, rule-based, <b>zero content-quality risk</b>. The vertical slice that ships real value and validates the direction.</p>
+      <section id="audit">
+        <h2>Current Gaps</h2>
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Current Swahili Advantage</th>
+              <th>Gap For Korean/MÄori</th>
+              <th>Target Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Audio</td>
+              <td><code>SpeakButton</code> searches for Swahili voices only.</td>
+              <td>Korean/MÄori audio is effectively unavailable even when device voices exist.</td>
+              <td>Language-aware TTS voice selection.</td>
+            </tr>
+            <tr>
+              <td>UI labels</td>
+              <td>Directions are named <code>sw_to_en</code> / <code>en_to_sw</code>; some prompts say Swahili.</td>
+              <td>Korean/MÄori learners see wrong labels or developer-facing concepts.</td>
+              <td>Rename conceptually to target-language directions and use language display names.</td>
+            </tr>
+            <tr>
+              <td>Grammar feedback</td>
+              <td><code>grammarRule()</code> explains Swahili tense/concord.</td>
+              <td>Korean particles/honorifics and MÄori tense particles get little tailored feedback.</td>
+              <td>Adapter-backed grammar hints.</td>
+            </tr>
+            <tr>
+              <td>Error classification</td>
+              <td>Swahili conjugation errors can be structural vs semantic via morpheme parsing.</td>
+              <td>Korean and MÄori structural mistakes are mostly generic edit-distance guesses.</td>
+              <td>Language-specific structural classifiers.</td>
+            </tr>
+            <tr>
+              <td>Special exercises</td>
+              <td>Noun class and concord drills exist.</td>
+              <td>Korean needs particle/speech-level drills; MÄori needs tense/pronoun/macron drills.</td>
+              <td>Special exercise registry by language capability.</td>
+            </tr>
+            <tr>
+              <td>Content metadata</td>
+              <td>Swahili generated cards carry morphology tags and keys.</td>
+              <td>Korean/MÄori metadata is improving but needs stronger conventions.</td>
+              <td>Standardize tags and <code>conjugation_key</code> schemas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
 
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Stages 1–2 complete &amp; verified live.</b> Build clean (126 modules), no console errors, Swahili untouched.
-  Verified end-to-end at <code>/app/hangul</code>: set picker (Consonants/Vowels/All), 40-question quiz, correct answers score &amp; auto-advance (ㅜ→“u” ✓, 1/40→2/40), wrong answers reveal the right sound (✗ It's “m”), sound-hint + example shown on reveal, Home entry card present.
-</div>
+      <section id="architecture">
+        <h2>Target Architecture</h2>
+        <div class="card">
+          <h3>Language Adapter Registry</h3>
+          <p>Add a behavior layer alongside the existing language metadata registry.</p>
+          <pre><code>interface LanguageAdapter {
+  id: string;
+  targetLabel: string;
+  englishLabel: string;
+  ttsLangs: string[];
 
-<div class="card done">
-  <div class="row"><span class="id">S2</span><span class="tag t-safe">Safe</span><span class="tag t-eff">Effort: Low–Med</span><span class="tag t-done">✓ Done</span></div>
-  <ul class="tight">
-    <li><b><code>HangulExercise</code></b> — recognise a jamo → its sound/romanization (and the reverse), driven by <code>hangul.ts</code>; reuses the existing exercise UI patterns + a11y conventions.</li>
-    <li><b><code>HangulScreen</code></b> — a self-contained mini-session over the jamo set (random draw, multiple choice, progress), no SRS/card-DB dependency for v1.</li>
-    <li>Verify: build clean + live (renders, grades correctly, no console errors).</li>
-  </ul>
-</div>
+  grammarHint(card): string | null;
+  scaffoldHint(card): string | undefined;
+  classifyError(args): ErrorType;
+  acceptsAnswer(args): boolean;
+  specialExercises(card): ExerciseCandidate[];
+}</code></pre>
+          <ul>
+            <li><strong>Metadata</strong> stays in <code>src/data/languages.ts</code>: name, flag, script, template DB, broad features.</li>
+            <li><strong>Behavior</strong> moves to <code>src/languages/sw.ts</code>, <code>src/languages/ko.ts</code>, <code>src/languages/mi.ts</code>.</li>
+            <li><strong>Fallback adapter</strong> provides generic flashcard/multiple-choice/type-answer behavior for future languages.</li>
+          </ul>
+        </div>
+      </section>
 
-<div class="callout" style="border-left-color:var(--green)">
-  <b style="color:var(--green)">✓ Korean track complete &amp; verified live (Stages 1–6).</b> Build clean (127 modules), no console errors.
-  Verified end-to-end: a <span class="kr">한국어</span> learner can sign in (language toggle 🇹🇿/🇰🇷), gets <code>korean_default.db</code> (7 units, 61 curated cards),
-  learns Korean cards through the existing engine (실례합니다 → "excuse me", recall→reveal→rate→advance), sees a Korean-appropriate grammar tab
-  (particles/speech levels, Standard Seoul Korean 표준어, <i>no</i> noun-class chart), and the Hangul trainer at <code>/app/hangul</code>.
-  <b>Swahili is fully intact</b> (regression verified: noun-class chart, Kiunguja dialect, all exercises).
-</div>
+      <section id="phase-1">
+        <h2>Phase 1: Shared Language Layer</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p0">Priority: P0</span>
+            <span class="pill phase">Foundation</span>
+            <span class="pill safe">Low Product Risk</span>
+            <span class="pill safe">Started</span>
+          </div>
+          <h3>Create The Adapter Boundary</h3>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Add <code>src/languages/types.ts</code> with adapter interfaces.</li>
+            <li><strong>Done:</strong> Add <code>src/languages/index.ts</code> to resolve the active adapter from current language.</li>
+            <li>Move current Swahili grammar/scaffold behavior into <code>src/languages/sw.ts</code>.</li>
+            <li>Add generic fallback behavior for Korean/MÄori before custom rules are complete.</li>
+            <li><strong>Done:</strong> Add generic fallback labels, text accessors, examples, CSV names, and TTS hints.</li>
+            <li><strong>Next:</strong> Add lightweight unit tests for adapter resolution and fallback behavior.</li>
+          </ul>
+        </div>
+      </section>
 
-<!-- STAGE 3 -->
-<h2 class="done">Stage 3 · Multi-language DB plumbing <span class="badge b-now">✓ Done</span></h2>
-<p class="phase-desc">The first change that touches shared infrastructure — done after the slice proves out.</p>
-<div class="card done">
-  <div class="row"><span class="id">S3</span><span class="tag t-eff">Effort: Med</span><span class="tag t-done">✓ Done</span></div>
-  <ul class="tight">
-    <li><b>Per-language seed DBs</b> — <code>{lang}_default.db</code>; <code>openDatabase</code> clones the right template; per-user key becomes language-aware (back-compat for existing <code>db_&lt;username&gt;</code> Swahili users).</li>
-    <li><b>Language picker</b> in the user/onboarding flow; profile stores the active language.</li>
-    <li>Keep migrations per-language; the <code>MIGRATIONS</code> array (Stage 6 of the prior plan) already supports this cleanly.</li>
-  </ul>
-</div>
+      <section id="phase-2">
+        <h2>Phase 2: UI De-Swahilify</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p0">Priority: P0</span>
+            <span class="pill safe">Visible Polish</span>
+            <span class="pill safe">Complete</span>
+          </div>
+          <h3>Make Shared UI Truly Target-Language Aware</h3>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Rename exercise direction types from <code>sw_to_en</code>/<code>en_to_sw</code> to <code>target_to_en</code>/<code>en_to_target</code>.</li>
+            <li><strong>Done:</strong> Replace labels like â€œType the Swahili translationâ€ with adapter-provided language names.</li>
+            <li><strong>Done:</strong> Update <code>FlashCard</code>, <code>MultipleChoice</code>, <code>TypeAnswer</code>, <code>RecallPrompt</code>, and <code>LearnScreen</code>.</li>
+            <li><strong>Done:</strong> Generalize gallery search, CSV export, and printable flashcards; do not rename DB columns yet.</li>
+            <li><strong>Done:</strong> Update <code>SpeakButton</code> to use <code>ttsLangs</code> from the active adapter.</li>
+          </ul>
+        </div>
+      </section>
 
-<!-- STAGE 4 -->
-<h2 class="done">Stage 4 · Language-aware behaviour <span class="badge b-now">✓ Done</span></h2>
-<p class="phase-desc">Make behaviour language-aware — <b>without</b> the risky mass rename.</p>
-<div class="card done">
-  <div class="row"><span class="id">S4</span><span class="tag t-eff">Effort: Med</span><span class="tag t-done">✓ Done</span></div>
-  <ul class="tight">
-    <li class="doneline"><b><code>pickExercise</code> is language-aware</b>: gated concord &amp; noun-class on the language's feature flags. Grammar tab + onboarding dialect note branch by language (Korean: particles/speech levels/Seoul Standard; no noun-class chart). Migrations tagged <code>sw</code>-only so they never run on Korean.</li>
-    <li><b>Deliberately NOT done:</b> the ~324-reference <code>swahili</code>→<code>target</code> column rename. The card column is functionally "the L2 text"; renaming it across 32 files + a SQLite migration on every user DB is high-risk for zero functional gain. Korean text lives in the existing column — fully working, surgical.</li>
-  </ul>
-</div>
+      <section id="phase-3">
+        <h2>Phase 3: Grammar Feedback</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p1">Priority: P1</span>
+            <span class="pill phase">Learning Quality</span>
+            <span class="pill safe">Complete</span>
+          </div>
+          <h3>Adapter-Backed Hints</h3>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Replace direct <code>grammarRule(card)</code> calls with <code>adapter.grammarHint(card)</code>.</li>
+            <li><strong>Done:</strong> Swahili preserves existing tense and concord hints in <code>src/languages/sw.ts</code>.</li>
+            <li><strong>Done:</strong> Korean has first-pass hints for particles, speech levels, honorific forms, negative forms, conditionals, and desire/request endings.</li>
+            <li><strong>Done:</strong> Maori has first-pass hints for tense/aspect particles including <code>kei te</code>, <code>e ... ana</code>, <code>kua</code>, <code>i</code>, <code>ka</code>, <code>kia</code>, <code>kaore ... e</code>, and <code>kaua ... e</code>.</li>
+            <li><strong>Done:</strong> Wrong-answer hints and first-exposure scaffold hints now come from the active language adapter.</li>
+            <li><strong>Later polish:</strong> Human-review and expand these rules after real learner feedback.</li>
+          </ul>
+        </div>
+      </section>
 
-<!-- STAGE 5 -->
-<h2 class="done">Stage 5 · Korean curriculum <span class="badge b-now">✓ Starter done</span></h2>
-<p class="phase-desc">Quality over volume: a <b>curated, correct</b> starter curriculum + the build script to extend it.</p>
-<div class="card done">
-  <div class="row"><span class="id">S5</span><span class="tag t-risk">Content risk</span><span class="tag t-eff">Effort: High</span><span class="tag t-done">✓ Starter done</span></div>
-  <ul class="tight">
-    <li class="doneline"><b>Shipped:</b> <code>scripts/build-korean-db.cjs</code> → <code>public/korean_default.db</code> (144 KB, full app schema, ships at migration v2). 7 units / 61 hand-curated cards: greetings, question words, Sino-Korean numbers, everyday phrases, food, common verbs/adjectives (dictionary + polite -요), and a particle/speech-level grammar unit. Romanization written by rule; rich honorific/speech-level cultural notes throughout (안녕하세요 vs 안녕, 저 vs 나, 존댓말/반말).</li>
-    <li><b>Next (deliberately deferred):</b> scaling the curriculum to hundreds of cards. Per the Swahili lesson, this should be rule-generated where possible (conjugation tables) + LLM vocab/sentences <b>with a QA pass</b>, not mass-generated blindly. The build script + schema make this a content task, not an engineering one.</li>
-  </ul>
-</div>
+      <section id="phase-4">
+        <h2>Phase 4: Error Classification</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p1">Priority: P1</span>
+            <span class="pill phase">Adaptive Intelligence</span>
+            <span class="pill safe">Complete</span>
+          </div>
+          <h3>Make â€œStructural Errorâ€ Language-Specific</h3>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Refactor <code>classifyError()</code> to delegate to the active adapter first, then generic fallback.</li>
+            <li><strong>Done:</strong> Swahili keeps its morpheme-slot parser for subject/tense/object/root mistakes in <code>src/languages/sw.ts</code>.</li>
+            <li><strong>Done:</strong> Korean detects likely speech-level, tense, honorific, negative-form, and particle structural mistakes.</li>
+            <li><strong>Done:</strong> Maori detects wrong tense/aspect frames and macron-only mistakes.</li>
+            <li><strong>Done:</strong> Review logs and <code>error_patterns</code> now receive classifications from the active language adapter.</li>
+            <li><strong>Later polish:</strong> Add focused regression tests and tune rules after real learner mistakes accumulate.</li>
+          </ul>
+        </div>
+      </section>
 
-<!-- STAGE 6 -->
-<h2 class="done">Stage 6 · Cultural context (bespoke exercises deferred) <span class="badge b-now">✓ Context done</span></h2>
-<div class="card done">
-  <div class="row"><span class="id">S6</span><span class="tag t-eff">Effort: Med–High</span><span class="tag t-done">✓ Context done</span></div>
-  <ul class="tight">
-    <li class="doneline"><b>Cultural context shipped:</b> formality and speech levels are embedded as grammar throughout the curriculum (honorific cultural notes on greetings/pronouns, the 요 polite-ending grammar card framing 존댓말 vs 반말), plus Standard Seoul Korean labelling in onboarding + the grammar tab.</li>
-    <li><b>Bespoke exercises deferred:</b> particle-choice and honorific-selection drills need a curated sentence dataset to do well — a content task best done deliberately, not half-baked. The user's explicit ask (a Korean alphabet exercise = the Hangul trainer) is fully delivered, and Korean vocab/grammar already works through the existing flashcard/MC/type/cloze engine.</li>
-  </ul>
-</div>
+      <section id="phase-5">
+        <h2>Phase 5: Special Exercises</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p1">Priority: P1</span>
+            <span class="pill phase">Exercise Depth</span>
+            <span class="pill safe">Complete</span>
+          </div>
+          <h3>Register Exercises By Capability</h3>
+          <p>Do not force every language into Swahili-style drills. Each language should advertise which special exercise candidates apply to a given card.</p>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Added adapter-level <code>specialExercises()</code> so custom drills are registered by language capability.</li>
+            <li><strong>Done:</strong> Moved Swahili noun-class and concord selection out of <code>LearnScreen</code> and into <code>src/languages/sw.ts</code>.</li>
+            <li><strong>Done:</strong> Added Korean particle-choice practice for grammar particle cards.</li>
+            <li><strong>Done:</strong> Added Maori tense/aspect-frame practice for generated tense-pattern cards.</li>
+            <li><strong>Done:</strong> Added <code>particle_choice</code> and <code>maori_tense</code> exercise types so review logs record the real exercise used.</li>
+            <li><strong>Later polish:</strong> Add deeper Korean speech-level transforms and Maori negative-frame construction after metadata is tightened in Phase 6.</li>
+          </ul>
+          <table class="matrix">
+            <thead>
+              <tr><th>Language</th><th>Special Exercises</th><th>Data Needed</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Swahili</td>
+                <td>Noun class, adjective concord, fill blank, morpheme breakdown.</td>
+                <td><code>noun_class</code>, concord tags, morpheme breakdown.</td>
+              </tr>
+              <tr>
+                <td>Korean</td>
+                <td>Particle choice, speech-level transform, honorific transform, Sino/native number choice, Hangul drills.</td>
+                <td>Structured grammar tags and generated form keys.</td>
+              </tr>
+              <tr>
+                <td>MÄori</td>
+                <td>Tense particle choice, pronoun choice, negative frame construction, macron distinction, pepeha ordering.</td>
+                <td>Tense-pattern tags, subject tags, macron pairs, pepeha templates.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-<div class="foot">
-  <b style="color:var(--green)">Status: Korean track complete &amp; verified live</b> — multi-language platform, language picker, Korean curriculum, and Hangul trainer all working; Swahili untouched.
-  Remaining: scale the Korean curriculum (content) and add bespoke particle/honorific exercises. Prior Swahili work shipped on <code>master</code> (<code>f81ba44</code>); see <a href="review/completed-swahili-work.md">completed-swahili-work.md</a>.
-</div>
+      <section id="phase-6">
+        <h2>Phase 6: Content Metadata</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p2">Priority: P2</span>
+            <span class="pill phase">Content Pipeline</span>
+            <span class="pill safe">Complete</span>
+          </div>
+          <h3>Make Generated Content Machine-Readable</h3>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Standardized generated tags such as <code>grammar:tense</code>, <code>grammar:negative</code>, <code>grammar:honorific</code>, <code>grammar:particle</code>, and parseable form tags.</li>
+            <li><strong>Done:</strong> Standardized generated <code>conjugation_key</code> values with language prefixes: <code>ko:...</code> and <code>mi:...</code>.</li>
+            <li><strong>Done:</strong> Updated Korean and Maori builders to emit richer metadata for generated cards.</li>
+            <li><strong>Done:</strong> Kept DB schema stable; improvements live in tags and existing key columns.</li>
+            <li><strong>Done:</strong> Added <code>scripts/validate-generated-metadata.cjs</code> to check generated tags/keys.</li>
+            <li><strong>Done:</strong> Rebuilt Korean and Maori seed DBs with the new metadata.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="phase-7">
+        <h2>Phase 7: Review Workflow</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill p2">Priority: P2</span>
+            <span class="pill safe">Quality Loop</span>
+            <span class="pill safe">Complete</span>
+          </div>
+          <h3>Turn Manual Review Into A Repeatable Pipeline</h3>
+          <ul class="checklist">
+            <li><strong>Done:</strong> Kept the review workbook export path for Sheets-based review.</li>
+            <li><strong>Done:</strong> Generalized the in-app review queue filters to generated/all/type filters across the active language DB.</li>
+            <li><strong>Done:</strong> Added language-aware labels and reviewed/generated counts in the review UI.</li>
+            <li><strong>Done:</strong> Added a correction-patch JSON export from the in-app review screen before saving.</li>
+            <li><strong>Later polish:</strong> Add tag/unit search and batch patch import if review volume grows.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="future">
+        <h2>Future Languages</h2>
+        <div class="card">
+          <h3>New Language Checklist</h3>
+          <ul class="checklist">
+            <li>Add language metadata: id, names, flag, script, seed DB path, broad features.</li>
+            <li>Add a minimal adapter using generic fallback behavior.</li>
+            <li>Define its grammar capabilities before writing special exercises.</li>
+            <li>Create a seed builder and content-review export path.</li>
+            <li>Launch first with generic flashcard/MC/type-answer if needed.</li>
+            <li>Add special exercises only where they naturally match the language.</li>
+            <li>Add adapter tests for grammar hints, answer acceptance, and structural error classification.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Rule of thumb:</strong> language-specific content belongs in data/builders/adapters. Shared screens should ask the adapter what to do instead of checking language IDs directly.
+        </div>
+      </section>
+
+      <section id="order">
+        <h2>Implementation Order</h2>
+        <div class="card">
+          <h3>Suggested Sequence</h3>
+          <ol>
+            <li><strong>Adapter boundary:</strong> create the registry and move Swahili grammar hints into it.</li>
+            <li><strong>UI labels/audio:</strong> remove the most visible Swahili-only strings and TTS assumption.</li>
+            <li><strong>Korean/MÄori grammar hints:</strong> use existing generated metadata to provide useful wrong-answer feedback.</li>
+            <li><strong>Error classifiers:</strong> add Korean and MÄori structural classifiers.</li>
+            <li><strong>Special exercise registry:</strong> refactor Swahili special exercises behind the adapter, then add Korean particle and MÄori tense drills.</li>
+            <li><strong>Metadata cleanup:</strong> complete - generated tags and keys are standardized in the Korean/Maori builders.</li>
+            <li><strong>Review loop:</strong> complete - Sheets export remains available and the in-app review queue is language-aware.</li>
+          </ol>
+        </div>
+      </section>
+
+      <div class="footer">
+        This plan intentionally preserves the current local-first architecture. It improves learning intelligence inside the existing app before any Convex/native/offline-pack migration work.
+      </div>
+    </main>
+  </div>
 </div>
 </body>
 </html>

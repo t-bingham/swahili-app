@@ -21,6 +21,24 @@ The app **must** be served over HTTP (not opened as a file) because WebAssembly 
 ### Tech Stack
 React 18 + TypeScript, React Router 6, Tailwind CSS, Zustand, sql.js (SQLite over WebAssembly), FSRS spaced repetition algorithm, Vite 5, vite-plugin-pwa (Workbox). Deployed on Vercel as a static site.
 
+### Future Architecture Direction
+The current architecture is intentionally a no-cost, local-first PWA for personal use and friend testing. Do not prematurely rewrite it into a cloud-first app while the learning experience is still being validated.
+
+If the app grows into a broader cross-platform product, the preferred direction is:
+- Keep the learning engine local-first and offline-capable.
+- Serve curriculum as downloadable language/unit packs.
+- Store shared curriculum once, not cloned per user in the cloud.
+- Sync only user progress deltas: review logs, card states, sessions, settings, stars, unit progress, skill mastery.
+- Use a backend such as Convex for auth, sync, user progress, and admin tooling.
+- Avoid making live cloud queries required for ordinary study sessions.
+
+### Native App Direction
+Preferred native path is Capacitor first, not a React Native rewrite. Capacitor should allow the existing React/Vite app to run inside native iOS and Android shells while preserving the same offline learning engine.
+
+Keep algorithms, scheduling, curriculum loading, sync, and persistence boundaries modular so they can survive a future Capacitor wrapper. Avoid scattering browser-only APIs through screens; isolate platform-specific storage/auth/network behavior behind small adapters where practical.
+
+Only consider a full React Native rewrite if Capacitor cannot meet performance, storage, offline, accessibility, or app-store requirements.
+
 ### Database Layer (`src/database/db.ts`)
 The entire database is a single file: sql.js (SQLite in WebAssembly) backed by IndexedDB. There is no server.
 

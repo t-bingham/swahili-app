@@ -1,19 +1,21 @@
 import { useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
+import type { LanguageAdapter, StudyDirection } from '../../languages';
 import { MorphemeBreakdown, RegisterBadge } from './MorphemeBreakdown';
 
 interface Props {
   card: CardWithState;
   onReveal: () => void;
   revealed: boolean;
+  language: LanguageAdapter;
   hint?: string;
-  direction?: 'sw_to_en' | 'en_to_sw';
+  direction?: StudyDirection;
   showPronunciation?: boolean;
   showExamples?: boolean;
   showMorphemeHints?: boolean;
 }
 
-export default function FlashCard({ card, onReveal, revealed, hint, direction = 'sw_to_en', showPronunciation = true, showExamples = true, showMorphemeHints = false }: Props) {
+export default function FlashCard({ card, onReveal, revealed, language, hint, direction = 'target_to_en', showPronunciation = true, showExamples = true, showMorphemeHints = false }: Props) {
   const revealBtnRef = useRef<HTMLButtonElement>(null);
   // Move focus to the Reveal button when a new card appears (keyboard users
   // shouldn't have to tab from the top on every card).
@@ -21,20 +23,20 @@ export default function FlashCard({ card, onReveal, revealed, hint, direction = 
     if (!revealed) revealBtnRef.current?.focus();
   }, [card.id, revealed]);
 
-  const swFirst = direction === 'sw_to_en';
-  const front = swFirst ? card.swahili : card.english;
-  const back  = swFirst ? card.english  : card.swahili;
-  const frontEx = swFirst ? card.example_sentences[0]?.swahili : card.example_sentences[0]?.english;
-  const backEx  = swFirst ? card.example_sentences[0]?.english : card.example_sentences[0]?.swahili;
+  const targetFirst = direction === 'target_to_en';
+  const front = targetFirst ? language.getTargetText(card) : language.getEnglishText(card);
+  const back  = targetFirst ? language.getEnglishText(card) : language.getTargetText(card);
+  const frontEx = targetFirst ? language.getTargetExample(card) : language.getEnglishExample(card);
+  const backEx  = targetFirst ? language.getEnglishExample(card) : language.getTargetExample(card);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-800 rounded-2xl p-8 text-center min-h-48 flex flex-col items-center justify-center">
-        {!swFirst && (
-          <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Translate to Swahili</div>
+        {!targetFirst && (
+          <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">{language.promptLabel(direction, 'flashcard')}</div>
         )}
         <div className="text-4xl font-bold text-slate-100 mb-2">{front}</div>
-        {swFirst && card.pronunciation && showPronunciation && (
+        {targetFirst && card.pronunciation && showPronunciation && (
           <div className="text-slate-500 text-sm italic">[{card.pronunciation}]</div>
         )}
         {hint && !revealed && (
@@ -48,7 +50,7 @@ export default function FlashCard({ card, onReveal, revealed, hint, direction = 
       {revealed ? (
         <div className="bg-slate-800/50 rounded-2xl p-6 text-center" aria-live="polite">
           <div className="text-2xl text-cyan-400 font-semibold mb-2">{back}</div>
-          {!swFirst && card.pronunciation && showPronunciation && (
+          {!targetFirst && card.pronunciation && showPronunciation && (
             <div className="text-slate-500 text-sm italic mt-1">[{card.pronunciation}]</div>
           )}
           {backEx && showExamples && (
