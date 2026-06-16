@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile, countOverdueCards, getLastSession, countCardsByDepth, getDailyStats } from '../database/db';
+import { getProfile, countOverdueCards, getLastSession, countCardsByDepth, getDailyStats, getCurrentLanguage } from '../database/db';
+import { getLanguage } from '../data/languages';
 import type { Profile, Session } from '../types';
 
 export default function HomeScreen() {
@@ -66,17 +67,19 @@ export default function HomeScreen() {
         {dueCount > 0 ? `Study Now · ${dueCount} due` : 'Start Session'}
       </button>
 
-      {/* Korean: Hangul trainer (new) */}
-      <button
-        onClick={() => navigate('/app/hangul')}
-        className="w-full p-4 rounded-2xl border-2 border-pink-500/40 bg-pink-500/10 hover:bg-pink-500/20 text-left transition-colors flex items-center gap-3"
-      >
-        <span className="text-2xl" aria-hidden="true">🇰🇷</span>
-        <div>
-          <p className="text-slate-100 font-semibold">Learn the Korean alphabet <span lang="ko" className="text-pink-300">한글</span></p>
-          <p className="text-slate-400 text-sm">New — read Hangul in an afternoon</p>
-        </div>
-      </button>
+      {/* Korean: Hangul trainer — only shown for Korean learners */}
+      {getLanguage(getCurrentLanguage()).features.hangul && (
+        <button
+          onClick={() => navigate('/app/hangul')}
+          className="w-full p-4 rounded-2xl border-2 border-pink-500/40 bg-pink-500/10 hover:bg-pink-500/20 text-left transition-colors flex items-center gap-3"
+        >
+          <span className="text-2xl" aria-hidden="true">🇰🇷</span>
+          <div>
+            <p className="text-slate-100 font-semibold">Learn the Korean alphabet <span lang="ko" className="text-pink-300">한글</span></p>
+            <p className="text-slate-400 text-sm">New — read Hangul in an afternoon</p>
+          </div>
+        </button>
+      )}
 
       {/* Daily progress */}
       {profile && dailyStats !== null && (
