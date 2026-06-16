@@ -15,6 +15,9 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const initSqlJs = require(path.join(ROOT, 'node_modules', 'sql.js', 'dist', 'sql-asm.js'));
+const { UNITS_EXTRA, VOCAB } = require('./korean-vocab.cjs');
+const { VERBS } = require('./korean-verbs.cjs');
+const { conjugateAll, romanize } = require('./korean-conjugate.cjs');
 
 const LATEST_MIGRATION_VERSION = 2; // keep in sync with src/database/migrations.ts
 
@@ -365,8 +368,9 @@ initSqlJs().then((SQL) => {
     db.run(`DELETE FROM ${t}`);
   }
 
-  // 3) Insert Korean units.
-  for (const [id, name, desc, level, order_index, track, notes] of UNITS) {
+  // 3) Insert Korean units (built-in + extra units from korean-vocab.cjs).
+  const allUnits = [...UNITS, ...UNITS_EXTRA];
+  for (const [id, name, desc, level, order_index, track, notes] of allUnits) {
     db.run(
       `INSERT INTO units (id, name, description, level, order_index, prerequisite_ids, grammar_notes, estimated_hours, track)
        VALUES (?,?,?,?,?,?,?,?,?)`,
@@ -374,19 +378,117 @@ initSqlJs().then((SQL) => {
     );
   }
 
+  // 3.5) Generate conjugation cards from the verb list (the big multiplier — the
+  // Swahili DB hits 25k mostly through morphological generation, not hand-written
+  // entries). Each verb produces ~13 forms.
+  //
+  // Form definitions: keys map to the conjugator output + the English template +
+  // a card-id suffix. The English template substitutes %en (verb's gloss, e.g.
+  // "to go") via a small helper below.
+  const FORMS = [
+    { key: 'formalPolitePresent', en: '%pres (formal polite)',        suffix: 'fpp' },
+    { key: 'formalPolitePast',    en: '%past (formal polite)',        suffix: 'fpa' },
+    { key: 'formalPoliteFuture',  en: '%future (formal polite)',      suffix: 'fpf' },
+    { key: 'politePresent',       en: '%pres (polite)',               suffix: 'pp'  },
+    { key: 'politePast',          en: '%past (polite)',               suffix: 'ppa' },
+    { key: 'politeFuture',        en: '%future (polite)',             suffix: 'pf'  },
+    { key: 'casualPresent',       en: '%pres (casual)',               suffix: 'cp'  },
+    { key: 'casualPast',          en: '%past (casual)',               suffix: 'cpa' },
+    { key: 'negPolitePresent',    en: "don't / doesn't %base (polite)", suffix: 'npp' },
+    { key: 'negPolitePast',       en: "didn't %base (polite)",        suffix: 'npa' },
+    { key: 'negFormalPresent',    en: "don't / doesn't %base (formal polite)", suffix: 'nfp' },
+    { key: 'honorificPolite',     en: '%pres (honorific)',            suffix: 'hp'  },
+  ];
+
+  // Build present/past/future English from a verb's "to X" gloss.
+  // For verbs: "to go" → pres "I go", past "I went", future "I will go".
+  // For adjectives: "to be big" → pres "is big", past "was big", future "will be big".
+  function englishTemplate(verb, tmpl) {
+    const en = verb.en;            // e.g. "to go", "to be big", "to not know"
+    const isAdj = verb.pos === 'adjective';
+    let base = en.replace(/^to\s+/, '');          // "go", "be big"
+    let pres, past, future;
+    if (isAdj) {
+      // "be big" → "is big" / "was big" / "will be big"
+      const after = base.replace(/^be\s+/, '');
+      pres   = 'is ' + after;
+      past   = 'was ' + after;
+      future = 'will be ' + after;
+    } else {
+      // Heuristic: pres = base (e.g. "go"); past = irregulars hard, so use "X-ed" / common irregulars
+      const IRR_PAST = { go:'went', come:'came', eat:'ate', drink:'drank', do:'did', give:'gave', take:'took', see:'saw', sleep:'slept', know:'knew', think:'thought', say:'said', meet:'met', sell:'sold', buy:'bought', read:'read', write:'wrote', send:'sent', sing:'sang', win:'won', lose:'lost', fall:'fell', find:'found', wear:'wore', stand:'stood', sit:'sat', run:'ran', catch:'caught', teach:'taught', forget:'forgot', understand:'understood' };
+      const firstWord = base.split(/\s+/)[0];
+      const pastWord = IRR_PAST[firstWord] || (firstWord.endsWith('e') ? firstWord + 'd' : firstWord + 'ed');
+      pres   = base;
+      past   = base.replace(firstWord, pastWord);
+      future = 'will ' + base;
+    }
+    return tmpl.replace('%pres', pres).replace('%past', past).replace('%future', future).replace('%base', base);
+  }
+
+  // Track ids the existing CARDS list reserves (so I de-dup verbs that appear in both).
+  const reservedKo = new Set();
+  for (const c of CARDS) reservedKo.add(c.ko);
+
+  // Generated conjugation cards
+  const CONJ_CARDS = [];
+  for (const v of VERBS) {
+    const forms = conjugateAll(v);
+    let formIdx = 0;
+    for (const f of FORMS) {
+      const ko = forms[f.key];
+      if (!ko) continue;
+      // De-dup: if this surface form is already a hand-curated card, skip
+      if (reservedKo.has(ko)) continue;
+      const cardId = 'ko-conj-' + v.dict.replace(/다$/, '') + '-' + f.suffix;
+      CONJ_CARDS.push({
+        id: cardId,
+        ko,
+        en: englishTemplate(v, f.en),
+        rom: romanize(ko),
+        type: 'conjugation',
+        unit: v.unit,
+        pos: v.pos,
+        tags: ['conjugation', f.suffix],
+        verb_root: v.dict,
+        conjugation_key: f.suffix,
+        register: f.suffix.startsWith('f') ? 'formal' : f.suffix.startsWith('c') ? 'informal' : 'neutral',
+      });
+      formIdx++;
+    }
+  }
+
   // 4) Insert Korean cards + fresh card_states.
+  // Merge: hand-curated CARDS + expanded VOCAB + generated conjugations.
+  const allCards = [...CARDS, ...VOCAB, ...CONJ_CARDS];
   let rank = 1;
-  for (const c of CARDS) {
+  // Auto-id for vocab entries lacking one, dedup by id (defensive against any clash).
+  const seenIds = new Set();
+  const seenKoEn = new Set(); // skip surface duplicates (same Korean + English)
+  let vocabAutoIdx = 0;
+  for (const c of allCards) {
+    // Auto-id for VOCAB-style entries that have no explicit id (e.g. V() helper)
+    if (!c.id) {
+      vocabAutoIdx++;
+      c.id = 'ko-v-' + c.unit.replace('ko-unit-','u') + '-' + String(vocabAutoIdx).padStart(4, '0');
+    }
+    const dupKey = c.ko + '|' + c.en;
+    if (seenIds.has(c.id) || seenKoEn.has(dupKey)) continue;
+    seenIds.add(c.id);
+    seenKoEn.add(dupKey);
     const examples = c.ex ? JSON.stringify([{ swahili: c.ex[0], english: c.ex[1] }]) : '[]';
+    const source = c.type === 'conjugation' ? 'generated' : 'handwritten';
     db.run(
       `INSERT INTO cards
          (id, swahili, english, pronunciation, type, tags, noun_class, verb_root, conjugation_key,
           base_difficulty, frequency_rank, quick_learn, unit_id, source, prerequisite_card_id,
           example_sentences, register, morpheme_breakdown, part_of_speech, etymology, dialect,
           cultural_note, senses, placement_only)
-       VALUES (?,?,?,?,?,?,NULL,NULL,NULL,?,?,?,?,'handwritten',NULL,?,?,NULL,?,NULL,'standard',?,?,0)`,
-      [c.id, c.ko, c.en, c.rom, c.type, JSON.stringify(c.tags || []), 2.5, rank,
-       c.type === 'phrase' ? 1 : 0, c.unit, examples, c.register || 'neutral', c.pos || null,
+       VALUES (?,?,?,?,?,?,NULL,?,?,?,?,?,?,?,NULL,?,?,NULL,?,NULL,'standard',?,?,0)`,
+      [c.id, c.ko, c.en, c.rom, c.type, JSON.stringify(c.tags || []),
+       c.verb_root || null, c.conjugation_key || null,
+       2.5, rank, c.type === 'phrase' ? 1 : 0, c.unit, source, examples,
+       c.register || 'neutral', c.pos || null,
        c.note || null, JSON.stringify([{ english: c.en }])],
     );
     db.run(
