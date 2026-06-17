@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Card, CardRegister } from '../types';
 import type { ReviewFilter } from '../database/db';
-import { getCurrentLanguage, getReviewQueue, saveReviewedCard, getReviewStats } from '../database/db';
+import { getCurrentLanguage, getReviewQueue, saveReviewedCard, getReviewStats, getReviewCard } from '../database/db';
 import { getLanguageAdapter } from '../languages';
 
 const FILTERS: { id: ReviewFilter; label: string }[] = [
@@ -18,6 +18,8 @@ const REGISTER_OPTIONS = ['neutral', 'formal', 'informal', 'slang', 'literary', 
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const cardId = searchParams.get('card');
   const [filter, setFilter] = useState<ReviewFilter>('generated');
   const [queue, setQueue] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
@@ -27,12 +29,15 @@ export default function ReviewScreen() {
   const language = getLanguageAdapter(getCurrentLanguage());
 
   useEffect(() => {
-    getReviewQueue(filter).then(q => {
+    const loadQueue = cardId
+      ? getReviewCard(cardId).then(card => (card ? [card] : []))
+      : getReviewQueue(filter);
+    loadQueue.then(q => {
       setQueue(q);
       setIndex(0);
     });
     getReviewStats().then(setStats);
-  }, [filter]);
+  }, [filter, cardId]);
 
   const card: Card | undefined = queue[index];
 
@@ -126,21 +131,27 @@ export default function ReviewScreen() {
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {FILTERS.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filter === f.id
-                ? 'bg-cyan-500 text-slate-950'
-                : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {cardId ? (
+        <div className="inline-flex w-fit rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-cyan-300">
+          Reviewing selected card
+        </div>
+      ) : (
+        <div className="flex gap-2 flex-wrap">
+          {FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                filter === f.id
+                  ? 'bg-cyan-500 text-slate-950'
+                  : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div>
         <div className="flex justify-between text-xs text-slate-500 mb-1">

@@ -792,6 +792,15 @@ export async function getReviewQueue(filter: ReviewFilter): Promise<Card[]> {
   ).map(parseCard);
 }
 
+export async function getReviewCard(cardId: string): Promise<Card | null> {
+  const rows = query<Record<string, unknown>>(
+    `SELECT * FROM cards c
+     WHERE c.id = ?`,
+    [cardId],
+  );
+  return rows[0] ? parseCard(rows[0]) : null;
+}
+
 export interface ReviewUpdate {
   english:      string;
   pronunciation: string;

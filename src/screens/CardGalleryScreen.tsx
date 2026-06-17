@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUnits, searchGalleryCards, getVerbConjugations, setCardStarred, getCurrentLanguage } from '../database/db';
 import { printFlashcards } from '../utils/printFlashcards';
 import { getLanguageAdapter, type LanguageAdapter } from '../languages';
@@ -165,6 +166,7 @@ function CardDetail({ card, onClose, onToggleStar }: {
   onClose: () => void;
   onToggleStar: (id: string, starred: boolean) => void;
 }) {
+  const navigate = useNavigate();
   const [showConjugations, setShowConjugations] = useState(false);
   const starred = card.state.starred ?? false;
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -197,6 +199,10 @@ function CardDetail({ card, onClose, onToggleStar }: {
     onToggleStar(card.id, !starred);
   }
 
+  function reviewCard() {
+    navigate(`/app/review?card=${encodeURIComponent(card.id)}`);
+  }
+
   const isVerb = card.type === 'vocabulary' && card.verb_root;
 
   return (
@@ -210,6 +216,12 @@ function CardDetail({ card, onClose, onToggleStar }: {
     >
       <div className="flex items-center justify-between p-4 border-b border-slate-800">
         <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-sm">← Back</button>
+        <button
+          onClick={reviewCard}
+          className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-semibold transition-colors"
+        >
+          Add review
+        </button>
         <button onClick={toggleStar} aria-label={starred ? 'Remove from starred words' : 'Add to starred words'} className={`text-xl ${starred ? 'text-yellow-400' : 'text-slate-700'}`}>
           {starred ? '★' : '☆'}
         </button>
@@ -340,6 +352,12 @@ function CardItem({ card, onClick, onToggleStar }: {
   onClick: () => void;
   onToggleStar: (id: string, starred: boolean) => void;
 }) {
+  const navigate = useNavigate();
+
+  function reviewCard() {
+    navigate(`/app/review?card=${encodeURIComponent(card.id)}`);
+  }
+
   return (
     <div className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 rounded-xl px-3 py-3 transition-colors">
       {/* Star is a sibling button (not nested) so both controls are keyboard-reachable */}
@@ -368,6 +386,12 @@ function CardItem({ card, onClick, onToggleStar }: {
           <DepthBadge depth={card.state.depth_level} />
           <span className="text-slate-600 text-lg" aria-hidden="true">›</span>
         </div>
+      </button>
+      <button
+        onClick={reviewCard}
+        className="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-cyan-500 text-slate-300 hover:text-slate-950 text-xs font-semibold transition-colors"
+      >
+        Add review
       </button>
     </div>
   );
