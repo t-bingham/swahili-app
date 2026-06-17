@@ -478,6 +478,17 @@ export default function SettingsScreen() {
       )}
 
       {/* ── Developer tools ── */}
+      <SectionHeader>Curriculum Review</SectionHeader>
+      <SettingsCard>
+        <button onClick={() => navigate('/app/review')} className="w-full p-4 text-left text-slate-300 hover:text-slate-100 flex items-center gap-3">
+          <span className="text-sm font-semibold text-cyan-300">Review</span>
+          <div>
+            <div className="text-sm font-medium">Card Review Pipeline</div>
+            <div className="text-xs text-slate-500 mt-0.5">Correct generated card content &amp; mark as reviewed</div>
+          </div>
+        </button>
+      </SettingsCard>
+
       {import.meta.env.DEV && (
         <>
           <SectionHeader>Developer Tools</SectionHeader>
