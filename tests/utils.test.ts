@@ -3,6 +3,7 @@ import { normalize } from '../src/utils/normalize';
 import { computeLessons } from '../src/utils/lessons';
 import { computeStatus } from '../src/utils/unitStatus';
 import { unitBasePath, unitDisplayLabel, unitsForTrack } from '../src/utils/unitTracks';
+import { parseConcord } from '../src/components/exercises/ConcordExercise';
 import type { Unit, UnitProgress } from '../src/types';
 import { makeCard } from './factories';
 
@@ -159,5 +160,28 @@ describe('unitTracks', () => {
   it('routes grammar units to the grammar tab', () => {
     expect(unitBasePath(units[1])).toBe('/app/units');
     expect(unitBasePath(units[2])).toBe('/app/grammar');
+  });
+});
+
+describe('parseConcord', () => {
+  it('returns null for non-concord cards', () => {
+    expect(parseConcord(makeCard())).toBeNull();
+  });
+
+  it('parses adjective agreement cards', () => {
+    const card = makeCard({
+      id: 'adj:watu:-zuri',
+      swahili: 'watu wazuri',
+      english: 'good people',
+      type: 'grammar',
+      tags: ['adjective-agreement'],
+    });
+
+    expect(parseConcord(card)).toEqual({
+      noun: 'watu',
+      answer: 'wazuri',
+      stem: 'zuri',
+      meaning: 'good',
+    });
   });
 });

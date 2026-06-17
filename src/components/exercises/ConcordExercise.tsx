@@ -28,7 +28,7 @@ export function canConcord(card: CardWithState): boolean {
 }
 
 export default function ConcordExercise({ card, onAnswer }: Props) {
-  const c = parseConcord(card)!; // guaranteed by canConcord in the picker
+  const c = parseConcord(card);
   const [value, setValue] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [correct, setCorrect] = useState(false);
@@ -41,7 +41,7 @@ export default function ConcordExercise({ card, onAnswer }: Props) {
   }, [card.id]);
 
   function submit() {
-    if (!value.trim() || submitted) return;
+    if (!c || !value.trim() || submitted) return;
     // Accept either the agreeing adjective alone ("mzuri") or the full phrase
     // ("bwana mzuri") — the prompt/placeholder invites the phrase.
     const v = normalize(value);
@@ -50,6 +50,14 @@ export default function ConcordExercise({ card, onAnswer }: Props) {
     setSubmitted(true);
     // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
     onAnswer(ok, value);
+  }
+
+  if (!c) {
+    return (
+      <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm" role="status">
+        Preparing next card...
+      </div>
+    );
   }
 
   return (
