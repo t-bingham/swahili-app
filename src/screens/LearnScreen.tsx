@@ -4,7 +4,7 @@ import { getProfile, getSkillMastery, getDailyStats, getStarredCards, getCurrent
 import { getLanguageAdapter, type LanguageAdapter, type StudyDirection } from '../languages';
 import { scaffoldLevel } from '../algorithms/afm';
 import { buildPracticePool, loadSessionModifiers } from '../scheduling/sessionAssembly';
-import { syncWithDrive } from '../sync/driveSync';
+import { syncNow } from '../sync/syncService';
 import { useSessionStore } from '../store/sessionStore';
 import FlashCard from '../components/exercises/FlashCard';
 import MultipleChoice from '../components/exercises/MultipleChoice';
@@ -184,7 +184,7 @@ export default function LearnScreen() {
     if (profile) {
       await store.finishSession(profile);
     }
-    syncWithDrive(); // fire-and-forget; merges remote then uploads; fails silently if offline
+    syncNow(); // fire-and-forget; provider handles offline/unsupported languages
     setPhase('summary');
   }
 

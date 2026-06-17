@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { getCurrentUser, getCurrentLanguage, openDatabase, getProfile } from '../database/db';
+import { getCurrentUser, openDatabase, getProfile } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
-import { syncWithDrive } from '../sync/driveSync';
+import { canSyncCurrentLanguage, syncNow } from '../sync/syncService';
 
 const tabs = [
   { to: '/app/home',    label: 'Home',    icon: '🏠' },
@@ -39,9 +39,7 @@ export default function Layout() {
   // Background sync: upload to Drive when coming back online or returning to the tab.
   useEffect(() => {
     function trySyncIfOnline() {
-      // Drive sync currently targets the Swahili profile only; don't let a Korean
-      // session overwrite the Swahili backup.
-      if (navigator.onLine && getCurrentUser() !== null && getCurrentLanguage() === 'sw') syncWithDrive();
+      if (navigator.onLine && getCurrentUser() !== null && canSyncCurrentLanguage()) syncNow();
     }
     const handleVisibility = () => { if (!document.hidden) trySyncIfOnline(); };
     window.addEventListener('online', trySyncIfOnline);

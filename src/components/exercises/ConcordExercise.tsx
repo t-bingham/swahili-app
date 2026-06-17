@@ -1,30 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CardWithState } from '../../types';
 import { normalize } from '../../utils/normalize';
+import { canSwahiliConcord, parseSwahiliConcord } from '../../languages/swahiliConcord';
 
 interface Props {
   card: CardWithState;
   onAnswer: (correct: boolean, typed: string) => void;
 }
 
-const STEM_MEANING: Record<string, string> = { zuri: 'good', baya: 'bad', kubwa: 'big' };
-
-// Adjective-agreement grammar cards are "<noun> <agreeing-adjective>" (e.g.
-// "kitabu kizuri"), with the bare stem encoded in the id (…:adj:kitabu:-zuri).
-// This turns them into a generative concord task: produce the agreeing form.
-export function parseConcord(card: CardWithState):
-  { noun: string; answer: string; stem: string; meaning: string } | null {
-  if (card.type !== 'grammar' || !card.tags?.includes('adjective-agreement')) return null;
-  if (card.swahili.includes('___')) return null; // those go to fill_blank
-  const parts = card.swahili.trim().split(/\s+/);
-  if (parts.length !== 2) return null;
-  const stem = card.id.split(':-')[1];
-  if (!stem || !STEM_MEANING[stem]) return null;
-  return { noun: parts[0], answer: parts[1], stem, meaning: STEM_MEANING[stem] };
-}
+export const parseConcord = parseSwahiliConcord;
 
 export function canConcord(card: CardWithState): boolean {
-  return parseConcord(card) !== null;
+  return canSwahiliConcord(card);
 }
 
 export default function ConcordExercise({ card, onAnswer }: Props) {
@@ -43,7 +30,7 @@ export default function ConcordExercise({ card, onAnswer }: Props) {
   function submit() {
     if (!c || !value.trim() || submitted) return;
     // Accept either the agreeing adjective alone ("mzuri") or the full phrase
-    // ("bwana mzuri") — the prompt/placeholder invites the phrase.
+    // ("bwana mzuri"); the prompt/placeholder invites the phrase.
     const v = normalize(value);
     const ok = v === normalize(c.answer) || v === normalize(`${c.noun} ${c.answer}`);
     setCorrect(ok);
@@ -67,13 +54,13 @@ export default function ConcordExercise({ card, onAnswer }: Props) {
         <div className="text-3xl font-bold text-slate-100">
           {c.noun} <span className="text-slate-500">+ -{c.stem}</span>
         </div>
-        <div className="text-cyan-400 text-sm">"{c.noun}" + "{c.meaning}" → ?</div>
+        <div className="text-cyan-400 text-sm">"{c.noun}" + "{c.meaning}" -&gt; ?</div>
         {card.noun_class && <div className="text-slate-500 text-xs">{card.noun_class} class</div>}
       </div>
 
       {submitted && (
         <p aria-live="polite" className={`text-sm font-semibold text-center ${correct ? 'text-green-400' : 'text-red-400'}`}>
-          {correct ? '✓ Correct' : '✗ Incorrect'}
+          {correct ? 'Correct' : 'Incorrect'}
         </p>
       )}
 
@@ -84,7 +71,7 @@ export default function ConcordExercise({ card, onAnswer }: Props) {
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && submit()}
         disabled={submitted}
-        placeholder={`${c.noun} …`}
+        placeholder={`${c.noun} ...`}
         className={`w-full px-5 py-4 rounded-xl bg-slate-800 border-2 text-slate-100 text-lg placeholder-slate-500 transition-colors ${
           submitted
             ? correct ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'

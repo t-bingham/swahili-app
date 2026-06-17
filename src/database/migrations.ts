@@ -670,6 +670,47 @@ interface Migration {
   run: (db: Database) => void;
 }
 
+function createReviewNotesTable(db: Database): void {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS review_notes (
+      id TEXT PRIMARY KEY,
+      card_id TEXT NOT NULL,
+      language TEXT NOT NULL,
+      issue_type TEXT NOT NULL,
+      note TEXT NOT NULL,
+      suggested_correction TEXT,
+      reviewer TEXT,
+      status TEXT NOT NULL DEFAULT 'open',
+      created_at TEXT NOT NULL,
+      resolved_at TEXT
+    )
+  `);
+  try { db.run('CREATE INDEX IF NOT EXISTS idx_review_notes_card ON review_notes(card_id)'); } catch { /* old SQLite */ }
+  try { db.run('CREATE INDEX IF NOT EXISTS idx_review_notes_status ON review_notes(status)'); } catch { /* old SQLite */ }
+}
+
+function createCurriculumInstallTables(db: Database): void {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS curriculum_packages (
+      language TEXT PRIMARY KEY,
+      package_version INTEGER NOT NULL,
+      template_db TEXT NOT NULL,
+      installed_scope TEXT NOT NULL DEFAULT 'all',
+      installed_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS curriculum_unit_versions (
+      language TEXT NOT NULL,
+      unit_id TEXT NOT NULL,
+      unit_version INTEGER NOT NULL DEFAULT 1,
+      installed_at TEXT NOT NULL,
+      PRIMARY KEY (language, unit_id)
+    )
+  `);
+}
+
 // Ordered list of migrations. Append new entries with the next version number.
 // Both current migrations are Swahili content/schema, so they are tagged sw-only —
 // they never run on the Korean (or any non-Swahili) DB, which ships fully migrated.
@@ -677,6 +718,10 @@ const MIGRATIONS: Migration[] = [
   { version: 1, languages: ['sw'], run: runLegacyMigration },
   // v2: Phase 0 grammar-content correctness repair (negatives, concord, ndiyo).
   { version: 2, languages: ['sw'], run: (db) => fixGrammarContent(db) },
+  // v3: local-first curriculum audit notes for every language DB.
+  { version: 3, run: createReviewNotesTable },
+  // v4: installed curriculum package metadata for future unit-by-unit downloads.
+  { version: 4, run: createCurriculumInstallTables },
 ];
 
 // Applies every migration newer than the DB's recorded version (and applicable to

@@ -6,7 +6,7 @@ import {
   saveGoogleSession, getGoogleProfile, getOrRefreshToken, clearGoogleSession,
   googleUsername,
 } from '../auth/googleAuth';
-import { syncWithDrive, clearSyncState } from '../sync/driveSync';
+import { clearSyncState, syncNow } from '../sync/syncService';
 import { LANGUAGES } from '../data/languages';
 
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
@@ -30,10 +30,9 @@ export default function UserPickerScreen() {
     sessionStorage.setItem('currentUser', username);
     sessionStorage.setItem('currentLanguage', language);
 
-    // Drive sync currently targets the Swahili profile only.
     if (language === 'sw' && (token || navigator.onLine)) {
       setOpenStatus('Syncing…');
-      await syncWithDrive({ tokenOverride: token, allowRefresh: true }).catch(() => {});
+      await syncNow({ tokenOverride: token, allowRefresh: true }).catch(() => {});
       setOpenStatus('');
     }
 

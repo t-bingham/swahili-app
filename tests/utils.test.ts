@@ -3,7 +3,7 @@ import { normalize } from '../src/utils/normalize';
 import { computeLessons } from '../src/utils/lessons';
 import { computeStatus } from '../src/utils/unitStatus';
 import { unitBasePath, unitDisplayLabel, unitsForTrack } from '../src/utils/unitTracks';
-import { parseConcord } from '../src/components/exercises/ConcordExercise';
+import { parseSwahiliConcord } from '../src/languages/swahiliConcord';
 import type { Unit, UnitProgress } from '../src/types';
 import { makeCard } from './factories';
 
@@ -163,9 +163,9 @@ describe('unitTracks', () => {
   });
 });
 
-describe('parseConcord', () => {
+describe('parseSwahiliConcord', () => {
   it('returns null for non-concord cards', () => {
-    expect(parseConcord(makeCard())).toBeNull();
+    expect(parseSwahiliConcord(makeCard())).toBeNull();
   });
 
   it('parses adjective agreement cards', () => {
@@ -177,7 +177,7 @@ describe('parseConcord', () => {
       tags: ['adjective-agreement'],
     });
 
-    expect(parseConcord(card)).toEqual({
+    expect(parseSwahiliConcord(card)).toEqual({
       noun: 'watu',
       answer: 'wazuri',
       stem: 'zuri',

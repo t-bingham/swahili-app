@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getProfile, updateProfileSettings, closeDatabase, resetCurrentUserData, getCurrentLanguage, getCurrentUser, openDatabase } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
 import { getGoogleProfile, clearGoogleSession } from '../auth/googleAuth';
-import { uploadToDrive, getLastSyncTime, clearSyncState } from '../sync/driveSync';
+import { clearSyncState, getActiveSyncProvider, getLastSyncTime, syncNow as runSyncNow } from '../sync/syncService';
 import { LANGUAGES } from '../data/languages';
 import { getLanguageAdapter } from '../languages';
 import type { ProfileSettings, LearningGoal, GrammarDepth } from '../types';
@@ -181,6 +181,7 @@ export default function SettingsScreen() {
   const [syncMsg, setSyncMsg] = useState('');
   const googleProfile = getGoogleProfile();
   const lastSync = getLastSyncTime();
+  const syncProvider = getActiveSyncProvider();
   const language = getLanguageAdapter(getCurrentLanguage());
 
   useEffect(() => {
@@ -225,9 +226,9 @@ export default function SettingsScreen() {
   async function syncNow() {
     setSyncing(true);
     setSyncMsg('');
-    const ok = await uploadToDrive();
+    const ok = await runSyncNow({ allowRefresh: true });
     setSyncing(false);
-    setSyncMsg(ok ? '✓ Synced to Drive' : navigator.onLine ? 'Sync failed — try again' : 'Offline — will sync after next session');
+    setSyncMsg(ok ? `✓ Synced to ${syncProvider.label}` : navigator.onLine ? 'Sync failed — try again' : 'Offline — will sync after next session');
     if (ok) setTimeout(() => setSyncMsg(''), 3000);
   }
 

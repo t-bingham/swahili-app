@@ -164,6 +164,7 @@ export async function openDatabase(userName: string, lang: string = _currentLang
 
   // Migrations are tagged by language; Swahili-specific ones never run on other DBs.
   runMigrations(_db, lang);
+  ensureCurriculumInstallMetadata(lang);
 
   scheduleFlush();
 }
@@ -275,6 +276,71 @@ export async function recordActivity(): Promise<void> {
 export async function getUnits(): Promise<Unit[]> {
   return query<Record<string, unknown>>('SELECT * FROM units ORDER BY order_index')
     .map(r => ({ ...r, prerequisite_ids: JSON.parse(r.prerequisite_ids as string) }) as unknown as Unit);
+}
+
+export interface CurriculumPackageInstall {
+  language: string;
+  package_version: number;
+  template_db: string;
+  installed_scope: 'all' | 'partial';
+  installed_at: string;
+  updated_at: string;
+}
+
+export interface CurriculumUnitInstall {
+  language: string;
+  unit_id: string;
+  unit_version: number;
+  installed_at: string;
+}
+
+export async function getCurriculumPackageInstall(): Promise<CurriculumPackageInstall | null> {
+  const rows = query<CurriculumPackageInstall>(
+    'SELECT * FROM curriculum_packages WHERE language = ? LIMIT 1',
+    [_currentLanguage],
+  );
+  return rows[0] ?? null;
+}
+
+export async function getInstalledCurriculumUnits(): Promise<CurriculumUnitInstall[]> {
+  return query<CurriculumUnitInstall>(
+    `SELECT * FROM curriculum_unit_versions
+     WHERE language = ?
+     ORDER BY unit_id ASC`,
+    [_currentLanguage],
+  );
+}
+
+export interface LocalProgressChanges {
+  exported_at: string;
+  language: string;
+  since: string | null;
+  card_states: CardState[];
+  review_logs: ReviewLog[];
+  sessions: Session[];
+  unit_progress: UnitProgress[];
+  review_notes: ReviewNote[];
+}
+
+export async function exportLocalProgressChanges(sinceIso?: string | null): Promise<LocalProgressChanges> {
+  const since = sinceIso || null;
+  const cardWhere = since
+    ? 'WHERE last_review >= ? OR COALESCE(starred,0)=1'
+    : 'WHERE review_count > 0 OR COALESCE(starred,0)=1';
+  const eventWhere = since ? 'WHERE reviewed_at >= ?' : '';
+  const sessionWhere = since ? 'WHERE completed_at >= ?' : '';
+  const noteWhere = since ? 'WHERE created_at >= ? OR COALESCE(resolved_at, created_at) >= ?' : '';
+
+  return {
+    exported_at: new Date().toISOString(),
+    language: _currentLanguage,
+    since,
+    card_states: query<CardState>(`SELECT * FROM card_states ${cardWhere}`, since ? [since] : []),
+    review_logs: query<ReviewLog>(`SELECT * FROM review_logs ${eventWhere}`, since ? [since] : []),
+    sessions: query<Session>(`SELECT * FROM sessions ${sessionWhere}`, since ? [since] : []),
+    unit_progress: query<UnitProgress>('SELECT * FROM unit_progress'),
+    review_notes: query<ReviewNote>(`SELECT * FROM review_notes ${noteWhere}`, since ? [since, since] : []),
+  };
 }
 
 // ─── Unit Progress ────────────────────────────────────────────────────────────
@@ -792,6 +858,27 @@ export async function getReviewQueue(filter: ReviewFilter): Promise<Card[]> {
   ).map(parseCard);
 }
 
+function ensureCurriculumInstallMetadata(lang: string): void {
+  const cfg = getLanguage(lang);
+  const now = new Date().toISOString();
+  run(
+    `INSERT INTO curriculum_packages
+       (language, package_version, template_db, installed_scope, installed_at, updated_at)
+     VALUES (?, ?, ?, 'all', ?, ?)
+     ON CONFLICT(language) DO UPDATE SET
+       package_version = excluded.package_version,
+       template_db = excluded.template_db,
+       updated_at = excluded.updated_at`,
+    [cfg.id, cfg.curriculumVersion, cfg.templateDb, now, now],
+  );
+  run(
+    `INSERT OR IGNORE INTO curriculum_unit_versions
+       (language, unit_id, unit_version, installed_at)
+     SELECT ?, id, 1, ? FROM units`,
+    [cfg.id, now],
+  );
+}
+
 export async function getReviewCard(cardId: string): Promise<Card | null> {
   const rows = query<Record<string, unknown>>(
     `SELECT * FROM cards c
@@ -808,12 +895,88 @@ export interface ReviewUpdate {
   cultural_note: string;
 }
 
+export type ReviewIssueType =
+  | 'translation'
+  | 'pronunciation'
+  | 'cultural_note'
+  | 'register'
+  | 'example'
+  | 'grammar'
+  | 'other';
+
+export interface ReviewNote {
+  id: string;
+  card_id: string;
+  language: string;
+  issue_type: ReviewIssueType;
+  note: string;
+  suggested_correction: string | null;
+  reviewer: string | null;
+  status: 'open' | 'accepted' | 'rejected';
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export interface ReviewNoteInput {
+  card_id: string;
+  language: string;
+  issue_type: ReviewIssueType;
+  note: string;
+  suggested_correction?: string | null;
+  reviewer?: string | null;
+}
+
 export async function saveReviewedCard(id: string, updates: ReviewUpdate): Promise<void> {
   run(
     `UPDATE cards SET
        english = ?, pronunciation = ?, register = ?, cultural_note = ?, source = 'reviewed'
      WHERE id = ?`,
     [updates.english, updates.pronunciation, updates.register, updates.cultural_note || null, id],
+  );
+}
+
+export async function saveReviewNote(input: ReviewNoteInput): Promise<ReviewNote> {
+  const now = new Date().toISOString();
+  const note: ReviewNote = {
+    id: `rn_${now.replace(/\D/g, '')}_${Math.random().toString(36).slice(2, 8)}`,
+    card_id: input.card_id,
+    language: input.language,
+    issue_type: input.issue_type,
+    note: input.note.trim(),
+    suggested_correction: input.suggested_correction?.trim() || null,
+    reviewer: input.reviewer?.trim() || null,
+    status: 'open',
+    created_at: now,
+    resolved_at: null,
+  };
+  if (!note.note && !note.suggested_correction) return note;
+  run(
+    `INSERT INTO review_notes
+       (id, card_id, language, issue_type, note, suggested_correction, reviewer, status, created_at, resolved_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      note.id, note.card_id, note.language, note.issue_type, note.note,
+      note.suggested_correction, note.reviewer, note.status, note.created_at, note.resolved_at,
+    ],
+  );
+  return note;
+}
+
+export async function getReviewNotesForCard(cardId: string): Promise<ReviewNote[]> {
+  return query<ReviewNote>(
+    `SELECT * FROM review_notes
+     WHERE card_id = ?
+     ORDER BY created_at DESC`,
+    [cardId],
+  );
+}
+
+export async function exportReviewNotes(): Promise<Array<ReviewNote & { target: string; english: string; unit_id: string; type: string }>> {
+  return query<ReviewNote & { target: string; english: string; unit_id: string; type: string }>(
+    `SELECT rn.*, c.swahili as target, c.english, c.unit_id, c.type
+     FROM review_notes rn
+     LEFT JOIN cards c ON c.id = rn.card_id
+     ORDER BY rn.created_at DESC`,
   );
 }
 
@@ -1123,6 +1286,7 @@ export async function mergeRemoteDb(remoteBytes: Uint8Array): Promise<{ merged: 
       _mergeCardStates(_db, remoteDb);
       _mergeAppendOnly(_db, remoteDb, 'sessions');
       _mergeAppendOnly(_db, remoteDb, 'review_logs');
+      _mergeAppendOnly(_db, remoteDb, 'review_notes');
       _mergeByOpportunities(_db, remoteDb, 'skill_mastery', ['skill_tag']);
       _mergeByOpportunities(_db, remoteDb, 'morpheme_mastery', ['morpheme', 'slot']);
       _mergeErrorPatterns(_db, remoteDb);

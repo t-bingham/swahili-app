@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Review: Multilingual Learning App</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #121a2c;
+    --panel2: #0f1728;
+    --line: #263449;
+    --ink: #e5edf8;
+    --muted: #9fb0c7;
+    --dim: #6f8097;
+    --blue: #57b8ff;
+    --teal: #38d9c8;
+    --green: #45d483;
+    --yellow: #f3c969;
+    --red: #ff7777;
+    --violet: #b79cff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.58 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 36px 24px 72px; }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 30px;
+  }
+  h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; letter-spacing: -0.02em; }
+  .lede { max-width: 920px; color: var(--muted); font-size: 17px; margin: 0; }
+  .meta { margin-top: 16px; color: var(--dim); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+  nav {
+    position: sticky;
+    top: 18px;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  nav a {
+    display: block;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  nav a:hover { background: rgba(87,184,255,.08); color: var(--ink); }
+  main { min-width: 0; }
+  section { margin: 0 0 36px; }
+  h2 {
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+  }
+  h3 { margin: 0 0 5px; font-size: 18px; }
+  p { margin: 8px 0; }
+  code {
+    color: #9de7ff;
+    background: #0a1324;
+    border: 1px solid #243248;
+    border-radius: 5px;
+    padding: 1px 5px;
+    font-size: 13px;
+  }
+  .callout {
+    background: linear-gradient(180deg, rgba(87,184,255,.09), rgba(56,217,200,.05));
+    border: 1px solid rgba(87,184,255,.28);
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 0 0 24px;
+    color: var(--muted);
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 12px 0;
+  }
+  .card p { color: var(--muted); }
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .status {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 15px;
+  }
+  .status strong { display: block; margin-bottom: 4px; }
+  .status span { color: var(--muted); font-size: 13px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .p0 { color: var(--red); border: 1px solid rgba(255,119,119,.4); background: rgba(255,119,119,.08); }
+  .p1 { color: var(--yellow); border: 1px solid rgba(243,201,105,.4); background: rgba(243,201,105,.08); }
+  .p2 { color: var(--blue); border: 1px solid rgba(87,184,255,.4); background: rgba(87,184,255,.08); }
+  .pass { color: var(--green); border: 1px solid rgba(69,212,131,.4); background: rgba(69,212,131,.08); }
+  .warn { color: var(--yellow); border: 1px solid rgba(243,201,105,.4); background: rgba(243,201,105,.08); }
+  .phase { color: var(--violet); border: 1px solid rgba(183,156,255,.4); background: rgba(183,156,255,.08); }
+  ul, ol { margin: 10px 0 0; padding-left: 22px; }
+  li { margin: 6px 0; color: var(--muted); }
+  li strong, p strong { color: var(--ink); }
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .matrix th, .matrix td {
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+  }
+  .matrix th {
+    background: #162238;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .matrix td { color: var(--muted); background: rgba(18,26,44,.65); }
+  .footer {
+    color: var(--dim);
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+    margin-top: 44px;
+    font-size: 13px;
+  }
+  @media (max-width: 980px) {
+    .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+    nav { position: static; }
+  }
+  @media (max-width: 560px) {
+    .status-grid { grid-template-columns: 1fr; }
+    .shell { padding: 24px 16px 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>Code Review: Multilingual Learning App</h1>
+    <p class="lede">
+      A static engineering review of the current local-first language app, focused on stability, curriculum review, multilingual readiness, offline strategy, and maintainability.
+    </p>
+    <div class="meta">Created: 17 June 2026 &middot; Artifact: static review plan &middot; Scope: no React route, no app behavior changes</div>
+  </header>
+
+  <div class="grid">
+    <nav aria-label="Review sections">
+      <a href="#summary">Summary</a>
+      <a href="#verification">Verification</a>
+      <a href="#p0">P0 Findings</a>
+      <a href="#p1">P1 Findings</a>
+      <a href="#p2">P2 Findings</a>
+      <a href="#table">Findings Table</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#strengths">Strengths</a>
+      <a href="#test-plan">Test Plan</a>
+    </nav>
+
+    <main>
+      <section id="summary">
+        <h2>Summary</h2>
+        <div class="callout">
+          <strong>Overall state:</strong> the app is buildable and structurally promising. The local-first architecture, language adapter direction, and seed database separation are good foundations. The next work should stabilize tests, close the curriculum review loop, and finish the multilingual/offline story before broader native or backend migration work.
+        </div>
+        <div class="card">
+          <h3>What This Review Is For</h3>
+          <p>
+            This page is a planning artifact for future implementation. It collects review findings into priorities so fixes can be scheduled without mixing analysis, implementation, and product decisions in one pass.
+          </p>
+          <p>
+            The review intentionally does not propose a cloud rewrite. It assumes the current no-cost local-first PWA remains the right validation architecture while friends and fluent speakers test the app.
+          </p>
+        </div>
+      </section>
+
+      <section id="verification">
+        <h2>Verification</h2>
+        <div class="status-grid">
+          <div class="status">
+            <div class="row"><span class="pill pass">Pass</span></div>
+            <strong>TypeScript</strong>
+            <span><code>npm.cmd exec tsc -- --noEmit</code> passed.</span>
+          </div>
+          <div class="status">
+            <div class="row"><span class="pill pass">Pass</span></div>
+            <strong>Production Build</strong>
+            <span><code>npm.cmd run build</code> passed outside the sandbox.</span>
+          </div>
+          <div class="status">
+            <div class="row"><span class="pill pass">Pass</span></div>
+            <strong>Metadata Validation</strong>
+            <span><code>node scripts\validate-generated-metadata.cjs</code> passed.</span>
+          </div>
+          <div class="status">
+            <div class="row"><span class="pill warn">Expected Fail</span></div>
+            <strong>Vitest</strong>
+            <span><code>npm.cmd test</code> fails because two DB regression tests are stale.</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Build Warning To Track</h3>
+          <p>
+            Vite reports that <code>src/database/db.ts</code> is dynamically imported by <code>HomeScreen</code> but also statically imported by many modules, so the dynamic import does not create a separate chunk. This is not currently a build failure.
+          </p>
+        </div>
+      </section>
+
+      <section id="p0">
+        <h2>P0 Findings</h2>
+        <div class="card">
+          <div class="row"><span class="pill p0">P0</span><span class="pill phase">Correctness</span></div>
+          <h3>Test Suite Is Stale</h3>
+          <p>
+            <code>tests/database-regression.test.ts</code> still expects migration bookkeeping strings inside <code>src/database/db.ts</code>, but migrations now live in <code>src/database/migrations.ts</code>. The app builds, but the regression suite no longer reflects the architecture.
+          </p>
+          <ul>
+            <li>Update migration-source tests to inspect <code>migrations.ts</code>.</li>
+            <li>Keep the seed DB schema/content checks.</li>
+            <li>Update project docs that still claim there is no test suite.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p0">P0</span><span class="pill phase">Curriculum QA</span></div>
+          <h3>Curriculum Review Is Not Seed-Database Complete</h3>
+          <p>
+            The in-app review screen edits the user's local IndexedDB clone. It can export a correction patch, but there is no importer that applies approved corrections back into <code>public/*_default.db</code>.
+          </p>
+          <ul>
+            <li>Add target-language text editing for review, not only English/pronunciation/register/cultural note.</li>
+            <li>Add a patch importer script that applies approved JSON patches to the correct seed DB.</li>
+            <li>Add migration support for already-cloned user DBs when approved content fixes must propagate.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p0">P0</span><span class="pill phase">Sync</span></div>
+          <h3>Multilingual Sync Remains Swahili-Only</h3>
+          <p>
+            Drive sync currently stores one <code>swahili.db</code> file and only runs for language <code>sw</code>. This avoids overwriting Korean or Maori data, but it also means non-Swahili progress is local-only.
+          </p>
+          <ul>
+            <li>Use per-language Drive filenames such as <code>sw.db</code>, <code>ko.db</code>, and <code>mi.db</code>.</li>
+            <li>Include language ID in sync keys and sync UI labels.</li>
+            <li>Document the transition path so existing Swahili Drive users keep their current backup.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="p1">
+        <h2>P1 Findings</h2>
+        <div class="card">
+          <div class="row"><span class="pill p1">P1</span><span class="pill phase">UI</span></div>
+          <h3>Settings Shows Duplicate Review Entry In Dev</h3>
+          <p>
+            The visible Curriculum Review section was added, but the older dev-only Card Review Pipeline button remains. Development builds show the same review entry twice.
+          </p>
+          <ul>
+            <li>Remove only the duplicate dev-only review button.</li>
+            <li>Keep Reset account data behind <code>import.meta.env.DEV</code>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p1">P1</span><span class="pill phase">Offline</span></div>
+          <h3>Offline/PWA Strategy Needs Language-Pack Cleanup</h3>
+          <p>
+            The manifest is still branded as Swahili, and the PWA currently risks caching all DB files through the Workbox glob. This is acceptable for a prototype, but it does not match the future "download language/unit packs" model.
+          </p>
+          <ul>
+            <li>Rename app manifest branding to a multilingual product name when appropriate.</li>
+            <li>Decide whether first install should cache all language DBs or only selected packs.</li>
+            <li>Design unit-pack download metadata before Capacitor packaging.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p1">P1</span><span class="pill phase">Data Model</span></div>
+          <h3>Schema Names Are Still Swahili-Shaped</h3>
+          <p>
+            Shared card fields still use names like <code>swahili</code> and <code>example_sentences[].swahili</code>. The adapter layer hides much of this, but new code still accesses raw fields in several places.
+          </p>
+          <ul>
+            <li>Keep DB columns unchanged for now to avoid migration churn.</li>
+            <li>Use adapter methods in UI code wherever possible.</li>
+            <li>Plan a future compatibility migration to <code>target_text</code> only if the app commits to a larger schema cleanup.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p1">P1</span><span class="pill phase">Language Adapters</span></div>
+          <h3>Some Screens Still Bypass The Adapter Layer</h3>
+          <p>
+            <code>UnitLessonScreen</code>, parts of <code>ReviewScreen</code>, the Card Gallery conjugation UI, and some helper text still assume Swahili grammar or raw target fields.
+          </p>
+          <ul>
+            <li>Route target text, examples, grammar labels, and special drill labels through language adapters.</li>
+            <li>Avoid adding new <code>language.id</code> branches in shared screens unless the branch controls navigation or availability.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="p2">
+        <h2>P2 Findings</h2>
+        <div class="card">
+          <div class="row"><span class="pill p2">P2</span><span class="pill phase">Review Flow</span></div>
+          <h3>Review Save Flow Is Optimistic</h3>
+          <p>
+            <code>handleSave()</code> calls <code>saveReviewedCard()</code> without awaiting it and has no error state. Direct-card review can also mark handwritten cards as <code>reviewed</code>, which may blur generated-review status with seed correction status.
+          </p>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p2">P2</span><span class="pill phase">Docs</span></div>
+          <h3>Documentation Is Stale</h3>
+          <p>
+            <code>README.md</code> still presents the project as a Swahili-only no-account app. <code>AGENTS.md</code> says there is no test suite even though <code>tests/</code> exists. Older review docs contain fixed issues and should be marked historical or superseded.
+          </p>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p2">P2</span><span class="pill phase">Maintainability</span></div>
+          <h3>Database Layer Is Large And Multi-Concern</h3>
+          <p>
+            <code>db.ts</code> still owns SQL.js initialization, IndexedDB storage, query helpers, review helpers, and remote merge logic. It works, but it is getting heavy.
+          </p>
+          <ul>
+            <li>Split only after current feature churn slows.</li>
+            <li>Suggested future modules: storage/opening, learning queries, review queries, sync merge, and migrations.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="row"><span class="pill p2">P2</span><span class="pill phase">Privacy</span></div>
+          <h3>Auth Tokens Live In Local Storage</h3>
+          <p>
+            Google token/profile data is stored in <code>localStorage</code>. This is acceptable for a prototype, but should be documented as a risk if the app becomes a broader product.
+          </p>
+        </div>
+      </section>
+
+      <section id="table">
+        <h2>Findings Table</h2>
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Severity</th>
+              <th>Issue</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tests</td>
+              <td><span class="pill p0">P0</span></td>
+              <td>Regression tests inspect the old migration location.</td>
+              <td>Update assertions to match <code>migrations.ts</code> and the migration registry.</td>
+            </tr>
+            <tr>
+              <td>Curriculum Review</td>
+              <td><span class="pill p0">P0</span></td>
+              <td>In-app edits do not automatically reach seed DBs.</td>
+              <td>Add approved patch import scripts and migration mirroring.</td>
+            </tr>
+            <tr>
+              <td>Multilingual Sync</td>
+              <td><span class="pill p0">P0</span></td>
+              <td>Drive sync is Swahili-only.</td>
+              <td>Use per-language Drive files and sync keys.</td>
+            </tr>
+            <tr>
+              <td>Settings</td>
+              <td><span class="pill p1">P1</span></td>
+              <td>Review entry is duplicated in dev builds.</td>
+              <td>Remove duplicate dev-only review button.</td>
+            </tr>
+            <tr>
+              <td>PWA</td>
+              <td><span class="pill p1">P1</span></td>
+              <td>Manifest and cache strategy still read as Swahili-first.</td>
+              <td>Clarify app branding and language-pack caching behavior.</td>
+            </tr>
+            <tr>
+              <td>Schema</td>
+              <td><span class="pill p1">P1</span></td>
+              <td>Shared target-language fields are named <code>swahili</code>.</td>
+              <td>Use adapter accessors now; consider schema rename later.</td>
+            </tr>
+            <tr>
+              <td>Adapters</td>
+              <td><span class="pill p1">P1</span></td>
+              <td>Some UI still bypasses language adapters.</td>
+              <td>Move target text and grammar wording through adapters.</td>
+            </tr>
+            <tr>
+              <td>Review Save</td>
+              <td><span class="pill p2">P2</span></td>
+              <td>Save is optimistic with no failure UI.</td>
+              <td>Await DB writes and show error/success state explicitly.</td>
+            </tr>
+            <tr>
+              <td>Docs</td>
+              <td><span class="pill p2">P2</span></td>
+              <td>README/AGENTS are behind current app state.</td>
+              <td>Refresh docs after the current review fixes land.</td>
+            </tr>
+            <tr>
+              <td>Build</td>
+              <td><span class="pill p2">P2</span></td>
+              <td>Vite warns about mixed static/dynamic <code>db.ts</code> imports.</td>
+              <td>Remove the dynamic import or plan a deliberate chunk split.</td>
+            </tr>
+            <tr>
+              <td>Maintainability</td>
+              <td><span class="pill p2">P2</span></td>
+              <td><code>db.ts</code> has many responsibilities.</td>
+              <td>Split after feature churn slows.</td>
+            </tr>
+            <tr>
+              <td>Privacy</td>
+              <td><span class="pill p2">P2</span></td>
+              <td>Google auth state is in <code>localStorage</code>.</td>
+              <td>Document risk now; revisit with backend/native architecture.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="roadmap">
+        <h2>Implementation Roadmap</h2>
+        <div class="card">
+          <h3>Phase 1: Stabilize The Review Baseline</h3>
+          <ol>
+            <li>Update stale DB regression tests.</li>
+            <li>Remove duplicate Settings review entry in dev.</li>
+            <li>Refresh AGENTS/README references to tests and languages.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Phase 2: Make Curriculum Review Seed-DB Capable</h3>
+          <ol>
+            <li>Add full correction fields, including target text and examples.</li>
+            <li>Export structured patches consistently.</li>
+            <li>Add an importer that applies approved patches to the selected seed DB.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Phase 3: Complete Multilingual Sync And Offline Packs</h3>
+          <ol>
+            <li>Add per-language Drive sync files.</li>
+            <li>Decide whether all languages or selected packs are cached.</li>
+            <li>Align PWA branding with the multi-language product direction.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Phase 4: De-Swahilify Remaining Shared UI</h3>
+          <ol>
+            <li>Move remaining raw target text access behind adapters.</li>
+            <li>Replace Swahili-only helper text in shared screens.</li>
+            <li>Keep DB schema migration optional until the product direction is firmer.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Phase 5: Maintenance Cleanup</h3>
+          <ol>
+            <li>Address the Vite chunking warning if bundle size becomes a real issue.</li>
+            <li>Split <code>db.ts</code> by concern after the review workflow settles.</li>
+            <li>Document auth/privacy tradeoffs before broader public testing.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="strengths">
+        <h2>Strengths</h2>
+        <div class="card">
+          <h3>Good Foundations</h3>
+          <ul>
+            <li><strong>Local-first architecture:</strong> strong fit for low-cost testing and offline study.</li>
+            <li><strong>Seed DB separation:</strong> curriculum is separate from per-user progress.</li>
+            <li><strong>Language adapter direction:</strong> the right abstraction for Korean, Maori, Swahili, and future languages.</li>
+            <li><strong>Production build:</strong> the app builds successfully despite active feature work.</li>
+            <li><strong>Metadata validation:</strong> generated content now has a safety check.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="test-plan">
+        <h2>Test Plan For This Artifact</h2>
+        <div class="card">
+          <h3>Checks</h3>
+          <ul>
+            <li>Open <code>review.html</code> directly with a <code>file:///</code> URL and confirm layout renders.</li>
+            <li>Run <code>npm.cmd exec tsc -- --noEmit</code>; expect pass.</li>
+            <li>Run <code>npm.cmd run build</code>; expect pass.</li>
+            <li>Run <code>git diff --check</code>; expect pass.</li>
+            <li>Do not block on <code>npm.cmd test</code>; its current failure is documented as a review finding.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="footer">
+        This document is intentionally static. It can be opened from the filesystem and does not alter the React app, routing, database, or build pipeline.
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

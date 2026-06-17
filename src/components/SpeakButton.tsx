@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react';
-
-function findVoice(langPrefixes: string[]): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-  const prefixes = langPrefixes.map(prefix => prefix.toLowerCase());
-  return window.speechSynthesis.getVoices().find(voice => {
-    const lang = voice.lang.toLowerCase();
-    return prefixes.some(prefix => lang.startsWith(prefix));
-  }) ?? null;
-}
+import { findSpeechVoice, hasSpeechSynthesis, onSpeechVoicesChanged, speakText } from '../platform/speech';
 
 interface Props {
   text: string;
@@ -16,24 +8,20 @@ interface Props {
 }
 
 export default function SpeakButton({ text, enabled = false, langPrefixes }: Props) {
-  const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(() => findVoice(langPrefixes));
+  const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(() => findSpeechVoice(langPrefixes));
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    const update = () => setVoice(findVoice(langPrefixes));
+    if (!hasSpeechSynthesis()) return;
+    const update = () => setVoice(findSpeechVoice(langPrefixes));
     update();
-    window.speechSynthesis.addEventListener('voiceschanged', update);
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', update);
+    return onSpeechVoicesChanged(update);
   }, [langPrefixes]);
 
   if (!enabled || !voice || !text) return null;
 
   function speak() {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = voice;
-    utterance.lang = voice!.lang;
-    window.speechSynthesis.speak(utterance);
+    if (!voice) return;
+    speakText(text, voice);
   }
 
   return (

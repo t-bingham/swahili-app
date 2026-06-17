@@ -16,6 +16,7 @@ export interface LanguageConfig {
   flag: string;
   script: Script;
   templateDb: string;
+  curriculumVersion: number;
   available: boolean;
   targetLanguageName: string;
   targetLanguageShortName: string;
@@ -32,6 +33,7 @@ export const LANGUAGES: Record<string, LanguageConfig> = {
     flag: '\uD83C\uDDF9\uD83C\uDDFF',
     script: 'latin',
     templateDb: '/swahili_default.db',
+    curriculumVersion: 1,
     available: true,
     targetLanguageName: 'Swahili',
     targetLanguageShortName: 'Swahili',
@@ -46,6 +48,7 @@ export const LANGUAGES: Record<string, LanguageConfig> = {
     flag: '\uD83C\uDDF0\uD83C\uDDF7',
     script: 'hangul',
     templateDb: '/korean_default.db',
+    curriculumVersion: 1,
     available: true,
     targetLanguageName: 'Korean',
     targetLanguageShortName: 'Korean',
@@ -60,6 +63,7 @@ export const LANGUAGES: Record<string, LanguageConfig> = {
     flag: '\uD83C\uDDF3\uD83C\uDDFF',
     script: 'latin',
     templateDb: '/maori_default.db',
+    curriculumVersion: 1,
     available: true,
     targetLanguageName: 'te reo Maori',
     targetLanguageShortName: 'Maori',

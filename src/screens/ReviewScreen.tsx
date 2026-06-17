@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Card, CardRegister } from '../types';
-import type { ReviewFilter } from '../database/db';
-import { getCurrentLanguage, getReviewQueue, saveReviewedCard, getReviewStats, getReviewCard } from '../database/db';
+import type { ReviewFilter, ReviewIssueType, ReviewNote } from '../database/db';
+import {
+  exportReviewNotes,
+  getCurrentLanguage,
+  getReviewCard,
+  getReviewNotesForCard,
+  getReviewQueue,
+  getReviewStats,
+  saveReviewedCard,
+  saveReviewNote,
+} from '../database/db';
 import { getLanguageAdapter } from '../languages';
+import { downloadJson } from '../platform/fileExport';
 
 const FILTERS: { id: ReviewFilter; label: string }[] = [
   { id: 'generated',   label: 'Needs Review' },
@@ -15,6 +25,15 @@ const FILTERS: { id: ReviewFilter; label: string }[] = [
 ];
 
 const REGISTER_OPTIONS = ['neutral', 'formal', 'informal', 'slang', 'literary', 'mixed'];
+const ISSUE_TYPES: { id: ReviewIssueType; label: string }[] = [
+  { id: 'translation', label: 'Translation' },
+  { id: 'pronunciation', label: 'Pronunciation' },
+  { id: 'cultural_note', label: 'Cultural note' },
+  { id: 'register', label: 'Register' },
+  { id: 'example', label: 'Example' },
+  { id: 'grammar', label: 'Grammar' },
+  { id: 'other', label: 'Other' },
+];
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
@@ -25,7 +44,15 @@ export default function ReviewScreen() {
   const [index, setIndex] = useState(0);
   const [stats, setStats] = useState({ reviewed: 0, generated: 0 });
   const [edit, setEdit] = useState({ english: '', pronunciation: '', register: 'neutral', cultural_note: '' });
+  const [notes, setNotes] = useState<ReviewNote[]>([]);
+  const [noteDraft, setNoteDraft] = useState({
+    issue_type: 'translation' as ReviewIssueType,
+    note: '',
+    suggested_correction: '',
+    reviewer: localStorage.getItem('curriculum_reviewer') ?? '',
+  });
   const [saved, setSaved] = useState(false);
+  const [noteSaved, setNoteSaved] = useState(false);
   const language = getLanguageAdapter(getCurrentLanguage());
 
   useEffect(() => {
@@ -49,16 +76,44 @@ export default function ReviewScreen() {
       register: card.register ?? 'neutral',
       cultural_note: card.cultural_note ?? '',
     });
+    setNoteDraft(s => ({ ...s, issue_type: 'translation', note: '', suggested_correction: '' }));
+    getReviewNotesForCard(card.id).then(setNotes);
     setSaved(false);
+    setNoteSaved(false);
   }, [card?.id]);
 
   function advance() {
     setIndex(i => Math.min(i + 1, queue.length - 1));
   }
 
-  function handleSave() {
+  async function saveCurrentNote(): Promise<boolean> {
+    if (!card) return false;
+    if (!noteDraft.note.trim() && !noteDraft.suggested_correction.trim()) return false;
+    localStorage.setItem('curriculum_reviewer', noteDraft.reviewer);
+    const note = await saveReviewNote({
+      card_id: card.id,
+      language: language.id,
+      issue_type: noteDraft.issue_type,
+      note: noteDraft.note,
+      suggested_correction: noteDraft.suggested_correction,
+      reviewer: noteDraft.reviewer,
+    });
+    if (!note.note && !note.suggested_correction) return false;
+    setNotes(existing => [note, ...existing]);
+    setNoteDraft(s => ({ ...s, note: '', suggested_correction: '' }));
+    setNoteSaved(true);
+    setTimeout(() => setNoteSaved(false), 1200);
+    return true;
+  }
+
+  async function handleSaveNote() {
+    await saveCurrentNote();
+  }
+
+  async function handleSave() {
     if (!card) return;
-    saveReviewedCard(card.id, edit);
+    await saveCurrentNote();
+    await saveReviewedCard(card.id, edit);
     setSaved(true);
     setStats(s => ({
       reviewed: card.source === 'generated' ? s.reviewed + 1 : s.reviewed,
@@ -69,6 +124,15 @@ export default function ReviewScreen() {
       : c,
     ));
     setTimeout(() => advance(), 600);
+  }
+
+  async function downloadReviewNotes() {
+    const rows = await exportReviewNotes();
+    downloadJson(`${language.id}_curriculum_review_notes.json`, {
+      exported_at: new Date().toISOString(),
+      language: language.id,
+      notes: rows,
+    });
   }
 
   function downloadCorrectionPatch() {
@@ -93,13 +157,7 @@ export default function ReviewScreen() {
         cultural_note: edit.cultural_note,
       },
     };
-    const blob = new Blob([JSON.stringify(patch, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${language.id}_${card.id}_correction.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadJson(`${language.id}_${card.id}_correction.json`, patch);
   }
 
   if (!card) {
@@ -129,6 +187,12 @@ export default function ReviewScreen() {
             {language.config.name}: {stats.reviewed} reviewed / {stats.generated} generated
           </div>
         </div>
+        <button
+          onClick={downloadReviewNotes}
+          className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+        >
+          Export Notes
+        </button>
       </div>
 
       {cardId ? (
@@ -251,6 +315,82 @@ export default function ReviewScreen() {
             <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">Example</div>
             <div className="text-sm text-slate-300 italic">"{card.example_sentences[0].swahili}"</div>
             <div className="text-sm text-slate-500 mt-0.5">"{card.example_sentences[0].english}"</div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-slate-800 rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="text-sm font-bold text-slate-100">Review note</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Use this for audit comments that should make it back to the seed database review process.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-slate-500 uppercase tracking-wider">Issue type</label>
+            <select
+              value={noteDraft.issue_type}
+              onChange={e => setNoteDraft(s => ({ ...s, issue_type: e.target.value as ReviewIssueType }))}
+              className="mt-1 w-full px-4 py-2.5 bg-slate-700 border border-slate-600 focus:border-cyan-400 rounded-lg text-slate-100 text-sm transition-colors outline-none"
+            >
+              {ISSUE_TYPES.map(issue => <option key={issue.id} value={issue.id}>{issue.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 uppercase tracking-wider">Reviewer</label>
+            <input
+              type="text"
+              value={noteDraft.reviewer}
+              onChange={e => setNoteDraft(s => ({ ...s, reviewer: e.target.value }))}
+              placeholder="name or initials"
+              className="mt-1 w-full px-4 py-2.5 bg-slate-700 border border-slate-600 focus:border-cyan-400 rounded-lg text-slate-100 text-sm transition-colors outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs text-slate-500 uppercase tracking-wider">Note</label>
+          <textarea
+            value={noteDraft.note}
+            onChange={e => setNoteDraft(s => ({ ...s, note: e.target.value }))}
+            placeholder="What should be checked, corrected, or discussed?"
+            rows={3}
+            className="mt-1 w-full px-4 py-2.5 bg-slate-700 border border-slate-600 focus:border-cyan-400 rounded-lg text-slate-100 text-sm resize-none transition-colors outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs text-slate-500 uppercase tracking-wider">Suggested correction</label>
+          <textarea
+            value={noteDraft.suggested_correction}
+            onChange={e => setNoteDraft(s => ({ ...s, suggested_correction: e.target.value }))}
+            placeholder="Optional wording, cultural note, pronunciation fix, or grammar correction."
+            rows={2}
+            className="mt-1 w-full px-4 py-2.5 bg-slate-700 border border-slate-600 focus:border-cyan-400 rounded-lg text-slate-100 text-sm resize-none transition-colors outline-none"
+          />
+        </div>
+
+        <button
+          onClick={handleSaveNote}
+          disabled={!noteDraft.note.trim() && !noteDraft.suggested_correction.trim()}
+          className="w-full py-3 rounded-xl font-semibold text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-slate-200 transition-colors"
+        >
+          {noteSaved ? 'Note Saved' : 'Save Review Note'}
+        </button>
+
+        {notes.length > 0 && (
+          <div className="border-t border-slate-700 pt-4 space-y-2">
+            <div className="text-xs text-slate-500 uppercase tracking-wider">Existing notes</div>
+            {notes.slice(0, 4).map(note => (
+              <div key={note.id} className="rounded-lg bg-slate-900/50 border border-slate-700 p-3 text-sm">
+                <div className="flex items-center justify-between gap-2 text-xs text-slate-500 mb-1">
+                  <span>{note.issue_type} / {note.reviewer || 'unknown reviewer'}</span>
+                  <span>{new Date(note.created_at).toLocaleDateString()}</span>
+                </div>
+                {note.note && <p className="text-slate-300">{note.note}</p>}
+                {note.suggested_correction && <p className="text-cyan-300 mt-1">Suggestion: {note.suggested_correction}</p>}
+              </div>
+            ))}
           </div>
         )}
       </div>

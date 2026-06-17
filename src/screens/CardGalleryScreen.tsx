@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUnits, searchGalleryCards, getVerbConjugations, setCardStarred, getCurrentLanguage } from '../database/db';
 import { printFlashcards } from '../utils/printFlashcards';
 import { getLanguageAdapter, type LanguageAdapter } from '../languages';
+import { downloadFile } from '../platform/fileExport';
 import type { CardWithState, Unit } from '../types';
 
 // ─── Type filter tabs ─────────────────────────────────────────────────────────
@@ -433,13 +434,11 @@ function downloadCSV(cards: CardWithState[], language: LanguageAdapter) {
     esc(c.state.next_review ? new Date(c.state.next_review).toLocaleDateString() : ''),
   ]);
   const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${language.csvFilenamePrefix()}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadFile({
+    filename: `${language.csvFilenamePrefix()}_${new Date().toISOString().slice(0,10)}.csv`,
+    content: csv,
+    mimeType: 'text/csv;charset=utf-8;',
+  });
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────

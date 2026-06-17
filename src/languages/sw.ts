@@ -5,6 +5,7 @@ import { createBaseAdapter } from './shared';
 import { genericClassifyError, levenshtein } from './errorUtils';
 import { normalize as norm } from '../utils/normalize';
 import { ALL_NOUN_CLASSES } from '../data/nounClasses';
+import { canSwahiliConcord } from './swahiliConcord';
 
 const TENSE_RULES: Record<string, string> = {
   present: 'Present tense: subject prefix + -na- + stem (ninasoma = "I read / am reading").',
@@ -116,20 +117,12 @@ function classifyError(card: CardWithState, given: string): ErrorType | null {
   return genericClassifyError(card, given);
 }
 
-function canConcordCard(card: CardWithState): boolean {
-  if (card.type !== 'grammar' || !card.tags?.includes('adjective-agreement')) return false;
-  if (card.swahili.includes('___')) return false;
-  const parts = card.swahili.trim().split(/\s+/);
-  const stem = card.id.split(':-')[1];
-  return parts.length === 2 && ['zuri', 'baya', 'kubwa'].includes(stem ?? '');
-}
-
 function specialExercises(
   card: CardWithState,
   baseExercise: ExerciseType,
   level: 1 | 2 | 3 | 4 | 5,
 ): SpecialExerciseCandidate[] {
-  if (canConcordCard(card)) {
+  if (canSwahiliConcord(card)) {
     return [{ exercise: 'concord', level: 3 }];
   }
   if (
