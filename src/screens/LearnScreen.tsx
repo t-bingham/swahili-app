@@ -9,7 +9,7 @@ import { useSessionStore } from '../store/sessionStore';
 import FlashCard from '../components/exercises/FlashCard';
 import MultipleChoice from '../components/exercises/MultipleChoice';
 import TypeAnswer from '../components/exercises/TypeAnswer';
-import FillInBlank from '../components/exercises/FillInBlank';
+import FillInBlank, { canFillInBlank } from '../components/exercises/FillInBlank';
 import RecallPrompt from '../components/exercises/RecallPrompt';
 import NounClassExercise from '../components/exercises/NounClassExercise';
 import SentenceCloze, { canCloze } from '../components/exercises/SentenceCloze';
@@ -31,7 +31,7 @@ function pickExercise(
   settings: ProfileSettings,
   language: LanguageAdapter,
 ): { exercise: UiPhaseExercise; level: 1 | 2 | 3 | 4 | 5 } {
-  if (card.type === 'grammar' && card.swahili.includes('___')) {
+  if (canFillInBlank(card, language)) {
     return { exercise: 'fill_blank', level: 3 };
   }
   if (card.state.depth_level === 1 || card.state.review_count === 0) {
@@ -108,6 +108,7 @@ export default function LearnScreen() {
   const [mode, setMode] = useState<'review' | 'learn' | 'starred'>('review');
   const [assembling, setAssembling] = useState(false);
   const [exercise, setExercise] = useState<UiPhaseExercise>('flashcard');
+  const [exerciseCardId, setExerciseCardId] = useState<string | null>(null);
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
   const [direction, setDirection] = useState<StudyDirection>('target_to_en');
   const [skillMastery, setSkillMastery] = useState<Map<string, number>>(new Map());
@@ -147,6 +148,7 @@ export default function LearnScreen() {
     setWrongAnswer(null);
     setRecallKnew(false);
     setPhase(ex === 'recall_prompt' ? 'recall_prompt' : 'exercise');
+    setExerciseCardId(card.id);
     startMs.current = Date.now();
   }, [card?.id, store.isActive]);
 
@@ -401,6 +403,14 @@ export default function LearnScreen() {
             End session
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (exerciseCardId !== card.id) {
+    return (
+      <div className="flex h-full items-center justify-center p-6" role="status">
+        <div className="text-slate-400 text-sm">Preparing next card...</div>
       </div>
     );
   }

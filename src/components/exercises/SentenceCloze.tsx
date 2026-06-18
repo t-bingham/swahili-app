@@ -31,7 +31,7 @@ export function canCloze(card: CardWithState): boolean {
 }
 
 export default function SentenceCloze({ card, onAnswer }: Props) {
-  const cloze = buildCloze(card)!; // guaranteed by canCloze in the picker
+  const cloze = buildCloze(card);
   const [value, setValue] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [correct, setCorrect] = useState(false);
@@ -44,12 +44,20 @@ export default function SentenceCloze({ card, onAnswer }: Props) {
   }, [card.id]);
 
   function submit() {
-    if (!value.trim() || submitted) return;
+    if (!cloze || !value.trim() || submitted) return;
     const ok = normalize(value) === normalize(cloze.answer);
     setCorrect(ok);
     setSubmitted(true);
     // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
     onAnswer(ok, value);
+  }
+
+  if (!cloze) {
+    return (
+      <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm" role="status">
+        Preparing next card...
+      </div>
+    );
   }
 
   return (

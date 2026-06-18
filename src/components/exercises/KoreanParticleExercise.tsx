@@ -27,6 +27,10 @@ function normalizeParticle(text: string): string {
   return text.replace(/\s+/g, '').replace(/[()]/g, '');
 }
 
+export function canKoreanParticleExercise(card: CardWithState): boolean {
+  return card.type === 'grammar' && card.part_of_speech === 'particle' && !!card.swahili.trim();
+}
+
 function buildOptions(correct: string) {
   const normalizedCorrect = normalizeParticle(correct);
   const matching = PARTICLES.find(p => normalizeParticle(p.text) === normalizedCorrect) ?? { text: correct, role: 'grammar pattern' };
@@ -52,6 +56,14 @@ export default function KoreanParticleExercise({ card, onAnswer }: Props) {
     if (selected) return;
     setSelected(opt);
     onAnswer(normalizeParticle(opt) === correct, opt);
+  }
+
+  if (!canKoreanParticleExercise(card)) {
+    return (
+      <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm" role="status">
+        Preparing next card...
+      </div>
+    );
   }
 
   return (

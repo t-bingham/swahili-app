@@ -30,6 +30,12 @@ function keyBase(conjugationKey?: string): string {
   return parts[0];
 }
 
+export function canMaoriTenseExercise(card: CardWithState): boolean {
+  return card.type === 'conjugation' &&
+    card.tags.includes('tense-pattern') &&
+    FRAMES.some(frame => frame.key === keyBase(card.conjugation_key));
+}
+
 function buildOptions(correctKey: string) {
   const correct = FRAMES.find(f => f.key === correctKey) ?? FRAMES[0];
   const pool = FRAMES.filter(f => f.key !== correct.key);
@@ -54,6 +60,14 @@ export default function MaoriTenseExercise({ card, onAnswer }: Props) {
     if (selected) return;
     setSelected(key);
     onAnswer(key === correctKey, key);
+  }
+
+  if (!canMaoriTenseExercise(card)) {
+    return (
+      <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm" role="status">
+        Preparing next card...
+      </div>
+    );
   }
 
   return (

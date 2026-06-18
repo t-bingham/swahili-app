@@ -7,6 +7,10 @@ interface Props {
   onAnswer: (correct: boolean, chosen: string) => void;
 }
 
+export function canNounClassExercise(card: CardWithState): card is CardWithState & { noun_class: NounClass } {
+  return !!card.noun_class && (ALL_NOUN_CLASSES as readonly string[]).includes(card.noun_class);
+}
+
 // Build a stable set of 4 options: correct + 3 random distractors
 function buildOptions(correct: NounClass): NounClass[] {
   const others = ALL_NOUN_CLASSES.filter(c => c !== correct);
@@ -25,17 +29,25 @@ function buildOptions(correct: NounClass): NounClass[] {
 }
 
 export default function NounClassExercise({ card, onAnswer }: Props) {
-  const correct = card.noun_class as NounClass;
-  const [options] = useState(() => buildOptions(correct));
+  const correct = canNounClassExercise(card) ? card.noun_class : null;
+  const [options] = useState(() => buildOptions(correct ?? ALL_NOUN_CLASSES[0]));
   const [selected, setSelected] = useState<NounClass | null>(null);
 
-  const info = NOUN_CLASS_INFO[correct] ?? null;
+  const info = correct ? NOUN_CLASS_INFO[correct] ?? null : null;
 
   function choose(cls: NounClass) {
     if (selected) return;
     setSelected(cls);
     // Report immediately; LearnScreen owns the feedback delay before rating. (P6.3)
     onAnswer(cls === correct, cls);
+  }
+
+  if (!correct) {
+    return (
+      <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-400 text-sm" role="status">
+        Preparing next card...
+      </div>
+    );
   }
 
   function optionStyle(cls: NounClass) {
