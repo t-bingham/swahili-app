@@ -54,6 +54,9 @@ export default function UserPickerScreen() {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         const profile = await profileRes.json();
+        if (!profileRes.ok || typeof profile.email !== 'string' || !profile.email.includes('@')) {
+          throw new Error('Google did not return a valid profile');
+        }
         saveGoogleSession(accessToken, tokenResponse.expires_in ?? 3600, {
           name: profile.name, email: profile.email, picture: profile.picture,
         });
@@ -104,8 +107,9 @@ export default function UserPickerScreen() {
   }
 
   function switchAccounts() {
-    clearGoogleSession();
     clearSyncState();
+    clearGoogleSession();
+    sessionStorage.removeItem('currentUser');
     window.location.reload();
   }
 

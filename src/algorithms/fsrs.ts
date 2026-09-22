@@ -3,6 +3,7 @@
 import type { FSRSResult } from '../types';
 
 const FACTOR = 19 / 81;
+const DECAY = -0.5;
 
 // Desired retention — the single most impactful FSRS knob. 0.88 sits in the
 // research-recommended 0.85–0.90 band: it minimises total study time while
@@ -19,13 +20,14 @@ const W: readonly number[] = [
 ];
 
 export function retrievability(t: number, S: number): number {
-  return Math.pow(1 + FACTOR * (t / S), -1 / FACTOR);
+  return Math.pow(1 + FACTOR * (t / S), DECAY);
 }
 
-// Note: Math.log(0.9) is the FSRS anchor that *defines* stability (interval at
-// R=0.9) and must stay fixed; only the target retention is tunable.
+// Invert the same FSRS-4.5/5 forgetting curve used by retrievability.
+// Stability is the interval at 90% recall: R(S, S) = 0.9.
+// https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm#fsrs-45
 export function nextInterval(S: number, targetRetention = DESIRED_RETENTION): number {
-  return Math.max(1, Math.round(S * Math.log(targetRetention) / Math.log(0.9)));
+  return Math.max(1, Math.round(S / FACTOR * (Math.pow(targetRetention, 1 / DECAY) - 1)));
 }
 
 export function initialStability(rating: 1 | 2 | 3 | 4): number {

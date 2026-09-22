@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProfile, getCurrentUser, getCurrentLanguage } from '../database/db';
+import { createProfile, getCurrentUser, getCurrentLanguage, flushDatabase } from '../database/db';
 import { getLanguage } from '../data/languages';
 import type { LearningGoal, GrammarDepth, ProfileSettings } from '../types';
 
@@ -110,6 +110,7 @@ export default function OnboardingScreen() {
     };
 
     await createProfile(displayName, settings);
+    await flushDatabase();
 
     if (wantsPlacementTest) {
       navigate('/placement-test');

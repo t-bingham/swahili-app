@@ -6,6 +6,7 @@ import { getGoogleProfile, clearGoogleSession } from '../auth/googleAuth';
 import { clearSyncState, getActiveSyncProvider, getLastSyncTime, syncNow as runSyncNow } from '../sync/syncService';
 import { LANGUAGES } from '../data/languages';
 import { getLanguageAdapter } from '../languages';
+import { useSessionStore } from '../store/sessionStore';
 import type { ProfileSettings, LearningGoal, GrammarDepth } from '../types';
 
 function formatRelative(date: Date): string {
@@ -204,8 +205,10 @@ export default function SettingsScreen() {
 
   async function switchGoogleAccount() {
     await closeDatabase();
-    clearGoogleSession();
     clearSyncState();
+    clearGoogleSession();
+    sessionStorage.removeItem('currentUser');
+    useSessionStore.getState().resetSession();
     navigate('/');
   }
 
@@ -213,6 +216,7 @@ export default function SettingsScreen() {
     const user = getCurrentUser();
     if (!user || newLang === getCurrentLanguage()) return;
     await closeDatabase();
+    useSessionStore.getState().resetSession();
     try { await openDatabase(user, newLang); } catch { await openDatabase(user, newLang); }
     sessionStorage.setItem('currentLanguage', newLang);
     // Check whether this user has been onboarded in the new language; if not,

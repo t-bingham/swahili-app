@@ -1,4 +1,4 @@
-import { getDb, mergeRemoteDb } from '../database/db';
+import { getDb, getCurrentUser, getCurrentLanguage, mergeRemoteDb, flushDatabase } from '../database/db';
 import { getOrRefreshToken, getGoogleToken, getGoogleProfile } from '../auth/googleAuth';
 
 const FILE_NAME = 'swahili.db';
@@ -9,21 +9,19 @@ function syncKey(): string {
 }
 
 async function findFile(token: string): Promise<{ id: string; modifiedTime: string } | null> {
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${FILE_NAME}%27&fields=files(id,modifiedTime)`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.files?.[0] ?? null;
-  } catch {
-    return null;
-  }
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${FILE_NAME}%27&fields=files(id,modifiedTime)`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) throw new Error('Could not look up the Drive backup');
+  const json = await res.json();
+  if (!Array.isArray(json.files)) throw new Error('Invalid Drive file listing');
+  return json.files[0] ?? null;
 }
 
-async function _upload(token: string, file: { id: string } | null): Promise<boolean> {
+async function _upload(token: string, file: { id: string } | null, isCurrent: () => boolean, key: string): Promise<boolean> {
   try {
+    if (!isCurrent()) return false;
     const data = getDb().export();
     const metadata = JSON.stringify({
       name: FILE_NAME,
@@ -44,8 +42,8 @@ async function _upload(token: string, file: { id: string } | null): Promise<bool
       },
     );
 
-    if (res.ok) {
-      localStorage.setItem(syncKey(), String(Date.now()));
+    if (res.ok && isCurrent()) {
+      localStorage.setItem(key, String(Date.now()));
       return true;
     }
     return false;
@@ -55,8 +53,8 @@ async function _upload(token: string, file: { id: string } | null): Promise<bool
 }
 
 /**
- * Full sync: if Drive has data we haven't seen yet, merge it into the local DB
- * first, then upload the (possibly merged) result back to Drive.
+ * Full sync: merge any existing Drive backup into the local DB first, then
+ * upload the merged result. A failed read or merge must never overwrite it.
  *
  * This is the only sync entry point needed. It replaces the old
  * downloadIfNewer + uploadToDrive pair and is safe to call at any point after
@@ -67,35 +65,54 @@ async function _upload(token: string, file: { id: string } | null): Promise<bool
  * Explicit user actions pass allowRefresh to attempt a silent refresh, and a
  * fresh login passes tokenOverride to skip the lookup entirely.
  */
-export async function syncWithDrive(
+async function performSync(
   opts: { tokenOverride?: string; allowRefresh?: boolean } = {},
 ): Promise<boolean> {
   if (!navigator.onLine) return false;
-  const token = opts.tokenOverride ?? (opts.allowRefresh ? await getOrRefreshToken() : getGoogleToken());
-  if (!token) return false;
-
   try {
+    const db = getDb();
+    const user = getCurrentUser();
+    const key = syncKey();
+    const isCurrent = () => {
+      try {
+        return getDb() === db && getCurrentUser() === user && getCurrentLanguage() === 'sw' && syncKey() === key;
+      } catch { return false; }
+    };
+    if (!isCurrent()) return false;
+    const token = opts.tokenOverride ?? (opts.allowRefresh ? await getOrRefreshToken() : getGoogleToken());
+    if (!token || !isCurrent()) return false;
     const file = await findFile(token);
-    const lastSync = Number(localStorage.getItem(syncKey()) ?? 0);
+    if (!isCurrent()) return false;
 
-    // If Drive has data we haven't merged yet, download and merge it
-    if (file && new Date(file.modifiedTime).getTime() > lastSync) {
+    // Always merge an existing backup. Device clocks and a local success time
+    // cannot reliably identify whether another device has written new progress.
+    if (file) {
       const res = await fetch(
         `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (res.ok) {
-        const remoteBytes = new Uint8Array(await res.arrayBuffer());
-        await mergeRemoteDb(remoteBytes);
-        // file.id is still valid for the upload below — same file, just patching it
-      }
+      if (!res.ok) return false;
+      const remoteBytes = new Uint8Array(await res.arrayBuffer());
+      if (!isCurrent()) return false;
+      const result = await mergeRemoteDb(remoteBytes);
+      if (!result.merged || !isCurrent()) return false;
+      await flushDatabase();
     }
 
     // Upload current local state (whether we merged or not)
-    return _upload(token, file);
+    return _upload(token, file, isCurrent, key);
   } catch {
     return false;
   }
+}
+
+// Visibility, online and manual events can overlap. Only one read/merge/write
+// cycle may run at once, including the first backup creation.
+let syncInFlight: Promise<boolean> | null = null;
+export function syncWithDrive(opts: { tokenOverride?: string; allowRefresh?: boolean } = {}): Promise<boolean> {
+  if (syncInFlight) return syncInFlight;
+  syncInFlight = performSync(opts).finally(() => { syncInFlight = null; });
+  return syncInFlight;
 }
 
 // Kept for the Settings "Sync now" button — delegates to syncWithDrive so
