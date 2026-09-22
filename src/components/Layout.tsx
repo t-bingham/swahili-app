@@ -14,7 +14,7 @@ const tabs = [
   { to: '/app/settings',label: 'Settings',icon: '⚙️' },
 ];
 
-export default function Layout() {
+export default function Layout({ showNavigation = true }: { showNavigation?: boolean }) {
   const navigate = useNavigate();
   const [ready, setReady] = useState(getCurrentUser() !== null);
 
@@ -51,6 +51,7 @@ export default function Layout() {
   }, []);
 
   if (!ready) return null;
+  if (!showNavigation) return <Outlet />;
 
   return (
     <div className="flex flex-col bg-slate-950" style={{ height: '100dvh' }}>

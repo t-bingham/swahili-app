@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getUnits, getAllUnitProgress, getUnitCardsWithState,
-  introduceCards, upsertUnitProgress,
+  introduceCards, upsertUnitProgress, flushDatabase,
 } from '../database/db';
 import GrammarNotes from '../components/GrammarNotes';
 import { computeLessons } from '../utils/lessons';
@@ -220,12 +220,14 @@ function PracticePhase({
 }) {
   const [options] = useState(() => getOptions(card, allLessonCards));
   const [selected, setSelected] = useState<string | null>(null);
+  const answerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (answerTimer.current) clearTimeout(answerTimer.current); }, []);
   const correct = primaryEnglish(card);
 
   function handleSelect(opt: string) {
-    if (selected !== null) return;
+    if (selected !== null || answerTimer.current) return;
     setSelected(opt);
-    setTimeout(() => onAnswer(opt === correct), 1100);
+    answerTimer.current = setTimeout(() => onAnswer(opt === correct), 1100);
   }
 
   const optionStyle = (opt: string) => {
@@ -411,6 +413,11 @@ export default function UnitLessonScreen() {
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setWordIndex(0);
+      setPracticeIndex(0);
+      setResults([]);
+      setPassed(false);
       const allUnits = await getUnits();
       const found = allUnits.find(u => u.id === id);
       if (!found) { navigate('/app/units'); return; }
@@ -424,7 +431,7 @@ export default function UnitLessonScreen() {
       setTotalLessons(lessons.length);
 
       const lesson = lessons[lessonIndex];
-      if (!lesson) { navigate(`${foundBasePath}/${id}`); return; }
+      if (!lesson || lesson.status === 'locked') { navigate(`${foundBasePath}/${id}`); return; }
 
       setLessonCards(lesson.cards);
 
@@ -460,11 +467,12 @@ export default function UnitLessonScreen() {
 
       await upsertUnitProgress({
         unit_id: unit.id,
-        status: isLastLesson ? 'completed' : 'in_progress',
+        status: isLastLesson || existing?.status === 'completed' ? 'completed' : 'in_progress',
         started_at: existing?.started_at ?? now,
-        completed_at: isLastLesson ? now : null,
+        completed_at: existing?.completed_at ?? (isLastLesson ? now : null),
         mastery_score: mastery,
       });
+      await flushDatabase();
     }
 
     setPassed(allCorrect);

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProfile, countOverdueCards, getLastSession, countCardsByDepth, getDailyStats, getCurrentLanguage } from '../database/db';
 import { getLanguage } from '../data/languages';
+import { useSessionStore } from '../store/sessionStore';
 import type { Profile, Session } from '../types';
 
 export default function HomeScreen() {
@@ -51,6 +52,8 @@ export default function HomeScreen() {
           onClick={async () => {
             const { closeDatabase } = await import('../database/db');
             await closeDatabase();
+            useSessionStore.getState().resetSession();
+            sessionStorage.removeItem('currentUser');
             // Drop sessionStorage's language so the picker doesn't auto-restore on next openDatabase
             sessionStorage.removeItem('currentLanguage');
             navigate('/');

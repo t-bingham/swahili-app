@@ -1277,7 +1277,9 @@ function _mergeProfile(local: Database, remote: Database): void {
  */
 export async function mergeRemoteDb(remoteBytes: Uint8Array): Promise<{ merged: boolean }> {
   if (!_db) return { merged: false };
+  const targetDb = _db;
   const sql = await getSql();
+  if (_db !== targetDb) return { merged: false };
   let remoteDb: Database | null = null;
   try {
     remoteDb = new sql.Database(remoteBytes);

@@ -9,6 +9,16 @@ import {
 } from '../src/algorithms/fsrs';
 
 describe('FSRS helpers', () => {
+  it.each([1, 10, 100])('defines stability %s as the interval at 90 percent recall', stability => {
+    expect(retrievability(stability, stability)).toBeCloseTo(0.9, 12);
+    expect(nextInterval(stability, 0.9)).toBe(stability);
+  });
+
+  it.each([0.75, 0.85, 0.88, 0.95])('schedules back to the requested retention %s', retention => {
+    const interval = nextInterval(100, retention);
+    expect(retrievability(interval, 100)).toBeCloseTo(retention, 3);
+  });
+
   it('keeps retrievability at 1 on review day and lower after time passes', () => {
     expect(retrievability(0, 10)).toBe(1);
     expect(retrievability(10, 10)).toBeLessThan(1);

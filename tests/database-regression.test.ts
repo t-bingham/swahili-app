@@ -2,10 +2,27 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import initSqlJs from 'sql.js';
+import { runMigrations } from '../src/database/migrations';
+import { LANGUAGES } from '../src/data/languages';
 
 const root = process.cwd();
 
 describe('database regression checks', () => {
+  it.each(Object.values(LANGUAGES))('migrates the $id seed safely and remains idempotent', async language => {
+    const SQL = await initSqlJs({ locateFile: () => path.join(root, 'public/sql-wasm.wasm') });
+    const db = new SQL.Database(fs.readFileSync(path.join(root, 'public', language.templateDb.slice(1))));
+    try {
+      runMigrations(db, language.id);
+      const cards = db.exec('SELECT * FROM cards ORDER BY id');
+      expect(cards[0].values.length).toBeGreaterThan(0);
+      expect(db.exec('PRAGMA integrity_check')[0].values).toEqual([['ok']]);
+      expect(db.exec('SELECT COUNT(*) FROM cards c LEFT JOIN card_states s ON c.id=s.card_id WHERE s.card_id IS NULL')[0].values).toEqual([[0]]);
+      runMigrations(db, language.id);
+      expect(db.exec('SELECT * FROM cards ORDER BY id')).toEqual(cards);
+      expect(db.exec("SELECT name FROM sqlite_master WHERE name IN ('review_notes','curriculum_packages','curriculum_unit_versions')")[0].values).toHaveLength(3);
+    } finally { db.close(); }
+  });
+
   it('migration source does not write to obsolete cards.en column', () => {
     const source = [
       fs.readFileSync(path.join(root, 'src/database/db.ts'), 'utf8'),

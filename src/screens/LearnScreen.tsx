@@ -150,7 +150,7 @@ export default function LearnScreen() {
     setPhase(ex === 'recall_prompt' ? 'recall_prompt' : 'exercise');
     setExerciseCardId(card.id);
     startMs.current = Date.now();
-  }, [card?.id, store.isActive]);
+  }, [card?.id, store.reviews.length, store.isActive]);
 
   // ── Session start ────────────────────────────────────────────────────────────
 
@@ -182,6 +182,7 @@ export default function LearnScreen() {
   // ── Session end ──────────────────────────────────────────────────────────────
 
   async function endSession() {
+    if (answerTimer.current) { clearTimeout(answerTimer.current); answerTimer.current = null; }
     const profile = await getProfile();
     if (profile) {
       await store.finishSession(profile);
@@ -440,7 +441,7 @@ export default function LearnScreen() {
       </div>
 
       {/* Exercise area */}
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div key={`${card.id}:${store.reviews.length}`} className="flex-1 overflow-y-auto space-y-4">
 
         {/* New word badge */}
         {isNewCard && (

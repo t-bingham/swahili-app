@@ -19,8 +19,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<UserPickerScreen />} />
-        <Route path="/onboarding" element={<OnboardingScreen />} />
-        <Route path="/placement-test" element={<PlacementTestScreen />} />
+        <Route element={<Layout showNavigation={false} />}>
+          <Route path="/onboarding" element={<OnboardingScreen />} />
+          <Route path="/placement-test" element={<PlacementTestScreen />} />
+        </Route>
         <Route path="/app" element={<Layout />}>
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<HomeScreen />} />
