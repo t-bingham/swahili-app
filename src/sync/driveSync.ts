@@ -1,5 +1,6 @@
 import { getDb, getCurrentUser, getCurrentLanguage, mergeRemoteDb, flushDatabase } from '../database/db';
 import { getOrRefreshToken, getGoogleToken, getGoogleProfile } from '../auth/googleAuth';
+import { googleUsername } from '../auth/profileIdentity';
 
 const FILE_NAME = 'swahili.db';
 
@@ -8,102 +9,101 @@ function syncKey(): string {
   return profile ? `drive_last_sync_${profile.email}` : 'drive_last_sync';
 }
 
-async function findFile(token: string): Promise<{ id: string; modifiedTime: string } | null> {
-  const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${FILE_NAME}%27&fields=files(id,modifiedTime)`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  if (!res.ok) throw new Error('Could not look up the Drive backup');
-  const json = await res.json();
-  if (!Array.isArray(json.files)) throw new Error('Invalid Drive file listing');
-  return json.files[0] ?? null;
-}
+interface DriveFile { id: string; etag: string }
 
-async function _upload(token: string, file: { id: string } | null, isCurrent: () => boolean, key: string): Promise<boolean> {
-  try {
-    if (!isCurrent()) return false;
-    const data = getDb().export();
-    const metadata = JSON.stringify({
-      name: FILE_NAME,
-      ...(!file && { parents: ['appDataFolder'] }),
+// Drive v2 exposes the resource ETag explicitly. Keep read and conditional
+// write on the same API version; never fall back to an unconditional update.
+async function findFiles(token: string): Promise<DriveFile[]> {
+  const files: DriveFile[] = [];
+  let pageToken = '';
+  do {
+    const params = new URLSearchParams({
+      spaces: 'appDataFolder', q: "title = '" + FILE_NAME + "' and trashed = false",
+      fields: 'nextPageToken,items(id,etag)', maxResults: '1000',
     });
-    const body = new FormData();
-    body.append('metadata', new Blob([metadata], { type: 'application/json' }));
-    body.append('file', new Blob([data as unknown as ArrayBuffer], { type: 'application/octet-stream' }));
-
-    const res = await fetch(
-      file
-        ? `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart`
-        : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
-      {
-        method: file ? 'PATCH' : 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body,
-      },
-    );
-
-    if (res.ok && isCurrent()) {
-      localStorage.setItem(key, String(Date.now()));
-      return true;
+    if (pageToken) params.set('pageToken', pageToken);
+    const response = await fetch('https://www.googleapis.com/drive/v2/files?' + params, {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!response.ok) throw new Error('Could not look up the Drive backup');
+    const json = await response.json();
+    if (!Array.isArray(json.items)) throw new Error('Invalid Drive file listing');
+    for (const file of json.items) {
+      if (typeof file.id !== 'string' || typeof file.etag !== 'string' || !file.etag) throw new Error('Backup has no conflict token');
+      files.push(file);
     }
-    return false;
-  } catch {
-    return false;
-  }
+    pageToken = json.nextPageToken || '';
+  } while (pageToken);
+  return files.sort((a,b) => a.id.localeCompare(b.id));
 }
 
-/**
- * Full sync: merge any existing Drive backup into the local DB first, then
- * upload the merged result. A failed read or merge must never overwrite it.
- *
- * This is the only sync entry point needed. It replaces the old
- * downloadIfNewer + uploadToDrive pair and is safe to call at any point after
- * openDatabase() has returned.
- *
- * Background syncs (Layout visibility/online, end-of-session upload) must never
- * trigger interactive auth, so they use only an already-valid stored token.
- * Explicit user actions pass allowRefresh to attempt a silent refresh, and a
- * fresh login passes tokenOverride to skip the lookup entirely.
- */
-async function performSync(
-  opts: { tokenOverride?: string; allowRefresh?: boolean } = {},
-): Promise<boolean> {
+async function upload(token: string, file?: DriveFile): Promise<Response> {
+  const data = getDb().export();
+  if (file) {
+    return fetch('https://www.googleapis.com/upload/drive/v2/files/' + encodeURIComponent(file.id) + '?uploadType=media', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token, 'If-Match': file.etag, 'Content-Type': 'application/octet-stream' },
+      body: new Blob([data as unknown as ArrayBuffer]),
+    });
+  }
+  const boundary = 'swahili-' + crypto.randomUUID();
+  const metadata = JSON.stringify({ title: FILE_NAME, parents: [{ id: 'appDataFolder' }] });
+  const body = new Blob([
+    '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + metadata + '\r\n',
+    '--' + boundary + '\r\nContent-Type: application/octet-stream\r\n\r\n',
+    data as unknown as ArrayBuffer,
+    '\r\n--' + boundary + '--',
+  ], { type: 'multipart/related; boundary=' + boundary });
+  return fetch('https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token }, body,
+  });
+}
+
+/** Read/merge/conditional-write. On conflict, download again before retrying. */
+async function performSync(opts: { tokenOverride?: string; allowRefresh?: boolean } = {}): Promise<boolean> {
   if (!navigator.onLine) return false;
   try {
     const db = getDb();
     const user = getCurrentUser();
+    const profile = getGoogleProfile();
+    if (!profile || user !== googleUsername(profile)) return false;
     const key = syncKey();
     const isCurrent = () => {
-      try {
-        return getDb() === db && getCurrentUser() === user && getCurrentLanguage() === 'sw' && syncKey() === key;
-      } catch { return false; }
+      try { return getDb() === db && getCurrentUser() === user && getCurrentLanguage() === 'sw' && syncKey() === key; }
+      catch { return false; }
     };
     if (!isCurrent()) return false;
     const token = opts.tokenOverride ?? (opts.allowRefresh ? await getOrRefreshToken() : getGoogleToken());
     if (!token || !isCurrent()) return false;
-    const file = await findFile(token);
-    if (!isCurrent()) return false;
 
-    // Always merge an existing backup. Device clocks and a local success time
-    // cannot reliably identify whether another device has written new progress.
-    if (file) {
-      const res = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      if (!res.ok) return false;
-      const remoteBytes = new Uint8Array(await res.arrayBuffer());
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const files = await findFiles(token);
       if (!isCurrent()) return false;
-      const result = await mergeRemoteDb(remoteBytes);
-      if (!result.merged || !isCurrent()) return false;
+      let conflict = false;
+      // Simultaneous first syncs can create same-name files. Merge EVERY copy
+      // before updating a deterministic canonical file; retain recovery copies.
+      for (const file of files) {
+        const response = await fetch('https://www.googleapis.com/drive/v2/files/' + encodeURIComponent(file.id) + '?alt=media', {
+          headers: { Authorization: 'Bearer ' + token, 'If-Match': file.etag },
+        });
+        if (response.status === 412) { conflict = true; break; }
+        if (!response.ok) return false;
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        if (!isCurrent()) return false;
+        const result = await mergeRemoteDb(bytes);
+        if (!result.merged || !isCurrent()) return false;
+      }
+      if (conflict) continue;
       await flushDatabase();
+      if (!isCurrent()) return false;
+      const response = await upload(token, files[0]);
+      if (response.status === 412) continue;
+      if (!response.ok || !isCurrent()) return false;
+      localStorage.setItem(key, String(Date.now()));
+      return true;
     }
-
-    // Upload current local state (whether we merged or not)
-    return _upload(token, file, isCurrent, key);
-  } catch {
-    return false;
-  }
+    return false; // Leave local changes intact for the next explicit/background retry.
+  } catch { return false; }
 }
 
 // Visibility, online and manual events can overlap. Only one read/merge/write

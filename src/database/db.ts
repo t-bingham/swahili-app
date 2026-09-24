@@ -10,6 +10,11 @@
 
 import type { Database, SqlJsStatic } from 'sql.js';
 import { runMigrations } from './migrations';
+import { idbLoad, idbSave, idbDelete, storageTransaction, acquireDatabaseLock, reportSaveError } from './persistence';
+import { googleUsername, legacyGoogleUsername } from '../auth/profileIdentity';
+import { localDateKey, localDayBounds } from '../utils/localDate';
+import { mergedStar, remoteStateWins } from './mergePolicy';
+import { v4 as uuidv4 } from 'uuid';
 import { getLanguage, DEFAULT_LANGUAGE } from '../data/languages';
 import type {
   Card, CardState, CardWithState, Profile, ProfileSettings,
@@ -21,67 +26,31 @@ const DEFAULT_REVIEWS_PER_DAY = 20;
 
 // ─── sql.js init ──────────────────────────────────────────────────────────────
 
-let SQL: SqlJsStatic | null = null;
+let SQL: Promise<SqlJsStatic> | null = null;
 
 async function getSql(): Promise<SqlJsStatic> {
   if (!SQL) {
-    const { default: initSqlJs } = await import('sql.js');
-    SQL = await initSqlJs({ locateFile: () => '/sql-wasm.wasm' });
+    SQL = import('sql.js').then(({ default: initSqlJs }) => initSqlJs({ locateFile: () => '/sql-wasm.wasm' })).catch(error => { SQL = null; throw error; });
   }
   return SQL;
 }
 
 // ─── IndexedDB helpers ────────────────────────────────────────────────────────
 
-const IDB_NAME = 'swahili_app';
-const IDB_STORE = 'databases';
-const IDB_VERSION = 1;
-
-function openIDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
-    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbLoad(key: string): Promise<Uint8Array | null> {
-  const idb = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readonly');
-    const req = tx.objectStore(IDB_STORE).get(key);
-    req.onsuccess = () => resolve(req.result ?? null);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbSave(key: string, data: Uint8Array): Promise<void> {
-  const idb = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).put(data, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function idbDelete(key: string): Promise<void> {
-  const idb = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).delete(key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-// ─── Singleton connection ──────────────────────────────────────────────────────
-
 let _db: Database | null = null;
 let _currentUser: string | null = null;
 let _currentLanguage: string = DEFAULT_LANGUAGE;
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
+let releaseLock: (() => void) | null = null;
+let lifecycle: Promise<unknown> = Promise.resolve();
+let writes: Promise<unknown> = Promise.resolve();
+let revision = 0;
+
+function serialize<T>(action: () => Promise<T>): Promise<T> {
+  const task = lifecycle.then(action);
+  lifecycle = task.catch(() => {});
+  return task;
+}
 
 export function getCurrentLanguage(): string {
   return _currentLanguage;
@@ -95,14 +64,26 @@ function dbKey(lang: string, user: string): string {
 }
 
 function scheduleFlush() {
+  revision++;
   if (_flushTimer) clearTimeout(_flushTimer);
-  _flushTimer = setTimeout(flushToDisk, 500);
+  _flushTimer = setTimeout(() => { _flushTimer = null; void flushToDisk().catch(() => {}); }, 500);
 }
 
 async function flushToDisk() {
   if (!_db || !_currentUser) return;
-  const data = _db.export();
-  await idbSave(dbKey(_currentLanguage, _currentUser), data);
+  const target = _db;
+  let savedRevision: number;
+  do {
+    savedRevision = revision;
+    let data: Uint8Array;
+    try { data = _db.export(); }
+    catch (error) { reportSaveError(error); throw error; }
+    const key = dbKey(_currentLanguage, _currentUser);
+    const write = writes.catch(() => {}).then(() => idbSave(key, data));
+    writes = write;
+    try { await write; reportSaveError(null); }
+    catch (error) { reportSaveError(error); throw error; }
+  } while (_db === target && savedRevision !== revision);
 }
 
 export function getDb(): Database {
@@ -121,59 +102,68 @@ export function getCurrentUser(): string | null {
 }
 
 export async function listUsers(): Promise<string[]> {
-  const idb = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readonly');
-    const req = tx.objectStore(IDB_STORE).getAllKeys();
-    req.onsuccess = () => {
-      const keys = (req.result as string[]).filter(k => k.startsWith('db_'));
-      resolve(keys.map(k => k.replace(/^db_/, '')));
-    };
-    req.onerror = () => reject(req.error);
+  return storageTransaction('readonly', (store, result) => {
+    const request = store.getAllKeys();
+    request.onsuccess = () => result(request.result.filter(k => typeof k === 'string' && k.startsWith('db_')).map(k => String(k).slice(3)));
   });
 }
 
 // Saves a downloaded DB binary into IndexedDB before openDatabase is called.
 export async function importDatabase(userName: string, data: Uint8Array): Promise<void> {
-  await idbSave(`db_${userName}`, data);
+  return serialize(async () => {
+    if (_db) throw new Error('Close the current profile before importing a database.');
+    const release = await acquireDatabaseLock();
+    try { await idbSave(dbKey(DEFAULT_LANGUAGE, userName), data); }
+    finally { release(); }
+  });
 }
 
-export async function openDatabase(userName: string, lang: string = _currentLanguage): Promise<void> {
+export function openDatabase(userName: string, lang: string = _currentLanguage): Promise<void> {
+  return serialize(() => openDatabaseInternal(userName, lang));
+}
+
+async function openDatabaseInternal(userName: string, lang: string): Promise<void> {
   if (_db && _currentUser === userName && _currentLanguage === lang) return;
-  if (_db) {
-    await flushToDisk();
-    _db.close();
-    _db = null;
+  if (!releaseLock) releaseLock = await acquireDatabaseLock();
+  let candidate: Database | null = null;
+  try {
+    const sql = await getSql();
+    const key = dbKey(lang, userName);
+    let existing = await idbLoad(key);
+    if (!existing) {
+      const response = await fetch(getLanguage(lang).templateDb);
+      if (!response.ok) throw new Error('Failed to load template database');
+      existing = new Uint8Array(await response.arrayBuffer());
+      await idbSave(key, existing);
+    }
+    candidate = new sql.Database(existing);
+    runMigrations(candidate, lang);
+    // Do not discard the active profile until its replacement is ready and its
+    // final writes are durable. A failed switch leaves the old profile usable.
+    await flushDatabase();
+    _db?.close();
+    _db = candidate;
+    candidate = null;
+    _currentUser = userName;
+    _currentLanguage = lang;
+    ensureCurriculumInstallMetadata(lang);
+    scheduleFlush();
+  } catch (error) {
+    candidate?.close();
+    if (!_db) { _currentUser = null; releaseLock?.(); releaseLock = null; }
+    throw error;
   }
-
-  _currentLanguage = lang;
-  const sql = await getSql();
-  const key = dbKey(lang, userName);
-  let existing = await idbLoad(key);
-
-  if (!existing) {
-    // First time for this user+language — clone the language's template DB
-    const resp = await fetch(getLanguage(lang).templateDb);
-    if (!resp.ok) throw new Error('Failed to load template database');
-    existing = new Uint8Array(await resp.arrayBuffer());
-    await idbSave(key, existing);
-  }
-
-  _db = new sql.Database(existing);
-  _currentUser = userName;
-
-  // Migrations are tagged by language; Swahili-specific ones never run on other DBs.
-  runMigrations(_db, lang);
-  ensureCurriculumInstallMetadata(lang);
-
-  scheduleFlush();
 }
 
-export async function closeDatabase(): Promise<void> {
-  await flushDatabase();
-  _db?.close();
-  _db = null;
-  _currentUser = null;
+export function closeDatabase(): Promise<void> {
+  return serialize(async () => {
+    await flushDatabase();
+    _db?.close();
+    _db = null;
+    _currentUser = null;
+    releaseLock?.();
+    releaseLock = null;
+  });
 }
 
 export async function flushDatabase(): Promise<void> {
@@ -186,14 +176,55 @@ export async function flushDatabase(): Promise<void> {
 
 // Permanently deletes the current user's database from IndexedDB.
 // Call clearGoogleSession() + clearSyncState() + navigate('/') after this.
-export async function resetCurrentUserData(): Promise<void> {
-  const user = _currentUser;
-  const lang = _currentLanguage;
-  if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null; }
-  _db?.close();
-  _db = null;
-  _currentUser = null;
-  if (user) await idbDelete(dbKey(lang, user));
+export function resetCurrentUserData(): Promise<void> {
+  return serialize(async () => {
+    const user = _currentUser;
+    const lang = _currentLanguage;
+    if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null; }
+    await writes.catch(() => {});
+    if (user) await idbDelete(dbKey(lang, user));
+    _db?.close();
+    _db = null;
+    _currentUser = null;
+    releaseLock?.();
+    releaseLock = null;
+    reportSaveError(null);
+  });
+}
+
+export class LegacyProfileFoundError extends Error {
+  constructor() { super('Older saved progress needs an ownership decision.'); }
+}
+
+export function openGoogleDatabase(email: string, lang: string, legacyChoice?: 'import' | 'fresh'): Promise<void> {
+  return serialize(async () => {
+    const user = googleUsername({ email });
+    const legacy = legacyGoogleUsername({ email });
+    if (!releaseLock) releaseLock = await acquireDatabaseLock();
+    try {
+      const target = dbKey(lang, user);
+      if (!await idbLoad(target)) {
+        const source = await idbLoad(dbKey(lang, legacy));
+        const ownerKey = `legacy-owner:${lang}:${legacy}`;
+        const owner = await idbLoad<string>(ownerKey);
+        if (source && (!owner || owner === user)) {
+          if (!owner && !legacyChoice) throw new LegacyProfileFoundError();
+          if (owner === user || legacyChoice === 'import') {
+            // The lifetime Web Lock makes ownership and copy decisions exclusive
+            // across tabs. The original stays intact as a recovery copy.
+            await storageTransaction<void>('readwrite', store => {
+              store.put(user, ownerKey);
+              store.put(source, target);
+            });
+          }
+        }
+      }
+      await openDatabaseInternal(user, lang);
+    } catch (error) {
+      if (!_db) { releaseLock?.(); releaseLock = null; }
+      throw error;
+    }
+  });
 }
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────
@@ -267,7 +298,7 @@ export async function updateProfileSettings(settings: ProfileSettings): Promise<
 }
 
 export async function recordActivity(): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
   run('UPDATE profile SET last_activity = ?', [today]);
 }
 
@@ -325,8 +356,8 @@ export interface LocalProgressChanges {
 export async function exportLocalProgressChanges(sinceIso?: string | null): Promise<LocalProgressChanges> {
   const since = sinceIso || null;
   const cardWhere = since
-    ? 'WHERE last_review >= ? OR COALESCE(starred,0)=1'
-    : 'WHERE review_count > 0 OR COALESCE(starred,0)=1';
+    ? 'WHERE last_review >= ? OR starred_updated_at >= ?'
+    : "WHERE depth_level > 1 OR review_count > 0 OR COALESCE(starred,0)=1 OR starred_updated_at != ''";
   const eventWhere = since ? 'WHERE reviewed_at >= ?' : '';
   const sessionWhere = since ? 'WHERE completed_at >= ?' : '';
   const noteWhere = since ? 'WHERE created_at >= ? OR COALESCE(resolved_at, created_at) >= ?' : '';
@@ -335,7 +366,7 @@ export async function exportLocalProgressChanges(sinceIso?: string | null): Prom
     exported_at: new Date().toISOString(),
     language: _currentLanguage,
     since,
-    card_states: query<CardState>(`SELECT * FROM card_states ${cardWhere}`, since ? [since] : []),
+    card_states: query<CardState>(`SELECT * FROM card_states ${cardWhere}`, since ? [since, since] : []),
     review_logs: query<ReviewLog>(`SELECT * FROM review_logs ${eventWhere}`, since ? [since] : []),
     sessions: query<Session>(`SELECT * FROM sessions ${sessionWhere}`, since ? [since] : []),
     unit_progress: query<UnitProgress>('SELECT * FROM unit_progress'),
@@ -411,7 +442,9 @@ export async function setCardStarred(cardId: string, starred: boolean): Promise<
   // Sole writer of `starred`. Ensure a row exists first so starring a card that
   // has no state yet still persists (all other columns have table defaults).
   run('INSERT OR IGNORE INTO card_states (card_id) VALUES (?)', [cardId]);
-  run('UPDATE card_states SET starred = ? WHERE card_id = ?', [starred ? 1 : 0, cardId]);
+  const previous = query<{ time: string }>('SELECT starred_updated_at AS time FROM card_states WHERE card_id = ?', [cardId])[0]?.time;
+  const time = new Date(Math.max(Date.now(), (previous ? Date.parse(previous) : 0) + 1)).toISOString();
+  run('UPDATE card_states SET starred = ?, starred_updated_at = ?, starred_change_id = ? WHERE card_id = ?', [starred ? 1 : 0, time, uuidv4(), cardId]);
 }
 
 // ─── Session query helpers ────────────────────────────────────────────────────
@@ -552,12 +585,16 @@ export async function getRetentionByCategory(): Promise<Array<{ category: string
 }
 
 export async function getDailyActivity(days = 84): Promise<Array<{ date: string; count: number }>> {
-  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
-  return query(
-    `SELECT substr(reviewed_at, 1, 10) as date, COUNT(*) as count
-     FROM review_logs WHERE reviewed_at >= ? GROUP BY date ORDER BY date`,
-    [since],
-  ) as Array<{ date: string; count: number }>;
+  const start = new Date();
+  start.setDate(start.getDate() - Math.max(0, days - 1));
+  const [since] = localDayBounds(start);
+  const [, until] = localDayBounds();
+  const counts = new Map<string, number>();
+  for (const row of query<{ reviewed_at: string }>('SELECT reviewed_at FROM review_logs WHERE reviewed_at >= ? AND reviewed_at < ?', [since, until])) {
+    const date = localDateKey(new Date(row.reviewed_at));
+    counts.set(date, (counts.get(date) ?? 0) + 1);
+  }
+  return [...counts].sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
 }
 
 export async function getTotalReviews(): Promise<number> {
@@ -581,14 +618,14 @@ export async function getUnitMasteryStats(): Promise<Map<string, { total: number
 }
 
 export async function getDailyStats(): Promise<{ reviewsToday: number; newWordsToday: number }> {
-  const todayStart = new Date().toISOString().slice(0, 10);
+  const [todayStart, tomorrowStart] = localDayBounds();
   const rRows = query<{ cnt: number }>(
-    'SELECT COUNT(*) as cnt FROM review_logs WHERE reviewed_at >= ?',
-    [todayStart],
+    'SELECT COUNT(*) as cnt FROM review_logs WHERE reviewed_at >= ? AND reviewed_at < ?',
+    [todayStart, tomorrowStart],
   );
   const nRows = query<{ cnt: number }>(
-    `SELECT COALESCE(SUM(new_words_introduced), 0) as cnt FROM sessions WHERE completed_at >= ?`,
-    [todayStart],
+    `SELECT COALESCE(SUM(new_words_introduced), 0) as cnt FROM sessions WHERE completed_at >= ? AND completed_at < ?`,
+    [todayStart, tomorrowStart],
   );
   return {
     reviewsToday: rRows[0]?.cnt ?? 0,
@@ -1012,70 +1049,29 @@ function _minIso(a: string | null, b: string | null): string | null {
   return a < b ? a : b;
 }
 
-/**
- * card_states — winner is whichever side has higher review_count.
- * starred is OR'd: once starred on either device it stays starred.
- */
+/** Merge scheduling state and independently ordered star/unstar edits. */
 function _mergeCardStates(local: Database, remote: Database): void {
-  // Load all local state that has been interacted with
-  const localMap = new Map<string, { count: number; starred: number }>();
-  for (const sql of [
-    'SELECT card_id, review_count, COALESCE(starred,0) FROM card_states WHERE review_count > 0 OR COALESCE(starred,0)=1',
-    'SELECT card_id, review_count, 0 FROM card_states WHERE review_count > 0',
-  ]) {
-    try {
-      const lr = local.exec(sql);
-      if (lr.length && lr[0].values.length) {
-        for (const [id, cnt, star] of lr[0].values)
-          localMap.set(id as string, { count: cnt as number, starred: star as number });
-        break;
-      }
-    } catch { continue; }
+  type StateRow = Record<string, string | number | null>;
+  function rows(db: Database): StateRow[] {
+    const res = db.exec('SELECT * FROM card_states');
+    if (!res.length) return [];
+    return res[0].values.map(values => Object.fromEntries(res[0].columns.map((key, i) => [key, values[i]])) as StateRow);
   }
-
-  // Load remote rows that carry any progress
-  let remoteRes: ReturnType<Database['exec']> = [];
-  for (const sql of [
-    'SELECT * FROM card_states WHERE review_count > 0 OR COALESCE(starred,0)=1',
-    'SELECT * FROM card_states WHERE review_count > 0',
-  ]) {
-    try { remoteRes = remote.exec(sql); if (remoteRes.length) break; }
-    catch { continue; }
-  }
-  if (!remoteRes.length || !remoteRes[0].values.length) return;
-
-  const { columns, values } = remoteRes[0];
-  const c = _mci(columns);
-
-  for (const row of values as MergeRow[]) {
-    const cardId       = row[c('card_id')] as string;
-    const remoteCount  = (row[c('review_count')] as number) ?? 0;
-    const remoteStarred = c('starred') >= 0 ? ((row[c('starred')] as number) ?? 0) : 0;
-
-    const loc = localMap.get(cardId);
-    const localCount   = loc?.count   ?? 0;
-    const localStarred = loc?.starred ?? 0;
-    const mergedStarred = Math.max(localStarred, remoteStarred);
-
-    if (remoteCount > localCount) {
-      local.run(
-        `UPDATE card_states SET
-           depth_level=?,stability=?,difficulty=?,retrievability=?,
-           last_review=?,next_review=?,review_count=?,lapse_count=?,
-           consecutive_correct=?,fast_learn_level=?,fast_learn_fail_count=?,
-           response_time_avg_ms=?,starred=?
-         WHERE card_id=?`,
-        [
-          row[c('depth_level')], row[c('stability')], row[c('difficulty')], row[c('retrievability')],
-          row[c('last_review')], row[c('next_review')], remoteCount, row[c('lapse_count')],
-          row[c('consecutive_correct')], row[c('fast_learn_level')], row[c('fast_learn_fail_count')],
-          c('response_time_avg_ms') >= 0 ? row[c('response_time_avg_ms')] : null,
-          mergedStarred, cardId,
-        ],
-      );
-    } else if (mergedStarred !== localStarred) {
-      local.run('UPDATE card_states SET starred=? WHERE card_id=?', [mergedStarred, cardId]);
-    }
+  const localMap = new Map(rows(local).map(row => [row.card_id, row]));
+  const fields = ['depth_level', 'stability', 'difficulty', 'retrievability', 'last_review', 'next_review', 'lapse_count', 'consecutive_correct', 'fast_learn_level', 'fast_learn_fail_count', 'response_time_avg_ms'];
+  for (const row of rows(remote)) {
+    const current = localMap.get(row.card_id);
+    if (!current) continue; // A newer curriculum may have cards not installed here.
+    const winner = remoteStateWins(current, row) ? row : current;
+    const star = mergedStar(current, row);
+    if (winner === current && Number(row.review_count) <= Number(current.review_count)
+      && star[0] === Number(current.starred ?? 0)
+      && star[1] === String(current.starred_updated_at ?? '')
+      && star[2] === String(current.starred_change_id ?? '')) continue;
+    local.run(
+      'UPDATE card_states SET ' + fields.map(key => key + '=?').join(',') + ', review_count=?, starred=?, starred_updated_at=?, starred_change_id=? WHERE card_id=?',
+      [...fields.map(key => winner[key] ?? null), Math.max(Number(current.review_count), Number(row.review_count)), ...star, row.card_id],
+    );
   }
 }
 
@@ -1288,6 +1284,8 @@ export async function mergeRemoteDb(remoteBytes: Uint8Array): Promise<{ merged: 
       _mergeCardStates(_db, remoteDb);
       _mergeAppendOnly(_db, remoteDb, 'sessions');
       _mergeAppendOnly(_db, remoteDb, 'review_logs');
+      // Concurrent equal-count reviews are distinct events; preserve both counts.
+      _db.run('UPDATE card_states SET review_count = MAX(review_count, (SELECT COUNT(*) FROM review_logs WHERE review_logs.card_id = card_states.card_id))');
       _mergeAppendOnly(_db, remoteDb, 'review_notes');
       _mergeByOpportunities(_db, remoteDb, 'skill_mastery', ['skill_tag']);
       _mergeByOpportunities(_db, remoteDb, 'morpheme_mastery', ['morpheme', 'slot']);

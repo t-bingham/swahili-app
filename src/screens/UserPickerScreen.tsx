@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
-import { openDatabase, getProfile, warmDatabase } from '../database/db';
+import { openGoogleDatabase, LegacyProfileFoundError, getProfile, warmDatabase } from '../database/db';
 import {
   saveGoogleSession, getGoogleProfile, getOrRefreshToken, clearGoogleSession,
   googleUsername,
@@ -16,6 +16,7 @@ export default function UserPickerScreen() {
   const [opening, setOpening] = useState(false);
   const [openStatus, setOpenStatus] = useState('');
   const [error, setError] = useState('');
+  const [legacyPending, setLegacyPending] = useState(false);
   const [language, setLanguage] = useState<string>(() => sessionStorage.getItem('currentLanguage') ?? 'sw');
 
   const googleProfile = getGoogleProfile();
@@ -24,9 +25,15 @@ export default function UserPickerScreen() {
     warmDatabase().catch(() => {}); // pre-load WASM so first openDatabase() doesn't cold-start
   }, []);
 
-  async function openDbAndNavigate(username: string, token?: string) {
-    // Retry once — first-load WASM init can fail transiently.
-    try { await openDatabase(username, language); } catch { await openDatabase(username, language); }
+  async function openDbAndNavigate(username: string, token?: string, choice?: 'import' | 'fresh') {
+    const profile = getGoogleProfile();
+    if (!profile || googleUsername(profile) !== username) throw new Error('Account changed. Please try again.');
+    try { await openGoogleDatabase(profile.email, language, choice); }
+    catch (error) {
+      if (error instanceof LegacyProfileFoundError) { setLegacyPending(true); setOpening(false); return; }
+      throw error;
+    }
+    setLegacyPending(false);
     sessionStorage.setItem('currentUser', username);
     sessionStorage.setItem('currentLanguage', language);
 
@@ -60,7 +67,7 @@ export default function UserPickerScreen() {
         saveGoogleSession(accessToken, tokenResponse.expires_in ?? 3600, {
           name: profile.name, email: profile.email, picture: profile.picture,
         });
-        username = googleUsername({ name: profile.name, email: profile.email, picture: profile.picture });
+        username = googleUsername({ email: profile.email });
       } catch {
         setError('Google sign-in failed. Please try again.');
         setOpening(false);
@@ -68,8 +75,8 @@ export default function UserPickerScreen() {
       }
       try {
         await openDbAndNavigate(username, accessToken);
-      } catch {
-        setError('Failed to open your profile. Please try again.');
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to open your profile. Please try again.');
         setOpening(false);
       }
     },
@@ -88,8 +95,8 @@ export default function UserPickerScreen() {
       // Online — open then merge.
       try {
         await openDbAndNavigate(username, token);
-      } catch {
-        setError('Failed to open your profile. Please try again.');
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to open your profile. Please try again.');
         setOpening(false);
       }
     } else {
@@ -98,10 +105,9 @@ export default function UserPickerScreen() {
       // automatically next session once a valid token is available.
       try {
         await openDbAndNavigate(username);
-      } catch {
-        // No local copy at all — need a full sign-in.
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to open saved progress. Please try again.');
         setOpening(false);
-        googleLogin();
       }
     }
   }
@@ -113,9 +119,24 @@ export default function UserPickerScreen() {
     window.location.reload();
   }
 
+  async function chooseLegacy(choice: 'import' | 'fresh') {
+    if (!googleProfile) return;
+    setOpening(true);
+    setError('');
+    try { await openDbAndNavigate(googleUsername(googleProfile), undefined, choice); }
+    catch (error) { setError(error instanceof Error ? error.message : 'Could not open progress.'); }
+    finally { setOpening(false); }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
+        {legacyPending && <div role="alert" className="bg-slate-800 text-slate-100 rounded-xl p-4 mb-4 space-y-3">
+          <p>Saved progress from an older version may belong to another account. Does it belong to {googleProfile?.email}?</p>
+          <p className="text-sm text-slate-400">Import only your own progress. The original copy will be kept. Starting fresh leaves the old progress untouched.</p>
+          <button disabled={opening} onClick={() => chooseLegacy('import')} className="block underline">This is my progress — import it</button>
+          <button disabled={opening} onClick={() => chooseLegacy('fresh')} className="block underline">Start fresh for this account</button>
+        </div>}
         <div className="text-center mb-6">
           <div className="text-6xl mb-4">{googleProfile ? (LANGUAGES[language]?.flag ?? '🌍') : '🌍'}</div>
           <h1 className="text-3xl font-bold text-slate-100">
@@ -133,7 +154,8 @@ export default function UserPickerScreen() {
               {Object.values(LANGUAGES).map(l => (
                 <button
                   key={l.id}
-                  onClick={() => setLanguage(l.id)}
+                  disabled={opening}
+                  onClick={() => { setLanguage(l.id); setLegacyPending(false); }}
                   aria-pressed={language === l.id}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
                     language === l.id ? 'border-cyan-400 bg-cyan-400/10 text-cyan-300' : 'border-slate-700 text-slate-400 hover:text-slate-200'

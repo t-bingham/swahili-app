@@ -2,6 +2,7 @@ const TOKEN_KEY   = 'g_token';
 const EXPIRY_KEY  = 'g_expiry';
 const PROFILE_KEY = 'g_profile';
 const REFRESH_KEY = 'g_refresh';
+export { googleUsername } from './profileIdentity';
 
 export interface GoogleProfile {
   name: string;
@@ -46,6 +47,8 @@ export function getGoogleProfile(): GoogleProfile | null {
 // session is still alive the new token arrives in a few hundred ms. Resolves
 // null on any error or if the 5-second window expires.
 function trySilentRefresh(): Promise<string | null> {
+  const originalProfile = getGoogleProfile();
+  const epoch = sessionEpoch;
   const clientId = (import.meta as unknown as { env: Record<string, string> }).env.VITE_GOOGLE_CLIENT_ID;
   const gis = (window as unknown as {
     google?: { accounts?: { oauth2?: { initTokenClient: (cfg: Record<string, unknown>) => { requestAccessToken: (o?: Record<string, unknown>) => void } } } }
@@ -54,28 +57,35 @@ function trySilentRefresh(): Promise<string | null> {
   if (!clientId || !gis) return Promise.resolve(null);
 
   return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(null), 5_000);
+    let settled = false;
+    const finish = (token: string | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(token);
+    };
+    const timer = setTimeout(() => finish(null), 5_000);
 
     try {
       const client = gis.initTokenClient({
         client_id: clientId,
         scope: 'https://www.googleapis.com/auth/drive.appdata',
+        hint: originalProfile?.email,
         callback: (resp: Record<string, string>) => {
-          clearTimeout(timer);
+          if (settled || epoch !== sessionEpoch || getGoogleProfile()?.email !== originalProfile?.email) { finish(null); return; }
           if (resp.access_token && !resp.error) {
             const profile = getGoogleProfile();
             if (profile) saveGoogleSession(resp.access_token, Number(resp.expires_in) || 3600, profile);
-            resolve(resp.access_token);
+            finish(resp.access_token);
           } else {
-            resolve(null);
+            finish(null);
           }
         },
-        error_callback: () => { clearTimeout(timer); resolve(null); },
+        error_callback: () => finish(null),
       });
       client.requestAccessToken({ prompt: '' });
     } catch {
-      clearTimeout(timer);
-      resolve(null);
+      finish(null);
     }
   });
 }
@@ -84,6 +94,7 @@ function trySilentRefresh(): Promise<string | null> {
 // fire the GIS token client (which can open a popup) repeatedly — that caused a
 // "Failed to open popup" storm whenever no live Google session was available.
 let _refreshInFlight: Promise<string | null> | null = null;
+let sessionEpoch = 0;
 let _lastRefreshFailAt = 0;
 const REFRESH_COOLDOWN_MS = 5 * 60_000;
 
@@ -96,15 +107,20 @@ export async function getOrRefreshToken(): Promise<string | null> {
   if (!navigator.onLine) return null;
   if (Date.now() - _lastRefreshFailAt < REFRESH_COOLDOWN_MS) return null;
   if (_refreshInFlight) return _refreshInFlight;
-  _refreshInFlight = trySilentRefresh().then((t) => {
-    if (!t) _lastRefreshFailAt = Date.now();
-    _refreshInFlight = null;
-    return t;
+  const epoch = sessionEpoch;
+  const refresh = trySilentRefresh().then((t) => {
+    if (!t && epoch === sessionEpoch) _lastRefreshFailAt = Date.now();
+    if (_refreshInFlight === refresh) _refreshInFlight = null;
+    return epoch === sessionEpoch ? t : null;
   });
+  _refreshInFlight = refresh;
   return _refreshInFlight;
 }
 
 export function clearGoogleSession(): void {
+  sessionEpoch++;
+  _lastRefreshFailAt = 0;
+  _refreshInFlight = null;
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(EXPIRY_KEY);
   localStorage.removeItem(PROFILE_KEY);
@@ -114,9 +130,4 @@ export function clearGoogleSession(): void {
 // Signed in means we have a saved profile (token may be expired — use getOrRefreshToken).
 export function isGoogleSignedIn(): boolean {
   return getGoogleProfile() !== null;
-}
-
-// Derives a safe local username from the Google email (e.g. "tom.b@gmail.com" → "tom_b")
-export function googleUsername(profile: GoogleProfile): string {
-  return profile.email.split('@')[0].replace(/[^a-z0-9]/gi, '_').toLowerCase();
 }

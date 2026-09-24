@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProfile, getCurrentUser, getCurrentLanguage, flushDatabase } from '../database/db';
 import { getLanguage } from '../data/languages';
+import { getGoogleProfile } from '../auth/googleAuth';
 import type { LearningGoal, GrammarDepth, ProfileSettings } from '../types';
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -95,7 +96,7 @@ export default function OnboardingScreen() {
 
   async function finish(wantsPlacementTest: boolean) {
     const user = getCurrentUser() ?? 'default';
-    const displayName = user.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const displayName = getGoogleProfile()?.name || user.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
     const settings: ProfileSettings = {
       new_words_per_day: newWordsPerDay,

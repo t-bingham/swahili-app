@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { countCardsByDepth, getRetentionByCategory, getDailyActivity, getTotalReviews } from '../database/db';
+import { localDateKey } from '../utils/localDate';
 
 const DEPTH_LABELS: Record<number, string> = {
   1: 'Not yet seen', 2: 'Learning', 2.5: 'Fast-track',
@@ -45,7 +46,7 @@ export default function StatsScreen() {
   const grid = Array.from({ length: 84 }, (_, i) => {
     const d = new Date(today);
     d.setDate(d.getDate() - (83 - i));
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = localDateKey(d);
     return { dateStr, count: activityMap.get(dateStr) ?? 0 };
   });
 

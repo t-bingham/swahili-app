@@ -4,7 +4,7 @@ import { getGoogleToken, getOrRefreshToken, getGoogleProfile } from '../src/auth
 import { syncWithDrive } from '../src/sync/driveSync';
 
 vi.mock('../src/database/db', () => ({
-  getDb: vi.fn(), getCurrentUser: vi.fn(() => 'reviewer'),
+  getDb: vi.fn(), getCurrentUser: vi.fn(() => 'google:reviewer%40example.test'),
   getCurrentLanguage: vi.fn(() => 'sw'),
   mergeRemoteDb: vi.fn(), flushDatabase: vi.fn(),
 }));
@@ -15,7 +15,7 @@ vi.mock('../src/auth/googleAuth', () => ({
 
 const fetchMock = vi.fn();
 const storage = new Map<string, string>();
-const listing = () => new Response(JSON.stringify({ files: [{ id: 'backup', modifiedTime: '2000-01-01T00:00:00Z' }] }));
+const listing = () => new Response(JSON.stringify({ items: [{ id: 'backup', etag: '"v1"' }] }));
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -35,6 +35,50 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Drive sync preserves backups', () => {
+  it('uses the downloaded version for conditional writes and re-merges on conflict', async () => {
+    fetchMock.mockResolvedValueOnce(listing()).mockResolvedValueOnce(new Response('v1'))
+      .mockResolvedValueOnce(new Response('', { status: 412 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: 'backup', etag: '"v2"' }] })))
+      .mockResolvedValueOnce(new Response('v2')).mockResolvedValueOnce(new Response('{}'));
+    expect(await syncWithDrive()).toBe(true);
+    expect(mergeRemoteDb).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[2][1].headers['If-Match']).toBe('"v1"');
+    expect(fetchMock.mock.calls[5][1].headers['If-Match']).toBe('"v2"');
+  });
+
+  it('bounds conflict retries without recording success', async () => {
+    for (let i = 0; i < 3; i++) {
+      fetchMock.mockResolvedValueOnce(listing()).mockResolvedValueOnce(new Response('database'))
+        .mockResolvedValueOnce(new Response('', { status: 412 }));
+    }
+    expect(await syncWithDrive()).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(9);
+    expect(storage.size).toBe(0);
+  });
+
+  it('merges duplicate first backups from every page before writing the canonical copy', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: 'b', etag: 'b1' }], nextPageToken: 'next' })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: 'a', etag: 'a1' }] })))
+      .mockResolvedValueOnce(new Response('a')).mockResolvedValueOnce(new Response('b'))
+      .mockResolvedValueOnce(new Response('{}'));
+    expect(await syncWithDrive()).toBe(true);
+    expect(fetchMock.mock.calls[1][0]).toContain('pageToken=next');
+    expect(mergeRemoteDb).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[4][0]).toContain('/a?uploadType=media');
+  });
+
+  it('refuses unconditional updates if Drive omits its conflict token', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('{"items":[{"id":"backup"}]}'));
+    expect(await syncWithDrive()).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a Google account that does not own the active database', async () => {
+    vi.mocked(getGoogleProfile).mockReturnValue({ name: 'Other', email: 'other@example.test', picture: '' });
+    expect(await syncWithDrive()).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it.each([401, 403, 500])('does not create a backup when file lookup fails (%s)', async status => {
     fetchMock.mockResolvedValueOnce(new Response('', { status }));
     expect(await syncWithDrive()).toBe(false);
@@ -62,11 +106,11 @@ describe('Drive sync preserves backups', () => {
     expect(await syncWithDrive()).toBe(true);
     expect(mergeRemoteDb).toHaveBeenCalledTimes(1);
     expect(flushDatabase).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[2][1].method).toBe('PATCH');
+    expect(fetchMock.mock.calls[2][1].method).toBe('PUT');
   });
 
   it('creates one first backup when callers overlap', async () => {
-    fetchMock.mockResolvedValueOnce(new Response('{"files":[]}')).mockResolvedValueOnce(new Response('{}'));
+    fetchMock.mockResolvedValueOnce(new Response('{"items":[]}')).mockResolvedValueOnce(new Response('{}'));
     const first = syncWithDrive();
     expect(syncWithDrive()).toBe(first);
     expect(await first).toBe(true);
@@ -101,10 +145,10 @@ describe('Drive sync preserves backups', () => {
   });
 
   it('does not mark a failed upload as synced and allows a later retry', async () => {
-    fetchMock.mockResolvedValueOnce(new Response('{"files":[]}')).mockResolvedValueOnce(new Response('', { status: 500 }));
+    fetchMock.mockResolvedValueOnce(new Response('{"items":[]}')).mockResolvedValueOnce(new Response('', { status: 500 }));
     expect(await syncWithDrive()).toBe(false);
     expect(storage.size).toBe(0);
-    fetchMock.mockResolvedValueOnce(new Response('{"files":[]}')).mockResolvedValueOnce(new Response('{}'));
+    fetchMock.mockResolvedValueOnce(new Response('{"items":[]}')).mockResolvedValueOnce(new Response('{}'));
     expect(await syncWithDrive()).toBe(true);
   });
 });

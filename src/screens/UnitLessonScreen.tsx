@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getUnits, getAllUnitProgress, getUnitCardsWithState,
-  introduceCards, upsertUnitProgress, flushDatabase,
+  introduceCards, upsertUnitProgress, flushDatabase, getCurrentLanguage,
 } from '../database/db';
 import GrammarNotes from '../components/GrammarNotes';
-import { computeLessons } from '../utils/lessons';
+import { computeLessons, lessonPassed } from '../utils/lessons';
+import FillInBlank, { canFillInBlank } from '../components/exercises/FillInBlank';
+import { getLanguageAdapter } from '../languages';
 import { unitBasePath } from '../utils/unitTracks';
 import type { Unit, CardWithState } from '../types';
 
@@ -224,10 +226,23 @@ function PracticePhase({
   useEffect(() => () => { if (answerTimer.current) clearTimeout(answerTimer.current); }, []);
   const correct = primaryEnglish(card);
 
+  const language = getLanguageAdapter(getCurrentLanguage());
+  function scheduleAnswer(correct: boolean) {
+    if (answerTimer.current) return;
+    answerTimer.current = setTimeout(() => onAnswer(correct), 1100);
+  }
+
   function handleSelect(opt: string) {
     if (selected !== null || answerTimer.current) return;
     setSelected(opt);
-    answerTimer.current = setTimeout(() => onAnswer(opt === correct), 1100);
+    scheduleAnswer(opt === correct);
+  }
+
+  if (canFillInBlank(card, language)) {
+    return <div className="flex flex-col h-full p-5 max-w-lg mx-auto gap-5 overflow-y-auto">
+      <ProgressBar current={practiceIndex + 1} total={totalPractice} label="Practice" />
+      <FillInBlank card={card} language={language} onAnswer={scheduleAnswer} />
+    </div>;
   }
 
   const optionStyle = (opt: string) => {
@@ -435,9 +450,9 @@ export default function UnitLessonScreen() {
 
       setLessonCards(lesson.cards);
 
-      // Practice: skip fill-blank grammar, shuffle, cap at lesson size
-      const eligible = lesson.cards.filter(c => !(c.type === 'grammar' && c.swahili.includes('___')));
-      setPracticeCards([...eligible].sort(() => Math.random() - 0.5));
+      // Every card is graded. Valid clozes use FillInBlank; malformed clozes
+      // retain a meaning question instead of silently bypassing practice.
+      setPracticeCards([...lesson.cards].sort(() => Math.random() - 0.5));
 
       // Grammar phase only for lesson 0 (if notes exist)
       setPhase(lessonIndex === 0 && found.grammar_notes?.trim() ? 'grammar' : 'words');
@@ -449,7 +464,7 @@ export default function UnitLessonScreen() {
   const completeLesson = useCallback(async (finalResults: PracticeResult[]) => {
     if (!unit) return;
 
-    const allCorrect = finalResults.length === 0 || finalResults.every(r => r.correct);
+    const allCorrect = lessonPassed(lessonCards, finalResults);
 
     if (allCorrect) {
       await introduceCards(lessonCards.map(c => c.id));
@@ -529,7 +544,7 @@ export default function UnitLessonScreen() {
             totalLessons={totalLessons}
             onNext={() => {
               if (wordIndex + 1 >= lessonCards.length) {
-                practiceCards.length > 0 ? setPhase('practice') : completeLesson([]);
+                setPhase('practice');
               } else {
                 setWordIndex(i => i + 1);
               }
