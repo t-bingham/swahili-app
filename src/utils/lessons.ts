@@ -10,6 +10,12 @@ export interface LessonInfo {
   status: LessonStatus;
 }
 
+export function lessonPassed(cards: CardWithState[], results: Array<{ card: CardWithState; correct: boolean }>): boolean {
+  if (!cards.length || results.length !== cards.length) return false;
+  const correctIds = new Set(results.filter(result => result.correct).map(result => result.card.id));
+  return cards.every(card => correctIds.has(card.id));
+}
+
 export function computeLessons(allCards: CardWithState[]): LessonInfo[] {
   const sorted = [...allCards].sort((a, b) => a.frequency_rank - b.frequency_rank);
 

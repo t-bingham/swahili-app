@@ -20,7 +20,9 @@ Reviewed routing and onboarding, authentication and profile switching, local SQL
 - Browser checks used a separate local test profile: onboarding reload, immediate profile persistence after completed onboarding, placement reload, unit map, repeated single-card practice, saved statistics, gallery search/starred filtering, switching to Korean onboarding, and Maori database initialization/onboarding.
 - Live Google OAuth/Drive round trips, simultaneous writes from separate devices, native shells, speech voices, and offline service-worker update behavior were not exercised. Sync network failures are covered by mocked responses. No production profile or remote backup was used for testing.
 
-## Remaining findings
+## Findings resolved in the follow-up PR
+
+The findings below describe the original review state; all five are addressed by the follow-up changes documented below.
 
 1. **High: account-key collisions.** `googleUsername()` uses only a sanitized email local part. Accounts such as `alex@example.com` and `alex@another.example` share a key; punctuation can also collide. A future change should use a stable full identity and migrate legacy data with explicit ownership information. Blindly renaming or copying existing databases could assign progress to the wrong account, so this review does not attempt that migration.
 2. **Medium: cross-device sync conflicts.** The current whole-file read/merge/write protocol has no conditional write protection across devices or tabs. Two devices can still race after downloading the same version. Card-state conflict resolution also prefers the higher review count, and starred flags use OR semantics, so an unstar can be resurrected. The new in-process sync guard does not solve these protocol issues.
@@ -29,3 +31,13 @@ Reviewed routing and onboarding, authentication and profile switching, local SQL
 5. **Low: daily boundaries.** Daily statistics and activity use UTC dates, which may differ from the learner's local day. Define a consistent local-day policy before changing stored date semantics.
 
 The app remains local-first. These changes add no backend, paid service, native dependency, or curriculum rewrite.
+
+## Follow-up fixes ? 24 September 2026
+
+- Google profiles now use the normalized full email address. Importing ambiguous legacy progress requires an explicit ownership decision per language, records that ownership atomically, and preserves the original database. Starting fresh leaves legacy progress unclaimed. Stale token-refresh callbacks cannot restore a signed-out account.
+- Drive sync uses v2 resource ETags and conditional writes, retries conflicts by downloading and merging again, and merges duplicate backup files across all listing pages. Concurrent review logs are retained; the latest reviewed schedule wins with deterministic ties. Versioned star changes preserve intentional unstars. All devices must update to gain conditional-write protection; older clients can still write unconditionally.
+- Lesson practice includes grammar blanks. Every unique lesson card needs a correct graded answer; an empty practice pool cannot pass.
+- Database lifecycle operations and persistence writes are serialized. IndexedDB connections close after transactions; failed switches preserve the current profile. Save failures display a retry banner and keep unsaved state in memory. A lifetime Web Lock permits one editable tab per origin. This requires a current browser with Web Locks over HTTPS (or localhost); native WebViews need this capability verified before release.
+- Statistics and activity use the current device's local calendar day, including DST boundaries. Timestamped reviews are grouped in the current timezone; previously stored activity-date labels are retained because their original timezone cannot be reconstructed.
+
+Follow-up verification: 87 automated tests cover identity migration, conflict retries, merge convergence, lifecycle failures, lesson completion and local-day boundaries. Browser smoke tests verified explicit legacy import, recovery from a simulated quota failure, and a one-card grammar lesson failing a wrong answer then passing a correct answer. Production build and whitespace checks passed. Live Google OAuth/Drive round trips and real simultaneous-device writes were not exercised; network conflict behavior is covered with mocked responses. Browser tests used synthetic local profiles.

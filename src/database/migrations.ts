@@ -722,6 +722,11 @@ const MIGRATIONS: Migration[] = [
   { version: 3, run: createReviewNotesTable },
   // v4: installed curriculum package metadata for future unit-by-unit downloads.
   { version: 4, run: createCurriculumInstallTables },
+  { version: 5, run: db => {
+    const columns = db.exec('PRAGMA table_info(card_states)')[0].values.map(row => row[1]);
+    if (!columns.includes('starred_updated_at')) db.run("ALTER TABLE card_states ADD COLUMN starred_updated_at TEXT NOT NULL DEFAULT ''");
+    if (!columns.includes('starred_change_id')) db.run("ALTER TABLE card_states ADD COLUMN starred_change_id TEXT NOT NULL DEFAULT ''");
+  } },
 ];
 
 // Applies every migration newer than the DB's recorded version (and applicable to

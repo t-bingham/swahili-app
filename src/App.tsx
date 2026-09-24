@@ -13,10 +13,12 @@ import CardGalleryScreen from './screens/CardGalleryScreen';
 import ReviewScreen from './screens/ReviewScreen';
 import HangulScreen from './screens/HangulScreen';
 import Layout from './components/Layout';
+import StorageStatus from './components/StorageStatus';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <StorageStatus />
       <Routes>
         <Route path="/" element={<UserPickerScreen />} />
         <Route element={<Layout showNavigation={false} />}>

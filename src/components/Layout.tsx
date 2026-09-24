@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { getCurrentUser, openDatabase, getProfile } from '../database/db';
 import { applyDisplaySettings } from '../utils/display';
 import { canSyncCurrentLanguage, syncNow } from '../sync/syncService';
+import { getGoogleProfile, googleUsername } from '../auth/googleAuth';
 
 const tabs = [
   { to: '/app/home',    label: 'Home',    icon: '🏠' },
@@ -17,6 +18,7 @@ const tabs = [
 export default function Layout({ showNavigation = true }: { showNavigation?: boolean }) {
   const navigate = useNavigate();
   const [ready, setReady] = useState(getCurrentUser() !== null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (getCurrentUser() !== null) {
@@ -26,6 +28,12 @@ export default function Layout({ showNavigation = true }: { showNavigation?: boo
     }
     const stored = sessionStorage.getItem('currentUser');
     if (!stored) { navigate('/', { replace: true }); return; }
+    const profile = getGoogleProfile();
+    if (profile && stored !== googleUsername(profile)) {
+      sessionStorage.removeItem('currentUser');
+      navigate('/', { replace: true });
+      return;
+    }
     const lang = sessionStorage.getItem('currentLanguage') ?? undefined;
     openDatabase(stored, lang)
       .catch(() => openDatabase(stored, lang))  // retry once for WASM cold-start
@@ -33,7 +41,7 @@ export default function Layout({ showNavigation = true }: { showNavigation?: boo
         setReady(true);
         getProfile().then(p => { if (p) applyDisplaySettings(p.settings); });
       })
-      .catch(() => { sessionStorage.removeItem('currentUser'); navigate('/', { replace: true }); });
+      .catch(error => setError(error instanceof Error ? error.message : 'Could not open your saved progress.'));
   }, []);
 
   // Background sync: upload to Drive when coming back online or returning to the tab.
@@ -50,6 +58,7 @@ export default function Layout({ showNavigation = true }: { showNavigation?: boo
     };
   }, []);
 
+  if (error) return <div role="alert" className="p-6 text-slate-200"><p>{error}</p><button className="underline mt-3" onClick={() => window.location.reload()}>Try again</button></div>;
   if (!ready) return null;
   if (!showNavigation) return <Outlet />;
 

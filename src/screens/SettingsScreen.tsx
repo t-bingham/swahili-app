@@ -7,6 +7,7 @@ import { clearSyncState, getActiveSyncProvider, getLastSyncTime, syncNow as runS
 import { LANGUAGES } from '../data/languages';
 import { getLanguageAdapter } from '../languages';
 import { useSessionStore } from '../store/sessionStore';
+import { openGoogleDatabase, LegacyProfileFoundError } from '../database/db';
 import type { ProfileSettings, LearningGoal, GrammarDepth } from '../types';
 
 function formatRelative(date: Date): string {
@@ -180,6 +181,8 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [switching, setSwitching] = useState(false);
+  const [switchError, setSwitchError] = useState('');
   const googleProfile = getGoogleProfile();
   const lastSync = getLastSyncTime();
   const syncProvider = getActiveSyncProvider();
@@ -214,17 +217,29 @@ export default function SettingsScreen() {
 
   async function switchLanguage(newLang: string) {
     const user = getCurrentUser();
-    if (!user || newLang === getCurrentLanguage()) return;
-    await closeDatabase();
-    useSessionStore.getState().resetSession();
-    try { await openDatabase(user, newLang); } catch { await openDatabase(user, newLang); }
-    sessionStorage.setItem('currentLanguage', newLang);
-    // Check whether this user has been onboarded in the new language; if not,
-    // route to onboarding to set goal / depth / pace before learning starts.
-    const profile = await getProfile();
-    navigate(profile ? '/app/home' : '/onboarding');
-    // Force a reload so all in-memory state (Zustand store, etc.) is reset.
-    setTimeout(() => window.location.reload(), 0);
+    if (!user || switching || newLang === getCurrentLanguage()) return;
+    setSwitching(true);
+    setSwitchError('');
+    try {
+      // Keep the old database open if saving its changes fails.
+      if (googleProfile) await openGoogleDatabase(googleProfile.email, newLang);
+      else await openDatabase(user, newLang);
+      useSessionStore.getState().resetSession();
+      sessionStorage.setItem('currentLanguage', newLang);
+      // Check whether this user has been onboarded in the new language; if not,
+      // route to onboarding to set goal / depth / pace before learning starts.
+      const profile = await getProfile();
+      navigate(profile ? '/app/home' : '/onboarding');
+      // Force a reload so all in-memory state (Zustand store, etc.) is reset.
+      setTimeout(() => window.location.reload(), 0);
+    } catch (error) {
+      if (error instanceof LegacyProfileFoundError) {
+        await closeDatabase();
+        useSessionStore.getState().resetSession();
+        sessionStorage.setItem('currentLanguage', newLang);
+        navigate('/');
+      } else setSwitchError(error instanceof Error ? error.message : 'Could not switch languages.');
+    } finally { setSwitching(false); }
   }
 
   async function syncNow() {
@@ -245,6 +260,7 @@ export default function SettingsScreen() {
   return (
     <div className="p-4 max-w-lg mx-auto pb-12">
       <h1 className="text-2xl font-bold text-slate-100 pt-2 mb-6">Settings</h1>
+      {switchError && <p role="alert" className="text-red-300">{switchError}</p>}
 
       {/* ── Language ── */}
       <SectionHeader>Language</SectionHeader>
@@ -257,6 +273,7 @@ export default function SettingsScreen() {
               return (
                 <button
                   key={l.id}
+                  disabled={switching}
                   onClick={() => switchLanguage(l.id)}
                   aria-pressed={active}
                   className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
